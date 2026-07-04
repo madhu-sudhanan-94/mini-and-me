@@ -55,39 +55,27 @@ export default function Addresses() {
               ))}
             </div>
 
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Country/region</label>
-              <select value={editing.country} onChange={(e) => set("country", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 bg-white">
-                {COUNTRY_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Full name</label>
-              <input value={editing.full_name} onChange={(e) => set("full_name", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-            </div>
-
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Phone</label>
-              <PhoneField value={editing.phone} onChange={(v) => set("phone", v)} placeholder="Mobile number" />
-            </div>
-
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Flat / house no., building</label>
-              <input value={editing.line1} onChange={(e) => set("line1", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-            </div>
-
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Street / locality</label>
-              <input value={editing.line2} onChange={(e) => set("line2", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-            </div>
-
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Area / landmark <span className="text-slate-400">(optional)</span></label>
-              <input value={editing.area} onChange={(e) => set("area", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Full name</label>
+                <input value={editing.full_name} onChange={(e) => set("full_name", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Phone</label>
+                <PhoneField value={editing.phone} onChange={(v) => set("phone", v)} placeholder="Mobile number" />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Flat / house no., building</label>
+                <input value={editing.line1} onChange={(e) => set("line1", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Street / locality</label>
+                <input value={editing.line2} onChange={(e) => set("line2", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+              </div>
+              <div className="lg:col-span-2">
+                <label className="block text-xs text-slate-500 mb-1">Area / landmark <span className="text-slate-400">(optional)</span></label>
+                <input value={editing.area} onChange={(e) => set("area", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+              </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">City</label>
                 <input value={editing.city} onChange={(e) => set("city", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
@@ -103,11 +91,16 @@ export default function Addresses() {
                   <input value={editing.state} onChange={(e) => set("state", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
                 )}
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">PIN code</label>
-              <input value={editing.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">PIN code</label>
+                <input value={editing.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Country/region</label>
+                <select value={editing.country} onChange={(e) => set("country", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 bg-white">
+                  {COUNTRY_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
             </div>
 
             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">

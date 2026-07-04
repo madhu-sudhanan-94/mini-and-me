@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, LogOut, Edit3, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, LogOut, Edit3, Plus, Trash2, Package, ChevronRight } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { panelBlueDeep } from "../theme.js";
 import Garment from "../components/Garment.jsx";
@@ -40,6 +40,12 @@ export default function Admin() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4">
+        <button onClick={() => setScreen("adminorders")} className="w-full mb-4 bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center"><Package size={19} className="text-brand-600" /></div>
+          <span className="flex-1 text-left font-semibold text-slate-800">Manage orders</span>
+          <ChevronRight size={20} className="text-slate-300" />
+        </button>
+
         {/* Add / edit form */}
         <div className="bg-white rounded-2xl p-4 shadow-xs mb-4">
           <p className="font-bold text-slate-800 mb-3 flex items-center gap-2">

@@ -4,7 +4,7 @@ import { panelBlue } from "../theme.js";
 import { useStore } from "../store.jsx";
 
 export default function Account() {
-  const { auth, orders, cartCount, setScreen, goToLogin, logout, profile, addresses, session } = useStore();
+  const { auth, orders, cartCount, setScreen, goToLogin, logout, profile, addresses, session, myOrders } = useStore();
   return (
     <div className="pb-4">
       <div className="rounded-b-[2.5rem] pb-8" style={panelBlue}>
@@ -45,7 +45,7 @@ export default function Account() {
           </button>
         )}
         {[
-          { icon: Package, label: "My orders", note: orders.length + " placed" },
+          { icon: Package, label: "My orders", note: (session ? myOrders.length : orders.length) + " placed", action: () => setScreen("orders") },
           { icon: ShoppingCart, label: "My cart", note: cartCount + " items", action: () => setScreen("cart") },
         ].map((row, i) => (
           <button key={i} onClick={row.action} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">

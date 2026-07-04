@@ -47,6 +47,9 @@ export function StoreProvider({ children }) {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [addresses, setAddresses] = useState([]); // delivery addresses for the signed-in user
   const [addrBusy, setAddrBusy] = useState(false);
+  const [myOrders, setMyOrders] = useState([]);      // this user's orders (from DB)
+  const [adminOrders, setAdminOrders] = useState([]); // all orders (admin view)
+  const [ordersBusy, setOrdersBusy] = useState(false);
 
   const [selProduct, setSelProduct] = useState(null);
   const [selColor, setSelColor] = useState(null);
@@ -140,6 +143,49 @@ export function StoreProvider({ children }) {
     } catch (e) { /* offline */ }
   };
   useEffect(() => { loadAddresses(); }, [session?.user?.id]);
+
+  // Customer order history (from the DB, with line items)
+  const loadMyOrders = async () => {
+    const uid = session?.user?.id;
+    if (!uid) { setMyOrders([]); return; }
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/orders?user_id=eq." + uid + "&select=*,order_items(*)&order=created_at.desc", { headers: writeHeaders() });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows)) setMyOrders(rows);
+      }
+    } catch (e) { /* offline */ }
+  };
+  useEffect(() => { loadMyOrders(); }, [session?.user?.id]);
+
+  // Admin: read & manage ALL orders
+  const loadAdminOrders = async () => {
+    if (auth.role !== "admin" || !session?.access_token) return;
+    setOrdersBusy(true);
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/orders?select=*,order_items(*)&order=created_at.desc", { headers: writeHeaders() });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows)) setAdminOrders(rows);
+      }
+    } catch (e) { /* offline */ }
+    finally { setOrdersBusy(false); }
+  };
+  const updateOrderStatus = async (id, status) => {
+    if (auth.role !== "admin" || !session?.access_token) return;
+    setOrdersBusy(true);
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/orders?id=eq." + id, {
+        method: "PATCH",
+        headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) { showToast("Couldn't update status"); return; }
+      setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, status } : o)));
+      showToast("Order marked " + status);
+    } catch (e) { showToast("Network error"); }
+    finally { setOrdersBusy(false); }
+  };
 
   // Restore a saved login session on load (refresh the token so it stays valid)
   useEffect(() => {
@@ -278,12 +324,18 @@ export function StoreProvider({ children }) {
   };
   const removeItem = (idx) => setCart((prev) => prev.filter((_, i) => i !== idx));
 
-  const saveOrderToDb = async (order, items, phone, email) => {
+  const saveOrderToDb = async (order, items, phone, email, extra = {}) => {
     try {
       const res = await fetch(SUPABASE_URL + "/rest/v1/orders", {
         method: "POST",
-        headers: { ...SB_HEADERS, Prefer: "return=representation" },
-        body: JSON.stringify({ customer_name: order.name, customer_phone: phone, customer_email: email, total: order.total, status: "placed", user_id: null }),
+        headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify({
+          customer_name: order.name, customer_phone: phone, customer_email: email,
+          total: order.total, status: "placed",
+          ref: order.id,
+          user_id: extra.userId || null,
+          shipping_address: extra.shipping || null,
+        }),
       });
       if (!res.ok) return;
       const rows = await res.json();
@@ -291,9 +343,10 @@ export function StoreProvider({ children }) {
       if (!dbId || !items.length) return;
       await fetch(SUPABASE_URL + "/rest/v1/order_items", {
         method: "POST",
-        headers: SB_HEADERS,
+        headers: writeHeaders(),
         body: JSON.stringify(items.map((it) => ({ ...it, order_id: dbId }))),
       });
+      if (extra.userId) loadMyOrders();
     } catch (e) { /* offline — order is still saved locally */ }
   };
 
@@ -311,8 +364,15 @@ export function StoreProvider({ children }) {
       const p = products.find((x) => x.id === it.id);
       return { product_id: it.id, product_name: p ? p.name : "Item", size: it.size, color: it.color, unit_price: p ? p.price : 0, qty: it.qty };
     });
-    saveOrderToDb(order, itemsSnapshot, coPhone.trim() || null, coEmail.trim() || null);
-    setOrders((o) => [order, ...o]);
+    // snapshot the delivery address onto the order so past orders keep the right destination
+    const a = defaultAddress;
+    const shipping = a ? {
+      label: a.label, full_name: a.full_name, phone: a.phone,
+      line1: a.line1, line2: a.line2, area: a.area, city: a.city,
+      state: a.state, pincode: a.pincode, country: a.country,
+    } : null;
+    saveOrderToDb(order, itemsSnapshot, coPhone.trim() || null, coEmail.trim() || null, { userId: session?.user?.id || null, shipping });
+    setOrders((o) => [{ ...order, status: "placed", shipping, items: itemsSnapshot }, ...o]);
     setLastOrder(order);
     setCart([]);
     setCoName(""); setCoPhone(""); setCoEmail("");
@@ -324,6 +384,8 @@ export function StoreProvider({ children }) {
     setSession(null);
     setProfile(null);
     setAddresses([]);
+    setMyOrders([]);
+    setAdminOrders([]);
     setAuth({ role: "guest", id: null });
     setReturnTo(null);
     setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice(""); setAuthMode("login");
@@ -561,6 +623,7 @@ export function StoreProvider({ children }) {
     loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
     authBusy, session, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
     addresses, addrBusy, defaultAddress,
+    myOrders, adminOrders, ordersBusy,
     selProduct, setSelProduct,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
@@ -573,6 +636,7 @@ export function StoreProvider({ children }) {
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
+    loadMyOrders, loadAdminOrders, updateOrderStatus,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

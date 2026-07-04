@@ -84,3 +84,33 @@ create policy "order_items_select_own" on public.order_items
   for select using (
     exists (select 1 from public.orders o where o.id = order_items.order_id and o.user_id = auth.uid())
   );
+
+-- ---------- Phase: orders (shipping snapshot, ref, status, admin access) ----------
+alter table public.orders add column if not exists shipping_address jsonb;
+alter table public.orders add column if not exists ref text;         -- human order ref (e.g. PP123456)
+-- status column already exists; values used: placed → confirmed → shipped → delivered → cancelled
+
+-- signed-in customers can insert their own orders (guest anon-insert policy, if any, stays as-is)
+drop policy if exists "orders_insert_self" on public.orders;
+create policy "orders_insert_self" on public.orders
+  for insert with check (auth.uid() = user_id);
+
+-- admins can read & manage ALL orders + items
+drop policy if exists "orders_admin_all" on public.orders;
+create policy "orders_admin_all" on public.orders
+  for all
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+drop policy if exists "order_items_admin_all" on public.order_items;
+create policy "order_items_admin_all" on public.order_items
+  for all
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+-- signed-in customers can insert items for their own order
+drop policy if exists "order_items_insert_self" on public.order_items;
+create policy "order_items_insert_self" on public.order_items
+  for insert with check (
+    exists (select 1 from public.orders o where o.id = order_items.order_id and o.user_id = auth.uid())
+  );

@@ -15,7 +15,9 @@ import Success from "./screens/Success.jsx";
 import Account from "./screens/Account.jsx";
 import Profile from "./screens/Profile.jsx";
 import Addresses from "./screens/Addresses.jsx";
+import Orders from "./screens/Orders.jsx";
 import Admin from "./screens/Admin.jsx";
+import AdminOrders from "./screens/AdminOrders.jsx";
 import ProductModal from "./screens/ProductModal.jsx";
 
 const Logo = BRAND.logo;
@@ -23,7 +25,7 @@ const Logo = BRAND.logo;
 const SCREENS = {
   login: Login, home: Home, category: Category, favorites: Favorites,
   cart: Cart, checkout: Checkout, success: Success, account: Account, profile: Profile,
-  addresses: Addresses, admin: Admin,
+  addresses: Addresses, orders: Orders, admin: Admin, adminorders: AdminOrders,
 };
 
 function Shell() {
@@ -46,7 +48,7 @@ function Shell() {
   const Current = SCREENS[screen] || Home;
   const showNav = ["home", "category", "account", "cart", "favorites"].includes(screen);
   const showChrome = screen !== "login";
-  const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : screen === "admin" ? "lg:max-w-4xl" : "lg:max-w-2xl";
+  const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-2xl";
 
   return (
     <div className="min-h-screen bg-slate-300 lg:bg-slate-50 flex justify-center sm:py-6 lg:py-0 font-sans">

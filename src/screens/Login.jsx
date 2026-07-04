@@ -15,7 +15,7 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="relative pb-12 rounded-b-[2.5rem]" style={panelBlue}>
+      <div className="relative pb-8 rounded-b-[2.5rem] shrink-0" style={panelBlue}>
         <div className="px-6 pt-2">
           <button onClick={() => { const dest = returnTo || "home"; setReturnTo(null); setScreen(dest); }} aria-label="Back" className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
             <ChevronLeft size={20} className="text-white" />
@@ -30,7 +30,7 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="px-6 -mt-6">
+      <div className="flex-1 flex flex-col justify-center px-6 py-6">
         <div className="bg-white rounded-3xl shadow-xl p-5">
           <div className="flex bg-slate-100 rounded-xl p-1 mb-4">
             <button className="flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 bg-white shadow-sm text-brand-600">

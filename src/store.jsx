@@ -58,6 +58,7 @@ export function StoreProvider({ children }) {
   const [selCategory, setSelCategory] = useState("women");
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState(null);
+  const [legalPage, setLegalPage] = useState("privacy"); // which policy the Legal screen shows
 
   // checkout
   const [coName, setCoName] = useState("");
@@ -239,6 +240,8 @@ export function StoreProvider({ children }) {
     setOtpSent(true);
   };
   const resetPhoneLogin = () => { setOtpSent(false); setOtp(""); setOtpErr(""); };
+
+  const openLegal = (key) => { setLegalPage(key); setScreen("legal"); };
   const verifyPhoneOtp = () => {
     if (otp !== DEMO_OTP) { setOtpErr("Incorrect code. For this demo, use " + DEMO_OTP + "."); return; }
     const phone = loginPhone.trim();
@@ -626,7 +629,7 @@ export function StoreProvider({ children }) {
     myOrders, adminOrders, ordersBusy,
     selProduct, setSelProduct,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
-    query, setQuery, toast, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
+    query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
     lastOrder, form, setForm, blankForm,
     // derived
     cartCount, cartTotal,

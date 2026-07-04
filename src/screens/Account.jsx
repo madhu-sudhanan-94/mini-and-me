@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin } from "lucide-react";
+import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin, LifeBuoy } from "lucide-react";
 import { panelBlue } from "../theme.js";
 import { mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
@@ -49,6 +49,7 @@ export default function Account() {
         {[
           { icon: Package, label: "My orders", note: orderCount + " placed", action: () => setScreen("orders") },
           { icon: ShoppingCart, label: "My cart", note: cartCount + " items", action: () => setScreen("cart") },
+          { icon: LifeBuoy, label: "Help & support", note: "FAQ · Policies", action: () => setScreen("contact") },
         ].map((row, i) => (
           <button key={i} onClick={row.action} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"><row.icon size={19} className="text-slate-600" /></div>

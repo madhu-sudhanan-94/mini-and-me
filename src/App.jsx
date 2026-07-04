@@ -5,6 +5,7 @@ import { panelBlue } from "./theme.js";
 import { StoreProvider, useStore } from "./store.jsx";
 import DesktopNav from "./components/DesktopNav.jsx";
 import BottomNav from "./components/BottomNav.jsx";
+import Footer from "./components/Footer.jsx";
 import Login from "./screens/Login.jsx";
 import Home from "./screens/Home.jsx";
 import Category from "./screens/Category.jsx";
@@ -18,6 +19,8 @@ import Addresses from "./screens/Addresses.jsx";
 import Orders from "./screens/Orders.jsx";
 import Admin from "./screens/Admin.jsx";
 import AdminOrders from "./screens/AdminOrders.jsx";
+import LegalPage from "./screens/LegalPage.jsx";
+import Contact from "./screens/Contact.jsx";
 import ProductModal from "./screens/ProductModal.jsx";
 
 const Logo = BRAND.logo;
@@ -26,6 +29,7 @@ const SCREENS = {
   login: Login, home: Home, category: Category, favorites: Favorites,
   cart: Cart, checkout: Checkout, success: Success, account: Account, profile: Profile,
   addresses: Addresses, orders: Orders, admin: Admin, adminorders: AdminOrders,
+  legal: LegalPage, contact: Contact,
 };
 
 function Shell() {
@@ -46,7 +50,8 @@ function Shell() {
   }
 
   const Current = SCREENS[screen] || Home;
-  const showNav = ["home", "category", "account", "cart", "favorites"].includes(screen);
+  const showNav = ["home", "category", "account", "cart", "favorites", "legal", "contact"].includes(screen);
+  const showFooter = ["home", "category", "favorites"].includes(screen);
   const showChrome = screen !== "login";
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-2xl";
 
@@ -57,6 +62,7 @@ function Shell() {
         {showChrome && <DesktopNav />}
         <div className="flex-1 overflow-y-auto no-scrollbar lg:overflow-visible">
           <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>
+          {showFooter && <Footer />}
         </div>
         {showNav && <BottomNav />}
         <ProductModal />

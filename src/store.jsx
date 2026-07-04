@@ -34,6 +34,8 @@ export function StoreProvider({ children }) {
   const [session, setSession] = useState(null); // { access_token, refresh_token, user }
   const [adminBusy, setAdminBusy] = useState(false);
   const [returnTo, setReturnTo] = useState(null); // screen to return to after logging in
+  const [profile, setProfile] = useState(null); // profiles row for the signed-in user
+  const [profileBusy, setProfileBusy] = useState(false);
 
   const [selProduct, setSelProduct] = useState(null);
   const [selColor, setSelColor] = useState(null);
@@ -97,6 +99,20 @@ export function StoreProvider({ children }) {
     } catch (e) { /* offline / not hosted yet — keep local sample data */ }
   };
   useEffect(() => { loadProducts(); }, []);
+
+  // Load the signed-in user's profile row whenever the session changes
+  const loadProfile = async () => {
+    const uid = session?.user?.id;
+    if (!uid) { setProfile(null); return; }
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid + "&select=*", { headers: writeHeaders() });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows[0]) setProfile(rows[0]);
+      }
+    } catch (e) { /* offline — keep whatever we have */ }
+  };
+  useEffect(() => { loadProfile(); }, [session?.user?.id]);
 
   // Restore a saved login session on load (refresh the token so it stays valid)
   useEffect(() => {
@@ -259,6 +275,7 @@ export function StoreProvider({ children }) {
   const logout = () => {
     if (session?.access_token) authSignOut(session.access_token);
     setSession(null);
+    setProfile(null);
     setAuth({ role: "guest", id: null });
     setReturnTo(null);
     setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice(""); setAuthMode("login");
@@ -353,13 +370,38 @@ export function StoreProvider({ children }) {
     showToast("Refreshed from database");
   };
 
+  // Save the signed-in user's profile fields (name, phone, gender, dob, avatar_url…)
+  const saveProfile = async (fields) => {
+    const uid = session?.user?.id;
+    if (!uid) { showToast("Log in to save your profile"); return false; }
+    setProfileBusy(true);
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid, {
+        method: "PATCH",
+        headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) { showToast("Couldn't save profile"); return false; }
+      const rows = await res.json().catch(() => []);
+      if (Array.isArray(rows) && rows[0]) setProfile(rows[0]);
+      showToast("Profile saved");
+      return true;
+    } catch (e) {
+      showToast("Network error — not saved");
+      return false;
+    } finally {
+      setProfileBusy(false);
+    }
+  };
+
   const value = {
     // state
     products, setProducts, screen, setScreen, auth, setAuth, cart, setCart,
     orders, setOrders, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
-    authBusy, session, adminBusy, returnTo, setReturnTo, selProduct, setSelProduct,
+    authBusy, session, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy,
+    selProduct, setSelProduct,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
     lastOrder, form, setForm, blankForm,
@@ -369,6 +411,7 @@ export function StoreProvider({ children }) {
     showToast, goToLogin, applySession, handleAuth, openProduct, closeProduct,
     toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
+    loadProfile, saveProfile,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

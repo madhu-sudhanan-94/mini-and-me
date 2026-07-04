@@ -4,22 +4,31 @@ import { panelBlue } from "../theme.js";
 import { useStore } from "../store.jsx";
 
 export default function Account() {
-  const { auth, orders, cartCount, setScreen, goToLogin, logout } = useStore();
+  const { auth, orders, cartCount, setScreen, goToLogin, logout, profile } = useStore();
   return (
     <div className="pb-4">
       <div className="rounded-b-[2.5rem] pb-8" style={panelBlue}>
         <div className="px-6 pt-4 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            {auth.role === "admin" ? <Shield size={28} className="text-white" /> : <User size={28} className="text-white" />}
+          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+            {profile?.avatar_url
+              ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+              : auth.role === "admin" ? <Shield size={28} className="text-white" /> : <User size={28} className="text-white" />}
           </div>
           <div>
-            <p className="text-white font-bold text-lg">{auth.role === "guest" ? "Guest user" : auth.role === "admin" ? "Administrator" : "Customer"}</p>
+            <p className="text-white font-bold text-lg">{auth.role === "guest" ? "Guest user" : (profile?.full_name || (auth.role === "admin" ? "Administrator" : "Customer"))}</p>
             <p className="text-brand-100 text-sm">{auth.id || "Not signed in"}</p>
           </div>
         </div>
       </div>
 
       <div className="px-5 mt-5 space-y-2.5">
+        {auth.role !== "guest" && (
+          <button onClick={() => setScreen("profile")} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center"><User size={19} className="text-brand-600" /></div>
+            <span className="flex-1 text-left font-semibold text-slate-800">Edit profile</span>
+            <ChevronRight size={20} className="text-slate-300" />
+          </button>
+        )}
         {auth.role === "admin" && (
           <button onClick={() => setScreen("admin")} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center"><Shield size={19} className="text-brand-600" /></div>

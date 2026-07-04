@@ -1,10 +1,12 @@
 import React from "react";
 import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin } from "lucide-react";
 import { panelBlue } from "../theme.js";
+import { mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
 
 export default function Account() {
   const { auth, orders, cartCount, setScreen, goToLogin, logout, profile, addresses, session, myOrders } = useStore();
+  const orderCount = session ? mergeOrders(myOrders, orders).length : orders.length;
   return (
     <div className="pb-4">
       <div className="rounded-b-[2.5rem] pb-8" style={panelBlue}>
@@ -45,7 +47,7 @@ export default function Account() {
           </button>
         )}
         {[
-          { icon: Package, label: "My orders", note: (session ? myOrders.length : orders.length) + " placed", action: () => setScreen("orders") },
+          { icon: Package, label: "My orders", note: orderCount + " placed", action: () => setScreen("orders") },
           { icon: ShoppingCart, label: "My cart", note: cartCount + " items", action: () => setScreen("cart") },
         ].map((row, i) => (
           <button key={i} onClick={row.action} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { ChevronLeft, Package, MapPin } from "lucide-react";
 import { formatINR } from "../lib/format.js";
-import { ORDER_STEPS, STATUS_LABEL, fmtDate, normalizeOrder, shipLines } from "../lib/orders.js";
+import { ORDER_STEPS, STATUS_LABEL, fmtDate, normalizeOrder, shipLines, mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
 
 function StatusTracker({ status }) {
@@ -26,7 +26,8 @@ export default function Orders() {
   const { myOrders, orders, session, setScreen, loadMyOrders } = useStore();
   useEffect(() => { if (session) loadMyOrders(); }, [session]);
 
-  const list = (session ? myOrders : orders).map(normalizeOrder);
+  // Signed-in users: DB history plus any local order not yet synced (deduped by ref).
+  const list = (session ? mergeOrders(myOrders, orders) : orders).map(normalizeOrder);
 
   return (
     <div className="pb-6">

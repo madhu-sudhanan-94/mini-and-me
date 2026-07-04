@@ -30,6 +30,16 @@ export function normalizeOrder(o) {
   };
 }
 
+const refOf = (o) => String(o.ref || o.id);
+
+// Merge DB orders with any local this-session orders not yet reflected in the DB
+// (e.g. a just-placed order, or one whose sync failed), deduped by ref.
+export function mergeOrders(dbOrders, localOrders) {
+  const seen = new Set((dbOrders || []).map(refOf));
+  const extra = (localOrders || []).filter((o) => !seen.has(refOf(o)));
+  return [...extra, ...(dbOrders || [])];
+}
+
 export function shipLines(a) {
   if (!a) return "";
   return [a.line1, a.line2, a.area, a.city, a.state, a.pincode, a.country].filter(Boolean).join(", ");

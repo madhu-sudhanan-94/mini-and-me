@@ -19,6 +19,13 @@ drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = id) with check (auth.uid() = id);
 
+-- SECURITY: the RLS above lets a user edit their own profile row, which would
+-- include the `role` column → self-promotion to admin. Column-level grants
+-- restrict WHICH columns a signed-in user may write, so `role` stays untouchable
+-- (it's set only by the signup trigger / service role).
+revoke update on public.profiles from anon, authenticated;
+grant update (full_name, phone, gender, dob, avatar_url) on public.profiles to authenticated;
+
 -- ---------- Phase 2: delivery addresses ----------
 create table if not exists public.addresses (
   id         uuid primary key default gen_random_uuid(),
@@ -114,3 +121,13 @@ create policy "order_items_insert_self" on public.order_items
   for insert with check (
     exists (select 1 from public.orders o where o.id = order_items.order_id and o.user_id = auth.uid())
   );
+
+-- Guest (anonymous) checkout — version-controlled instead of relying on an
+-- off-repo policy. Guests may only create user-less orders.
+drop policy if exists "orders_insert_guest" on public.orders;
+create policy "orders_insert_guest" on public.orders
+  for insert to anon with check (user_id is null);
+
+drop policy if exists "order_items_insert_guest" on public.order_items;
+create policy "order_items_insert_guest" on public.order_items
+  for insert to anon with check (true);

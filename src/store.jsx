@@ -337,7 +337,7 @@ export function StoreProvider({ children }) {
           shipping_address: extra.shipping || null,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { showToast("Order saved on this device — couldn't sync to the server"); return; }
       const rows = await res.json();
       const dbId = rows && rows[0] && rows[0].id;
       if (!dbId || !items.length) return;
@@ -347,7 +347,7 @@ export function StoreProvider({ children }) {
         body: JSON.stringify(items.map((it) => ({ ...it, order_id: dbId }))),
       });
       if (extra.userId) loadMyOrders();
-    } catch (e) { /* offline — order is still saved locally */ }
+    } catch (e) { showToast("Order saved on this device — couldn't sync to the server"); }
   };
 
   const placeOrder = () => {

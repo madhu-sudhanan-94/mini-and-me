@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Search, ShoppingCart, ChevronLeft, ChevronRight, Plus, Minus, Trash2,
   User, Home, LayoutGrid, Check, Phone, Mail, LogOut, Package,
-  Edit3, X, Star, Shield, Wifi, Signal, BatteryFull, ArrowRight, Heart, Sparkles
+  Edit3, X, Star, Shield, ArrowRight, Heart, Sparkles
 } from "lucide-react";
 import { BRAND } from "./brand.config.js";
 
@@ -606,15 +606,6 @@ export default function App() {
   };
 
   /* ---------- small UI pieces ---------- */
-  const StatusBar = ({ light }) => (
-    <div className={`lg:hidden flex items-center justify-between px-5 pt-3 pb-1 text-[11px] font-semibold ${light ? "text-white/90" : "text-slate-700"}`}>
-      <span>9:41</span>
-      <div className="flex items-center gap-1">
-        <Signal size={13} /><Wifi size={13} /><BatteryFull size={15} />
-      </div>
-    </div>
-  );
-
   const PriceTag = ({ p, size = "base" }) => (
     <div className="flex items-baseline gap-1.5">
       <span className={`font-bold text-slate-900 ${size === "lg" ? "text-2xl" : "text-[15px]"}`}>{formatINR(p.price)}</span>
@@ -697,7 +688,6 @@ export default function App() {
   const renderLogin = () => (
     <div className="flex flex-col min-h-full">
       <div className="relative pb-12 rounded-b-[2.5rem]" style={panelBlue}>
-        <StatusBar light />
         <div className="px-6 pt-2">
           <button onClick={() => { const dest = returnTo || "home"; setReturnTo(null); setScreen(dest); }} aria-label="Back" className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
             <ChevronLeft size={20} className="text-white" />
@@ -772,7 +762,6 @@ export default function App() {
     const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
     return (
       <div className="pb-4">
-        <StatusBar />
         <div className="lg:hidden px-5 pt-2 flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-xs">Welcome back 👋</p>
@@ -887,7 +876,6 @@ export default function App() {
     const list = products.filter((p) => p.cat === selCategory);
     return (
       <div className="pb-4">
-        <StatusBar />
         <div className="px-5 pt-2 flex items-center gap-3">
           <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
           <h2 className="text-xl font-bold text-slate-900">Shop</h2>
@@ -973,7 +961,6 @@ export default function App() {
     const favs = products.filter((p) => favorites.includes(p.id));
     return (
       <div className="pb-4">
-        <StatusBar />
         <div className="px-5 pt-2 flex items-center gap-3">
           <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
           <h2 className="text-2xl font-extrabold text-slate-900">Favourites</h2>
@@ -996,7 +983,6 @@ export default function App() {
 
   const renderCart = () => (
     <div className="flex flex-col min-h-full">
-      <StatusBar />
       <div className="px-5 pt-2 flex items-center gap-3">
         <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-extrabold text-slate-900">My cart</h2>
@@ -1054,7 +1040,6 @@ export default function App() {
 
   const renderCheckout = () => (
     <div className="flex flex-col min-h-full">
-      <StatusBar />
       <div className="px-5 pt-2 flex items-center gap-3">
         <button onClick={() => setScreen("cart")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-extrabold text-slate-900">Checkout</h2>
@@ -1102,7 +1087,6 @@ export default function App() {
 
   const renderSuccess = () => (
     <div className="flex flex-col min-h-full">
-      <StatusBar />
       <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
         <div className="w-24 h-24 rounded-full bg-linear-to-br from-brand-600 to-accent-500 flex items-center justify-center shadow-lg shadow-brand-500/30 mb-6">
           <Check size={44} className="text-white" strokeWidth={3} />
@@ -1121,7 +1105,6 @@ export default function App() {
   const renderAccount = () => (
     <div className="pb-4">
       <div className="rounded-b-[2.5rem] pb-8" style={panelBlue}>
-        <StatusBar light />
         <div className="px-6 pt-4 flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
             {auth.role === "admin" ? <Shield size={28} className="text-white" /> : <User size={28} className="text-white" />}
@@ -1170,7 +1153,6 @@ export default function App() {
     return (
       <div className="flex flex-col min-h-full bg-slate-50">
         <div className="rounded-b-3xl" style={panelBlueDeep}>
-          <StatusBar light />
           <div className="px-5 pb-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button onClick={() => setScreen("account")} className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center"><ChevronLeft size={18} className="text-white" /></button>

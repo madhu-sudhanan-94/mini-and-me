@@ -7,7 +7,7 @@ import { useStore } from "../store.jsx";
 export default function Checkout() {
   const {
     cartCount, cartTotal, coName, setCoName, coPhone, setCoPhone,
-    coEmail, setCoEmail, auth, goToLogin, placeOrder, setScreen, defaultAddress,
+    coEmail, setCoEmail, auth, goToLogin, placeOrder, setScreen, defaultAddress, session,
   } = useStore();
 
   return (
@@ -18,7 +18,7 @@ export default function Checkout() {
       </div>
 
       <div className="flex-1 px-6 pt-5">
-        {auth.role !== "guest" && (
+        {session && (
           <div className="mb-5">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-semibold text-slate-800">Deliver to</p>

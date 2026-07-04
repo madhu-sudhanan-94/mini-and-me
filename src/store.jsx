@@ -6,6 +6,9 @@ import {
 import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
 
+// Temporary demo phone login. Real SMS OTP needs a paid provider (roadmap).
+const DEMO_OTP = "1234";
+
 /*
   StoreProvider holds ALL of the app's state and actions (what used to live in
   the single App component). Screens/components read it with the useStore() hook,
@@ -25,6 +28,11 @@ export function StoreProvider({ children }) {
   const [heroIndex, setHeroIndex] = useState(0);
   const [imgIndex, setImgIndex] = useState(0);
 
+  const [loginTab, setLoginTab] = useState("email"); // email | phone
+  const [loginPhone, setLoginPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpErr, setOtpErr] = useState("");
   const [authMode, setAuthMode] = useState("login"); // login | signup
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -172,7 +180,27 @@ export function StoreProvider({ children }) {
   const goToLogin = (target) => {
     setReturnTo(target || null);
     setAuthErr(""); setAuthNotice(""); setAuthMode("login");
+    setLoginTab("email"); setOtp(""); setOtpSent(false); setOtpErr("");
     setScreen("login");
+  };
+
+  /* ---------- demo phone login (temporary, code 1234) ---------- */
+  const sendPhoneOtp = () => {
+    setOtpErr("");
+    const digits = loginPhone.replace(/\D/g, "");
+    if (digits.length < 8) { setOtpErr("Enter a valid phone number."); return; }
+    setOtp("");
+    setOtpSent(true);
+  };
+  const resetPhoneLogin = () => { setOtpSent(false); setOtp(""); setOtpErr(""); };
+  const verifyPhoneOtp = () => {
+    if (otp !== DEMO_OTP) { setOtpErr("Incorrect code. For this demo, use " + DEMO_OTP + "."); return; }
+    const phone = loginPhone.trim();
+    setAuth({ role: "customer", id: phone, uid: null });
+    setLoginPhone(""); setOtp(""); setOtpSent(false); setOtpErr("");
+    const dest = returnTo || "home";
+    setReturnTo(null);
+    setScreen(dest);
   };
 
   const applySession = (data) => {
@@ -299,6 +327,7 @@ export function StoreProvider({ children }) {
     setAuth({ role: "guest", id: null });
     setReturnTo(null);
     setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice(""); setAuthMode("login");
+    setLoginTab("email"); setLoginPhone(""); setOtp(""); setOtpSent(false); setOtpErr("");
     setScreen("home"); // back to the store as a guest, not the login wall
   };
 
@@ -529,6 +558,7 @@ export function StoreProvider({ children }) {
     orders, setOrders, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
+    loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
     authBusy, session, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
     addresses, addrBusy, defaultAddress,
     selProduct, setSelProduct,
@@ -538,7 +568,7 @@ export function StoreProvider({ children }) {
     // derived
     cartCount, cartTotal,
     // actions
-    showToast, goToLogin, applySession, handleAuth, openProduct, closeProduct,
+    showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth, openProduct, closeProduct,
     toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     loadProfile, saveProfile, uploadAvatar,

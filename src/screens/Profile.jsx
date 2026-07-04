@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, Camera } from "lucide-react";
 import { panelBlue } from "../theme.js";
+import PhoneField from "../components/PhoneField.jsx";
 import { useStore } from "../store.jsx";
 
 const GENDERS = [
@@ -18,7 +19,7 @@ function initials(name, email) {
 }
 
 export default function Profile() {
-  const { profile, saveProfile, profileBusy, auth, setScreen } = useStore();
+  const { profile, saveProfile, profileBusy, auth, setScreen, uploadAvatar, avatarBusy } = useStore();
   const email = profile?.email || auth.id || "";
 
   const [f, setF] = useState({ full_name: "", phone: "", gender: "", dob: "" });
@@ -30,6 +31,13 @@ export default function Profile() {
       dob: profile.dob || "",
     });
   }, [profile]);
+
+  // avatar: optimistic local preview while uploading + graceful fallback on a broken URL
+  const [preview, setPreview] = useState(null);
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => { setImgFailed(false); }, [profile?.avatar_url]);
+  useEffect(() => { if (!avatarBusy) setPreview(null); }, [avatarBusy]);
+  const avatarSrc = preview || (profile?.avatar_url && !imgFailed ? profile.avatar_url : null);
 
   const save = async () => {
     const ok = await saveProfile({
@@ -51,13 +59,15 @@ export default function Profile() {
         <div className="flex flex-col items-center mt-3">
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden ring-4 ring-white/25">
-              {profile?.avatar_url
-                ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+              {avatarSrc
+                ? <img src={avatarSrc} alt="Profile photo" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
                 : <span className="text-white text-2xl font-extrabold">{initials(f.full_name, email)}</span>}
             </div>
-            <button type="button" disabled title="Photo upload coming soon" className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-white text-brand-600 shadow-md flex items-center justify-center opacity-70 cursor-not-allowed">
+            <label title="Change photo" className={`absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-white text-brand-600 shadow-md flex items-center justify-center ${avatarBusy ? "opacity-60 cursor-wait" : "cursor-pointer"}`}>
               <Camera size={16} />
-            </button>
+              <input type="file" accept="image/*" className="hidden" disabled={avatarBusy}
+                onChange={(e) => { const file = e.target.files && e.target.files[0]; if (file) { setPreview(URL.createObjectURL(file)); uploadAvatar(file); } e.target.value = ""; }} />
+            </label>
           </div>
           <p className="text-white/80 text-xs mt-2">{email}</p>
         </div>
@@ -77,10 +87,7 @@ export default function Profile() {
 
           <div>
             <label className="block text-xs text-slate-500 mb-1">Phone number</label>
-            <div className="flex items-center border border-slate-200 rounded-xl px-3 focus-within:border-brand-500">
-              <span className="text-slate-500 text-sm pr-2 border-r border-slate-200">+91</span>
-              <input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })} inputMode="numeric" placeholder="Mobile number" className="flex-1 py-3 px-3 outline-hidden text-sm" />
-            </div>
+            <PhoneField value={f.phone} onChange={(v) => setF({ ...f, phone: v })} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

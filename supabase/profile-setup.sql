@@ -36,6 +36,9 @@ create table if not exists public.addresses (
   created_at timestamptz not null default now()
 );
 
+-- country (added after initial release; backfills existing rows to 'India')
+alter table public.addresses add column if not exists country text not null default 'India';
+
 alter table public.addresses enable row level security;
 
 drop policy if exists "addresses_select_own" on public.addresses;

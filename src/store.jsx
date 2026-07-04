@@ -36,6 +36,7 @@ export function StoreProvider({ children }) {
   const [returnTo, setReturnTo] = useState(null); // screen to return to after logging in
   const [profile, setProfile] = useState(null); // profiles row for the signed-in user
   const [profileBusy, setProfileBusy] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
   const [addresses, setAddresses] = useState([]); // delivery addresses for the signed-in user
   const [addrBusy, setAddrBusy] = useState(false);
 
@@ -357,6 +358,55 @@ export function StoreProvider({ children }) {
     }
   };
 
+  // Upload a profile photo to the `avatars` bucket, then store its URL on the profile.
+  // Path must start with the user's id to satisfy the storage RLS policy.
+  const uploadAvatar = async (file) => {
+    const uid = session?.user?.id;
+    if (!uid || !session?.access_token) { showToast("Log in to upload a photo"); return; }
+    if (avatarBusy) return; // ignore a second pick while one is in flight
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { showToast("Please choose an image file"); return; }
+    if (file.size === 0) { showToast("That file appears to be empty"); return; }
+    if (file.size > 3 * 1024 * 1024) { showToast("Image must be under 3 MB"); return; }
+    setAvatarBusy(true);
+    try {
+      const path = uid + "/avatar";
+      const up = await fetch(SUPABASE_URL + "/storage/v1/object/avatars/" + path, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + session.access_token,
+          "content-type": file.type,
+          "x-upsert": "true",
+          "cache-control": "3600",
+        },
+        body: file,
+      });
+      if (!up.ok) {
+        showToast(up.status === 401 || up.status === 403 ? "Session expired — please log in again" : "Upload failed — is the 'avatars' bucket set up?");
+        return;
+      }
+      const url = SUPABASE_URL + "/storage/v1/object/public/avatars/" + path + "?v=" + Date.now();
+      const res = await fetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid, {
+        method: "PATCH",
+        headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify({ avatar_url: url }),
+      });
+      if (!res.ok) {
+        showToast(res.status === 401 || res.status === 403 ? "Session expired — please log in again" : "Uploaded, but couldn't save to profile");
+        return;
+      }
+      const rows = await res.json().catch(() => []);
+      if (!(Array.isArray(rows) && rows[0])) { showToast("Couldn't save photo — profile not found"); return; }
+      setProfile(rows[0]);
+      showToast("Photo updated");
+    } catch (e) {
+      showToast("Network error — photo not uploaded");
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
   const editProduct = (p) => setForm({
     id: p.id, name: p.name, cat: p.cat, shape: p.shape,
     price: String(p.price), original: p.original ? String(p.original) : "",
@@ -461,7 +511,8 @@ export function StoreProvider({ children }) {
       });
       if (!res.ok) { showToast("Couldn't save profile"); return false; }
       const rows = await res.json().catch(() => []);
-      if (Array.isArray(rows) && rows[0]) setProfile(rows[0]);
+      if (!(Array.isArray(rows) && rows[0])) { showToast("Couldn't save — profile not found"); return false; }
+      setProfile(rows[0]);
       showToast("Profile saved");
       return true;
     } catch (e) {
@@ -478,7 +529,7 @@ export function StoreProvider({ children }) {
     orders, setOrders, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
-    authBusy, session, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy,
+    authBusy, session, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
     addresses, addrBusy, defaultAddress,
     selProduct, setSelProduct,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
@@ -490,7 +541,7 @@ export function StoreProvider({ children }) {
     showToast, goToLogin, applySession, handleAuth, openProduct, closeProduct,
     toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
-    loadProfile, saveProfile,
+    loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
   };
 

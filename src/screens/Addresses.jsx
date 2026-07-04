@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { ChevronLeft, Plus, Edit3, Trash2, MapPin, Check, Star } from "lucide-react";
+import { ChevronLeft, Plus, Edit3, Trash2, MapPin, Star } from "lucide-react";
+import PhoneField from "../components/PhoneField.jsx";
+import { COUNTRY_NAMES } from "../lib/countries.js";
 import { useStore } from "../store.jsx";
 
 const LABELS = ["Home", "Work", "Other"];
-const blankAddr = { label: "Home", full_name: "", phone: "", line1: "", line2: "", area: "", city: "", state: "", pincode: "", is_default: false };
+const blankAddr = { label: "Home", full_name: "", phone: "", line1: "", line2: "", area: "", city: "", state: "", pincode: "", country: "India", is_default: false };
 
 function fmtLines(a) {
   return [a.line1, a.line2, a.area].filter(Boolean).join(", ");
@@ -18,7 +20,7 @@ export default function Addresses() {
     setErr("");
     setEditing({ ...blankAddr, full_name: profile?.full_name || "", phone: profile?.phone || "", is_default: addresses.length === 0 });
   };
-  const startEdit = (a) => { setErr(""); setEditing({ ...a }); };
+  const startEdit = (a) => { setErr(""); setEditing({ ...a, country: a.country || "India" }); };
 
   const submit = async () => {
     const f = editing;
@@ -27,7 +29,8 @@ export default function Addresses() {
     const payload = {
       label: f.label, full_name: f.full_name.trim() || null, phone: f.phone.trim() || null,
       line1: f.line1.trim(), line2: f.line2.trim() || null, area: f.area.trim() || null,
-      city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim(), is_default: !!f.is_default,
+      city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim(),
+      country: f.country || "India", is_default: !!f.is_default,
     };
     const ok = await saveAddress(payload, f.id);
     if (ok) setEditing(null);
@@ -50,10 +53,8 @@ export default function Addresses() {
                 <button key={l} onClick={() => set("label", l)} className={`flex-1 py-2 rounded-xl text-sm font-semibold ${editing.label === l ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{l}</button>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <input value={editing.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="Full name" className="border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-              <input value={editing.phone} onChange={(e) => set("phone", e.target.value.replace(/\D/g, "").slice(0, 10))} inputMode="numeric" placeholder="Phone" className="border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-            </div>
+            <input value={editing.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="Full name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+            <PhoneField value={editing.phone} onChange={(v) => set("phone", v)} placeholder="Phone" />
             <input value={editing.line1} onChange={(e) => set("line1", e.target.value)} placeholder="Flat / house no., building" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
             <input value={editing.line2} onChange={(e) => set("line2", e.target.value)} placeholder="Street / locality" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
             <input value={editing.area} onChange={(e) => set("area", e.target.value)} placeholder="Area / landmark (optional)" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
@@ -61,7 +62,12 @@ export default function Addresses() {
               <input value={editing.city} onChange={(e) => set("city", e.target.value)} placeholder="City" className="border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
               <input value={editing.state} onChange={(e) => set("state", e.target.value)} placeholder="State" className="border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
             </div>
-            <input value={editing.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="PIN code" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+            <div className="grid grid-cols-2 gap-3">
+              <input value={editing.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="PIN code" className="border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+              <select value={editing.country} onChange={(e) => set("country", e.target.value)} className="border border-slate-200 rounded-xl py-3 px-2.5 outline-hidden text-sm focus:border-brand-500 bg-white">
+                {COUNTRY_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
 
             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
               <input type="checkbox" checked={!!editing.is_default} onChange={(e) => set("is_default", e.target.checked)} className="w-4 h-4 accent-brand-600" />
@@ -93,7 +99,7 @@ export default function Addresses() {
               </div>
               {(a.full_name || a.phone) && <p className="text-sm font-semibold text-slate-800">{[a.full_name, a.phone].filter(Boolean).join(" · ")}</p>}
               <p className="text-sm text-slate-500 mt-0.5">{fmtLines(a)}</p>
-              <p className="text-sm text-slate-500">{[a.city, a.state].filter(Boolean).join(", ")} {a.pincode}</p>
+              <p className="text-sm text-slate-500">{[a.city, a.state].filter(Boolean).join(", ")} {a.pincode}{a.country ? " · " + a.country : ""}</p>
               <div className="flex items-center gap-2 mt-3">
                 {!a.is_default && <button onClick={() => makeDefaultAddress(a.id)} disabled={addrBusy} className="text-xs font-semibold text-brand-600 disabled:opacity-50">Set as default</button>}
                 <button onClick={() => startEdit(a)} className="ml-auto w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600"><Edit3 size={15} /></button>

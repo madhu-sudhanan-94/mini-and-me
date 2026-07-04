@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronLeft, User, MapPin } from "lucide-react";
 import { formatINR } from "../lib/format.js";
+import PhoneField from "../components/PhoneField.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Checkout() {
@@ -46,10 +47,7 @@ export default function Checkout() {
         <input value={coName} onChange={(e) => setCoName(e.target.value)} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 mb-4" />
 
         <label className="block text-xs text-slate-500 mb-1">Phone number</label>
-        <div className="flex items-center border border-slate-200 rounded-xl px-3 focus-within:border-brand-500 mb-4">
-          <span className="text-slate-500 text-sm pr-2 border-r border-slate-200">+91</span>
-          <input value={coPhone} onChange={(e) => setCoPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} inputMode="numeric" placeholder="Mobile number" className="flex-1 py-3 px-3 outline-hidden text-sm" />
-        </div>
+        <div className="mb-4"><PhoneField value={coPhone} onChange={setCoPhone} /></div>
 
         <div className="flex items-center gap-3 my-1 text-slate-300 text-xs"><div className="flex-1 h-px bg-slate-200" />or<div className="flex-1 h-px bg-slate-200" /></div>
 

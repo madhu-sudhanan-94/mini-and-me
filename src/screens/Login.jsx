@@ -30,7 +30,7 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center px-6 py-6">
+      <div className="px-6 pt-5 pb-8">
         <div className="bg-white rounded-3xl shadow-xl p-5">
           <div className="flex bg-slate-100 rounded-xl p-1 mb-4">
             <button className="flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 bg-white shadow-sm text-brand-600">

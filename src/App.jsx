@@ -4,6 +4,10 @@ import {
   User, Home, LayoutGrid, Check, Phone, Mail, LogOut, Package,
   Edit3, X, Star, Shield, Wifi, Signal, BatteryFull, ArrowRight, Heart, Sparkles
 } from "lucide-react";
+import { BRAND } from "./brand.config.js";
+
+// Brand logo mark (defined once in src/brand.config.js)
+const Logo = BRAND.logo;
 
 /* ============================ Helpers ============================ */
 const ADMIN_EMAIL = "madhusudhanana94@gmail.com";
@@ -28,7 +32,30 @@ function mapDbProduct(r) {
     images: r.image_url ? [r.image_url] : [],
   };
 }
-const DEMO_OTP = "1234";
+/* ---------- Supabase Auth (real email + password login) ---------- */
+const SUPA_AUTH = SUPABASE_URL + "/auth/v1";
+const ANON_HEADERS = { apikey: SUPABASE_KEY, "Content-Type": "application/json" };
+
+async function authSignUp(email, password) {
+  const res = await fetch(SUPA_AUTH + "/signup", { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ email, password }) });
+  return { ok: res.ok, data: await res.json().catch(() => ({})) };
+}
+async function authSignIn(email, password) {
+  const res = await fetch(SUPA_AUTH + "/token?grant_type=password", { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ email, password }) });
+  return { ok: res.ok, data: await res.json().catch(() => ({})) };
+}
+async function authRefresh(refresh_token) {
+  try {
+    const res = await fetch(SUPA_AUTH + "/token?grant_type=refresh_token", { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ refresh_token }) });
+    return res.ok ? await res.json().catch(() => null) : null;
+  } catch { return null; }
+}
+async function authSignOut(token) {
+  try { await fetch(SUPA_AUTH + "/logout", { method: "POST", headers: { ...ANON_HEADERS, Authorization: "Bearer " + token } }); } catch {}
+}
+function authErrText(data) {
+  return data?.error_description || data?.msg || data?.error || data?.message || "Something went wrong. Please try again.";
+}
 
 const formatINR = (n) => "₹" + Number(n).toLocaleString("en-IN");
 
@@ -49,6 +76,7 @@ const PKEY = "vk_products_v1";
 const OKEY = "vk_orders_v1";
 const CKEY = "vk_cart_v1";
 const FKEY = "vk_favs_v1";
+const AKEY = "vk_session_v1";
 async function sget(key, shared) {
   try {
     if (typeof window === "undefined" || !window.storage) return null;
@@ -231,14 +259,15 @@ const INITIAL_PRODUCTS = [
 const DOT =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.4' fill='%23ffffff' fill-opacity='0.16'/%3E%3C/svg%3E\")";
 // Layer the dot pattern OVER a CSS gradient in one background-image (avoids overriding a Tailwind gradient class).
-const panelBlue = { backgroundImage: `${DOT}, linear-gradient(135deg, #2563eb, #0ea5e9)` };
-const panelBlueDeep = { backgroundImage: `${DOT}, linear-gradient(135deg, #1d4ed8, #3b82f6)` };
-const heroBlue = { backgroundImage: `${DOT}, linear-gradient(135deg, #2563eb, #38bdf8)` };
+const C = BRAND.colors;
+const panelBlue = { backgroundImage: `${DOT}, linear-gradient(135deg, ${C.brand[600]}, ${C.accent[500]})` };
+const panelBlueDeep = { backgroundImage: `${DOT}, linear-gradient(135deg, ${C.brand[700]}, ${C.brand[500]})` };
+const heroBlue = { backgroundImage: `${DOT}, linear-gradient(135deg, ${C.brand[600]}, ${C.accent[400]})` };
 
 /* ============================ App ============================ */
 export default function App() {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [screen, setScreen] = useState("login");
+  const [screen, setScreen] = useState("home"); // open on the store; login only when needed
   const [auth, setAuth] = useState({ role: "guest", id: null });
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -247,11 +276,15 @@ export default function App() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [imgIndex, setImgIndex] = useState(0);
 
-  const [loginMode, setLoginMode] = useState("phone"); // phone | email
-  const [loginValue, setLoginValue] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpErr, setOtpErr] = useState("");
-  const [pending, setPending] = useState(null);
+  const [authMode, setAuthMode] = useState("login"); // login | signup
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [authErr, setAuthErr] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [session, setSession] = useState(null); // { access_token, refresh_token, user }
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [returnTo, setReturnTo] = useState(null); // screen to return to after logging in
 
   const [selProduct, setSelProduct] = useState(null);
   const [selColor, setSelColor] = useState(null);
@@ -269,7 +302,7 @@ export default function App() {
   const [lastOrder, setLastOrder] = useState(null);
 
   // admin form
-  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", color: "#2563EB" };
+  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", color: "#2563EB", image: "", trending: false };
   const [form, setForm] = useState(blankForm);
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
@@ -298,16 +331,43 @@ export default function App() {
     })();
   }, []);
 
+  // Headers for authenticated (admin) writes — uses the logged-in admin's token
+  const writeHeaders = () => ({
+    apikey: SUPABASE_KEY,
+    Authorization: "Bearer " + (session?.access_token || SUPABASE_KEY),
+    "Content-Type": "application/json",
+  });
+
   // Load live products from Supabase (falls back to samples if unreachable)
+  const loadProducts = async ({ allowEmpty = false } = {}) => {
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/products?select=*&order=id.asc", { headers: SB_HEADERS });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && (rows.length || allowEmpty)) setProducts(rows.map(mapDbProduct));
+      }
+    } catch (e) { /* offline / not hosted yet — keep local sample data */ }
+  };
+  useEffect(() => { loadProducts(); }, []);
+
+  // Restore a saved login session on load (refresh the token so it stays valid)
   useEffect(() => {
     (async () => {
+      const raw = await sget(AKEY, false);
+      if (!raw) return;
       try {
-        const res = await fetch(SUPABASE_URL + "/rest/v1/products?select=*&order=id.asc", { headers: SB_HEADERS });
-        if (res.ok) {
-          const rows = await res.json();
-          if (Array.isArray(rows) && rows.length) setProducts(rows.map(mapDbProduct));
+        const saved = JSON.parse(raw);
+        if (!saved?.refresh_token) return;
+        const fresh = await authRefresh(saved.refresh_token);
+        if (fresh && fresh.access_token) {
+          const email = (fresh.user?.email || saved.user?.email || "").toLowerCase();
+          setSession({ access_token: fresh.access_token, refresh_token: fresh.refresh_token, user: fresh.user || saved.user });
+          setAuth({ role: email === ADMIN_EMAIL ? "admin" : "customer", id: fresh.user?.email || email, uid: fresh.user?.id || null });
+          setScreen((s) => (s === "login" ? "home" : s));
+        } else {
+          await sset(AKEY, "", false);
         }
-      } catch (e) { /* offline / not hosted yet — keep local sample data */ }
+      } catch {}
     })();
   }, []);
 
@@ -315,6 +375,7 @@ export default function App() {
   useEffect(() => { if (hydrated) sset(OKEY, JSON.stringify(orders), true); }, [orders, hydrated]);
   useEffect(() => { if (hydrated) sset(CKEY, JSON.stringify(cart), false); }, [cart, hydrated]);
   useEffect(() => { if (hydrated) sset(FKEY, JSON.stringify(favorites), false); }, [favorites, hydrated]);
+  useEffect(() => { if (hydrated) sset(AKEY, session ? JSON.stringify(session) : "", false); }, [session, hydrated]);
 
   // Auto-rotate the home hero
   useEffect(() => {
@@ -324,29 +385,52 @@ export default function App() {
   }, [screen]);
 
   /* ---------- actions ---------- */
-  const sendOtp = () => {
-    if (!loginValue.trim()) return;
-    const isAdmin = loginMode === "email" && loginValue.trim().toLowerCase() === ADMIN_EMAIL;
-    setPending({ mode: loginMode, value: loginValue.trim(), isAdmin });
-    setOtp("");
-    setOtpErr("");
-    setScreen("otp");
+  // Send a guest to the login screen, remembering where to bring them back
+  const goToLogin = (target) => {
+    setReturnTo(target || null);
+    setAuthErr(""); setAuthNotice(""); setAuthMode("login");
+    setScreen("login");
   };
 
-  const verifyOtp = () => {
-    if (otp !== DEMO_OTP) {
-      setOtpErr("Incorrect code. For this demo, use " + DEMO_OTP + ".");
-      return;
+  const applySession = (data) => {
+    const user = data.user || { email: loginEmail.trim().toLowerCase() };
+    const email = (user.email || "").toLowerCase();
+    const isAdmin = email === ADMIN_EMAIL;
+    setSession({ access_token: data.access_token, refresh_token: data.refresh_token, user });
+    setAuth({ role: isAdmin ? "admin" : "customer", id: user.email || email, uid: user.id || null });
+    setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice("");
+    // Return to where they were headed (e.g. checkout); else admins → dashboard, others → home
+    const dest = returnTo || (isAdmin ? "admin" : "home");
+    setReturnTo(null);
+    setScreen(dest);
+  };
+
+  const handleAuth = async () => {
+    const email = loginEmail.trim().toLowerCase();
+    const password = loginPassword;
+    setAuthErr(""); setAuthNotice("");
+    if (!email || !password) { setAuthErr("Enter your email and password."); return; }
+    if (password.length < 6) { setAuthErr("Password must be at least 6 characters."); return; }
+    setAuthBusy(true);
+    try {
+      if (authMode === "signup") {
+        const { ok, data } = await authSignUp(email, password);
+        if (!ok) { setAuthErr(authErrText(data)); return; }
+        if (data.access_token) { applySession(data); return; } // email confirmation off → instant session
+        // email confirmation on → no session until the link is clicked
+        setAuthNotice("Account created! Check " + email + " for a confirmation link, then log in.");
+        setAuthMode("login");
+        setLoginPassword("");
+      } else {
+        const { ok, data } = await authSignIn(email, password);
+        if (!ok || !data.access_token) { setAuthErr(authErrText(data)); return; }
+        applySession(data);
+      }
+    } catch (e) {
+      setAuthErr("Network error — please check your connection and try again.");
+    } finally {
+      setAuthBusy(false);
     }
-    if (pending.isAdmin) {
-      setAuth({ role: "admin", id: pending.value });
-      setScreen("admin");
-    } else {
-      setAuth({ role: "customer", id: pending.value });
-      setScreen("home");
-    }
-    setLoginValue("");
-    setOtp("");
   };
 
   const openProduct = (p) => {
@@ -425,52 +509,100 @@ export default function App() {
   };
 
   const logout = () => {
+    if (session?.access_token) authSignOut(session.access_token);
+    setSession(null);
     setAuth({ role: "guest", id: null });
-    setLoginValue(""); setOtp(""); setLoginMode("phone");
-    setScreen("login");
+    setReturnTo(null);
+    setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice(""); setAuthMode("login");
+    setScreen("home"); // back to the store as a guest, not the login wall
   };
 
-  const saveProduct = () => {
+  const writeErrToast = (status, fallback) =>
+    showToast(status === 401 || status === 403 ? "Not allowed — log in as admin first" : fallback);
+
+  const saveProduct = async () => {
     if (!form.name.trim() || !form.price) return;
+    if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin to save"); return; }
     const sizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
-    if (form.id) {
-      setProducts((ps) => ps.map((p) => p.id === form.id ? {
-        ...p, name: form.name.trim(), cat: form.cat, shape: form.shape,
-        price: Number(form.price), original: form.original ? Number(form.original) : undefined,
-        colors: [form.color], sizes,
-      } : p));
-      showToast("Product updated");
-    } else {
-      const newId = Math.max(...products.map((p) => p.id)) + 1;
-      setProducts((ps) => [{
-        id: newId, name: form.name.trim(), cat: form.cat, shape: form.shape,
-        price: Number(form.price), original: form.original ? Number(form.original) : undefined,
-        colors: [form.color], sizes, desc: "Added by admin.",
-      }, ...ps]);
-      showToast("Product added");
+    const body = {
+      name: form.name.trim(),
+      category: form.cat,
+      shape: form.shape,
+      price: Number(form.price),
+      original_price: form.original ? Number(form.original) : null,
+      colors: form.id ? [form.color, ...((form._colors || []).slice(1))] : [form.color],
+      sizes,
+      trending: !!form.trending,
+      image_url: form.image.trim() || null,
+    };
+    setAdminBusy(true);
+    try {
+      let res;
+      if (form.id) {
+        res = await fetch(SUPABASE_URL + "/rest/v1/products?id=eq." + form.id, {
+          method: "PATCH",
+          headers: { ...writeHeaders(), Prefer: "return=representation" },
+          body: JSON.stringify(body),
+        });
+      } else {
+        body.description = "Added by admin.";
+        res = await fetch(SUPABASE_URL + "/rest/v1/products", {
+          method: "POST",
+          headers: { ...writeHeaders(), Prefer: "return=representation" },
+          body: JSON.stringify(body),
+        });
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        writeErrToast(res.status, err.message || "Save failed");
+        return;
+      }
+      const rows = await res.json().catch(() => []);
+      const saved = Array.isArray(rows) && rows[0] ? mapDbProduct(rows[0]) : null;
+      if (saved) {
+        setProducts((ps) => form.id ? ps.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...ps]);
+      } else {
+        await loadProducts({ allowEmpty: true });
+      }
+      showToast(form.id ? "Product updated" : "Product added");
+      setForm(blankForm);
+    } catch (e) {
+      showToast("Network error — not saved");
+    } finally {
+      setAdminBusy(false);
     }
-    setForm(blankForm);
   };
 
   const editProduct = (p) => setForm({
     id: p.id, name: p.name, cat: p.cat, shape: p.shape,
-    price: String(p.price), original: p.original ? String(p.original) : "", color: p.colors[0],
+    price: String(p.price), original: p.original ? String(p.original) : "",
+    color: p.colors[0], _colors: p.colors, image: (p.images && p.images[0]) || "", trending: !!p.trending,
   });
-  const deleteProduct = (id) => {
-    setProducts((ps) => ps.filter((p) => p.id !== id));
-    if (form.id === id) setForm(blankForm);
-    showToast("Product removed");
+
+  const deleteProduct = async (id) => {
+    if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin to delete"); return; }
+    setAdminBusy(true);
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/products?id=eq." + id, {
+        method: "DELETE",
+        headers: writeHeaders(),
+      });
+      if (!res.ok) { writeErrToast(res.status, "Delete failed"); return; }
+      setProducts((ps) => ps.filter((p) => p.id !== id));
+      if (form.id === id) setForm(blankForm);
+      showToast("Product removed");
+    } catch (e) {
+      showToast("Network error — not deleted");
+    } finally {
+      setAdminBusy(false);
+    }
   };
 
-  const resetDemo = async () => {
-    setProducts(INITIAL_PRODUCTS);
-    setOrders([]);
-    setCart([]);
-    setForm(blankForm);
-    await sset(PKEY, JSON.stringify(INITIAL_PRODUCTS), true);
-    await sset(OKEY, JSON.stringify([]), true);
-    await sset(CKEY, JSON.stringify([]), false);
-    showToast("Demo data reset");
+  const refreshFromDb = async () => {
+    setAdminBusy(true);
+    await loadProducts({ allowEmpty: true });
+    setAdminBusy(false);
+    showToast("Refreshed from database");
   };
 
   /* ---------- small UI pieces ---------- */
@@ -493,13 +625,13 @@ export default function App() {
   const ProductCard = ({ p, wide }) => (
     <div
       onClick={() => openProduct(p)}
-      className={`text-left bg-white rounded-2xl p-2.5 shadow-sm hover:shadow-md transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}
+      className={`text-left bg-white rounded-2xl p-2.5 shadow-xs hover:shadow-md transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}
     >
-      <div className="relative rounded-xl bg-gradient-to-br from-sky-50 to-blue-100 h-32 overflow-hidden">
+      <div className="relative rounded-xl bg-linear-to-br from-accent-50 to-brand-100 h-32 overflow-hidden">
         <ProductImage p={p} color={p.colors[0]} />
-        {p.original && <span className="absolute z-10 top-1.5 left-1.5 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>}
+        {p.original && <span className="absolute z-10 top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>}
         {p.tag === "new" && <span className="absolute z-10 top-1.5 left-1.5 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">NEW</span>}
-        <button onClick={(e) => { e.stopPropagation(); toggleFav(p.id); }} className="absolute z-10 top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/85 backdrop-blur flex items-center justify-center active:scale-90 transition">
+        <button onClick={(e) => { e.stopPropagation(); toggleFav(p.id); }} className="absolute z-10 top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center active:scale-90 transition">
           <Heart size={14} className={isFav(p.id) ? "text-rose-500" : "text-slate-400"} fill={isFav(p.id) ? "currentColor" : "none"} />
         </button>
       </div>
@@ -513,9 +645,9 @@ export default function App() {
       const active = screen === target;
       return (
         <button onClick={() => setScreen(target)} className="relative flex flex-col items-center gap-0.5 flex-1 py-1">
-          <Icon size={21} className={active ? "text-blue-600" : "text-slate-400"} />
-          <span className={`text-[10px] ${active ? "text-blue-600 font-semibold" : "text-slate-400"}`}>{label}</span>
-          {badge > 0 && <span className="absolute top-0 right-7 bg-blue-600 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">{badge}</span>}
+          <Icon size={21} className={active ? "text-brand-600" : "text-slate-400"} />
+          <span className={`text-[10px] ${active ? "text-brand-600 font-semibold" : "text-slate-400"}`}>{label}</span>
+          {badge > 0 && <span className="absolute top-0 right-7 bg-brand-600 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">{badge}</span>}
         </button>
       );
     };
@@ -530,12 +662,12 @@ export default function App() {
   };
 
   const DesktopNav = () => {
-    const link = (active) => `px-3 py-2 rounded-lg text-sm font-semibold transition ${active ? "text-blue-600 bg-blue-50" : "text-slate-600 hover:bg-slate-100"}`;
+    const link = (active) => `px-3 py-2 rounded-lg text-sm font-semibold transition ${active ? "text-brand-600 bg-brand-50" : "text-slate-600 hover:bg-slate-100"}`;
     return (
-      <header className="hidden lg:flex sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 px-8 py-3 items-center gap-5">
+      <header className="hidden lg:flex sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-8 py-3 items-center gap-5">
         <button onClick={() => setScreen("home")} className="flex items-center gap-2.5 shrink-0">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={panelBlue}><ShoppingCart size={18} className="text-white" /></div>
-          <span className="font-extrabold text-lg text-slate-900">Mini & Me</span>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={panelBlue}><Logo size={18} className="text-white" /></div>
+          <span className="font-extrabold text-lg text-slate-900">{BRAND.name}</span>
         </button>
         <nav className="flex items-center gap-1">
           <button onClick={() => setScreen("home")} className={link(screen === "home")}>Home</button>
@@ -547,13 +679,13 @@ export default function App() {
         <div className="flex-1 max-w-sm ml-auto">
           <div className="flex items-center bg-slate-100 rounded-full px-4 py-2">
             <Search size={17} className="text-slate-400" />
-            <input value={query} onChange={(e) => { setQuery(e.target.value); setScreen("home"); }} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-2 outline-none text-sm bg-transparent" />
+            <input value={query} onChange={(e) => { setQuery(e.target.value); setScreen("home"); }} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-2 outline-hidden text-sm bg-transparent" />
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button onClick={() => setScreen("cart")} className="relative w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center">
             <ShoppingCart size={20} className="text-slate-700" />
-            {cartCount > 0 && <span className="absolute top-0.5 right-0.5 bg-blue-600 text-white text-[10px] font-bold rounded-full min-w-[17px] h-[17px] px-1 flex items-center justify-center">{cartCount}</span>}
+            {cartCount > 0 && <span className="absolute top-0.5 right-0.5 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[17px] h-[17px] px-1 flex items-center justify-center">{cartCount}</span>}
           </button>
           <button onClick={() => setScreen("account")} className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center"><User size={20} className="text-slate-700" /></button>
         </div>
@@ -566,77 +698,66 @@ export default function App() {
     <div className="flex flex-col min-h-full">
       <div className="relative pb-12 rounded-b-[2.5rem]" style={panelBlue}>
         <StatusBar light />
-        <div className="px-6 pt-10">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-5">
-            <ShoppingCart size={26} className="text-white" />
+        <div className="px-6 pt-2">
+          <button onClick={() => { const dest = returnTo || "home"; setReturnTo(null); setScreen(dest); }} aria-label="Back" className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <ChevronLeft size={20} className="text-white" />
+          </button>
+        </div>
+        <div className="px-6 pt-4">
+          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-5">
+            <Logo size={26} className="text-white" />
           </div>
-          <h1 className="text-white text-3xl font-extrabold leading-tight">Mini & Me</h1>
-          <p className="text-blue-100 mt-1.5 text-sm">Kids · Men · Women — fashion delivered across India.</p>
+          <h1 className="text-white text-3xl font-extrabold leading-tight">{BRAND.name}</h1>
+          <p className="text-brand-100 mt-1.5 text-sm">{BRAND.tagline}</p>
         </div>
       </div>
 
       <div className="px-6 -mt-6">
         <div className="bg-white rounded-3xl shadow-xl p-5">
           <div className="flex bg-slate-100 rounded-xl p-1 mb-4">
-            <button onClick={() => { setLoginMode("phone"); setLoginValue(""); }} className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${loginMode === "phone" ? "bg-white shadow text-blue-600" : "text-slate-500"}`}>
-              <Phone size={15} /> Phone
-            </button>
-            <button onClick={() => { setLoginMode("email"); setLoginValue(""); }} className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${loginMode === "email" ? "bg-white shadow text-blue-600" : "text-slate-500"}`}>
+            <button className="flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 bg-white shadow-sm text-brand-600">
               <Mail size={15} /> Email
+            </button>
+            <button disabled className="flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 text-slate-400 cursor-not-allowed">
+              <Phone size={15} /> Phone <span className="text-[9px] font-bold bg-slate-200 text-slate-500 rounded-sm px-1 py-0.5">SOON</span>
             </button>
           </div>
 
-          {loginMode === "phone" ? (
-            <div className="flex items-center border border-slate-200 rounded-xl px-3 focus-within:border-blue-500">
-              <span className="text-slate-500 text-sm font-medium pr-2 border-r border-slate-200">+91</span>
-              <input value={loginValue} onChange={(e) => setLoginValue(e.target.value.replace(/\D/g, "").slice(0, 10))} inputMode="numeric" placeholder="Mobile number" className="flex-1 py-3 px-3 outline-none text-sm" />
-            </div>
-          ) : (
-            <input value={loginValue} onChange={(e) => setLoginValue(e.target.value)} type="email" placeholder="you@email.com" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-none text-sm focus:border-blue-500" />
-          )}
+          <form onSubmit={(e) => { e.preventDefault(); if (!authBusy) handleAuth(); }}>
+            <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); setAuthErr(""); }} type="email" autoComplete="email" placeholder="you@email.com" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+            <input value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"} placeholder="Password (min 6 characters)" className="w-full mt-2.5 border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
 
-          <button onClick={sendOtp} disabled={!loginValue.trim()} className="w-full mt-4 bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-500/25 disabled:opacity-50 flex items-center justify-center gap-2">
-            Send OTP <ArrowRight size={18} />
+            {authErr && <p className="text-red-500 text-xs mt-2.5">{authErr}</p>}
+            {authNotice && (
+              <div className="mt-2.5 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                <Check size={15} className="text-brand-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-brand-700">{authNotice}</p>
+              </div>
+            )}
+
+            <button type="submit" disabled={authBusy} className="w-full mt-4 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-500/25 disabled:opacity-60 flex items-center justify-center gap-2">
+              {authBusy ? "Please wait…" : (<>{authMode === "signup" ? "Create account" : "Log in"} <ArrowRight size={18} /></>)}
+            </button>
+          </form>
+
+          <button onClick={() => { setAuthMode(authMode === "signup" ? "login" : "signup"); setAuthErr(""); setAuthNotice(""); }} className="w-full mt-3 text-brand-600 text-sm font-semibold py-1.5">
+            {authMode === "signup" ? "Already have an account? Log in" : "New here? Create an account"}
           </button>
 
-          <button onClick={() => { setAuth({ role: "guest", id: null }); setScreen("home"); }} className="w-full mt-3 text-slate-500 text-sm font-medium py-2">
+          <div className="flex items-center gap-3 my-3">
+            <div className="flex-1 h-px bg-slate-100" />
+            <span className="text-[11px] text-slate-400">or</span>
+            <div className="flex-1 h-px bg-slate-100" />
+          </div>
+
+          <button onClick={() => { setReturnTo(null); setAuth({ role: "guest", id: null }); setScreen("home"); }} className="w-full text-slate-500 text-sm font-medium py-2">
             Skip for now →
           </button>
         </div>
 
         <p className="text-center text-[11px] text-slate-400 mt-4 px-4">
-          Admin? Use the Email tab with your admin address.
+          Admin? Log in with your admin email to manage products.
         </p>
-      </div>
-    </div>
-  );
-
-  const renderOtp = () => (
-    <div className="flex flex-col min-h-full">
-      <StatusBar />
-      <div className="px-6 pt-2">
-        <button onClick={() => setScreen("login")} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center"><ChevronLeft size={20} /></button>
-      </div>
-      <div className="px-6 pt-6">
-        <h2 className="text-2xl font-extrabold text-slate-900">Verify it's you</h2>
-        <p className="text-slate-500 text-sm mt-1">
-          We sent a code to <span className="font-semibold text-slate-700">{pending?.mode === "phone" ? "+91 " + pending?.value : pending?.value}</span>
-        </p>
-
-        <div className="mt-7">
-          <input value={otp} onChange={(e) => { setOtp(e.target.value.replace(/\D/g, "").slice(0, 4)); setOtpErr(""); }} inputMode="numeric" placeholder="• • • •" className="w-full text-center tracking-[0.6em] text-2xl font-bold border-2 border-slate-200 rounded-2xl py-4 outline-none focus:border-blue-500" />
-          {otpErr && <p className="text-red-500 text-xs mt-2">{otpErr}</p>}
-        </div>
-
-        <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
-          <Shield size={16} className="text-blue-600 shrink-0" />
-          <p className="text-xs text-blue-700">Demo mode — your OTP is <b>{DEMO_OTP}</b>.</p>
-        </div>
-
-        <button onClick={verifyOtp} disabled={otp.length < 4} className="w-full mt-6 bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-500/25 disabled:opacity-50">
-          Verify &amp; Continue
-        </button>
-        <button onClick={sendOtp} className="w-full mt-3 text-blue-600 text-sm font-semibold py-2">Resend code</button>
       </div>
     </div>
   );
@@ -647,7 +768,7 @@ export default function App() {
     const trending = products.filter((p) => p.trending);
     const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 6);
     const cats = ["women", "men", "kids"];
-    const catColor = { women: "from-rose-400 to-pink-500", men: "from-blue-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
+    const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
     const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
     return (
       <div className="pb-4">
@@ -655,24 +776,24 @@ export default function App() {
         <div className="lg:hidden px-5 pt-2 flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-xs">Welcome back 👋</p>
-            <p className="font-extrabold text-slate-900 text-lg">Mini & Me</p>
+            <p className="font-extrabold text-slate-900 text-lg">{BRAND.name}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setScreen("favorites")} className="relative w-11 h-11 rounded-full bg-white shadow-sm flex items-center justify-center">
+            <button onClick={() => setScreen("favorites")} className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
               <Heart size={19} className="text-slate-700" />
               {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{favorites.length}</span>}
             </button>
-            <button onClick={() => setScreen("cart")} className="relative w-11 h-11 rounded-full bg-white shadow-sm flex items-center justify-center">
+            <button onClick={() => setScreen("cart")} className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
               <ShoppingCart size={19} className="text-slate-700" />
-              {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{cartCount}</span>}
+              {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{cartCount}</span>}
             </button>
           </div>
         </div>
 
         <div className="lg:hidden px-5 mt-4">
-          <div className="flex items-center bg-white rounded-2xl px-4 py-3 shadow-sm">
+          <div className="flex items-center bg-white rounded-2xl px-4 py-3 shadow-xs">
             <Search size={18} className="text-slate-400" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-3 outline-none text-sm bg-transparent" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-3 outline-hidden text-sm bg-transparent" />
           </div>
         </div>
 
@@ -690,18 +811,18 @@ export default function App() {
             <div className="px-5 mt-5">
               <button onClick={() => openProduct(heroP)} className="w-full text-left relative rounded-3xl overflow-hidden p-5 h-52 lg:h-80 flex flex-col justify-end" style={heroBlue}>
                 <ProductImage p={heroP} color="#ffffff" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
-                <span className="absolute top-4 left-4 z-10 bg-white/25 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">✨ Featured</span>
-                <h3 className="text-white text-2xl font-extrabold relative z-10 leading-tight max-w-[70%] drop-shadow">{heroP.name}</h3>
+                <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/15 to-transparent" />
+                <span className="absolute top-4 left-4 z-10 bg-white/25 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">✨ Featured</span>
+                <h3 className="text-white text-2xl font-extrabold relative z-10 leading-tight max-w-[70%] drop-shadow-sm">{heroP.name}</h3>
                 <div className="flex items-baseline gap-2 mt-1 relative z-10">
-                  <span className="text-white text-xl font-bold drop-shadow">{formatINR(heroP.price)}</span>
-                  {heroP.original && <span className="text-blue-100 line-through text-sm">{formatINR(heroP.original)}</span>}
+                  <span className="text-white text-xl font-bold drop-shadow-sm">{formatINR(heroP.price)}</span>
+                  {heroP.original && <span className="text-brand-100 line-through text-sm">{formatINR(heroP.original)}</span>}
                 </div>
               </button>
               {featured.length > 1 && (
                 <div className="flex justify-center gap-1.5 mt-3">
                   {featured.map((_, i) => (
-                    <span key={i} onClick={() => setHeroIndex(i)} className={`h-1.5 rounded-full cursor-pointer transition-all ${i === heroIndex % featured.length ? "w-5 bg-blue-600" : "w-1.5 bg-slate-300"}`} />
+                    <span key={i} onClick={() => setHeroIndex(i)} className={`h-1.5 rounded-full cursor-pointer transition-all ${i === heroIndex % featured.length ? "w-5 bg-brand-600" : "w-1.5 bg-slate-300"}`} />
                   ))}
                 </div>
               )}
@@ -714,7 +835,7 @@ export default function App() {
                 {cats.map((c) => {
                   const n = products.filter((p) => p.cat === c).length;
                   return (
-                    <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className={`rounded-2xl p-3 h-24 lg:h-40 lg:p-5 flex flex-col justify-between bg-gradient-to-br ${catColor[c]} shadow-md active:scale-95 transition`}>
+                    <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className={`rounded-2xl p-3 h-24 lg:h-40 lg:p-5 flex flex-col justify-between bg-linear-to-br ${catColor[c]} shadow-md active:scale-95 transition`}>
                       <Package size={20} className="text-white" />
                       <div className="text-left">
                         <p className="text-white font-bold text-sm leading-none">{CAT_LABEL[c]}</p>
@@ -730,7 +851,7 @@ export default function App() {
             <div className="mt-6">
               <div className="px-5 flex items-center justify-between">
                 <h3 className="font-bold text-slate-900 text-lg">Trending now</h3>
-                <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="text-blue-600 text-sm font-semibold">See all</button>
+                <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
               </div>
               <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
                 {trending.map((p) => <ProductCard key={p.id} p={p} wide />)}
@@ -739,7 +860,7 @@ export default function App() {
 
             {/* Promo banner */}
             <div className="px-5 mt-5">
-              <div className="rounded-2xl p-4 flex items-center gap-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-md">
+              <div className="rounded-2xl p-4 flex items-center gap-3 bg-linear-to-r from-violet-500 to-fuchsia-500 shadow-md">
                 <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center shrink-0"><Sparkles size={22} className="text-white" /></div>
                 <div>
                   <p className="text-white font-bold">Festive Sale is live</p>
@@ -768,12 +889,12 @@ export default function App() {
       <div className="pb-4">
         <StatusBar />
         <div className="px-5 pt-2 flex items-center gap-3">
-          <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"><ChevronLeft size={20} /></button>
+          <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
           <h2 className="text-xl font-bold text-slate-900">Shop</h2>
         </div>
         <div className="flex gap-2 px-5 mt-4 overflow-x-auto no-scrollbar">
           {cats.map((c) => (
-            <button key={c} onClick={() => setSelCategory(c)} className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${selCategory === c ? "bg-blue-600 text-white shadow-md shadow-blue-500/25" : "bg-white text-slate-500 shadow-sm"}`}>
+            <button key={c} onClick={() => setSelCategory(c)} className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${selCategory === c ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-white text-slate-500 shadow-xs"}`}>
               {CAT_LABEL[c]}
             </button>
           ))}
@@ -792,12 +913,12 @@ export default function App() {
     return (
       <div className="absolute lg:fixed inset-0 z-40 flex flex-col lg:items-center lg:justify-center">
         <div className="absolute inset-0 bg-black/40" onClick={closeProduct} />
-        <div className="relative mt-auto lg:mt-0 bg-slate-50 rounded-t-[2rem] lg:rounded-[2rem] max-h-[94%] lg:max-h-[88vh] w-full lg:w-[460px] lg:max-w-[92vw] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
+        <div className="relative mt-auto lg:mt-0 bg-slate-50 rounded-t-4xl lg:rounded-4xl max-h-[94%] lg:max-h-[88vh] w-full lg:w-[460px] lg:max-w-[92vw] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
           {/* Image carousel */}
-          <div className="relative h-72 lg:h-80 bg-gradient-to-br from-sky-100 to-blue-200 shrink-0">
+          <div className="relative h-72 lg:h-80 bg-linear-to-br from-accent-100 to-brand-200 shrink-0">
             <ProductImage key={imgIndex} p={p} color={selColor} index={imgIndex} />
-            <button onClick={closeProduct} className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur flex items-center justify-center"><X size={18} /></button>
-            <button onClick={() => toggleFav(p.id)} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur flex items-center justify-center active:scale-90 transition">
+            <button onClick={closeProduct} className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center"><X size={18} /></button>
+            <button onClick={() => toggleFav(p.id)} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center active:scale-90 transition">
               <Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-500"} fill={isFav(p.id) ? "currentColor" : "none"} />
             </button>
             {imgs.length > 1 && (
@@ -815,7 +936,7 @@ export default function App() {
 
           {/* Details */}
           <div className="flex-1 overflow-y-auto px-6 pt-4 pb-2 no-scrollbar">
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">{CAT_LABEL[p.cat]}</p>
+            <p className="text-xs font-semibold text-brand-600 uppercase tracking-wide">{CAT_LABEL[p.cat]}</p>
             <h2 className="text-2xl font-extrabold text-slate-900 mt-1">{p.name}</h2>
             <div className="mt-2"><PriceTag p={p} size="lg" /></div>
             <p className="text-slate-500 text-sm mt-3 leading-relaxed">{p.desc}</p>
@@ -823,7 +944,7 @@ export default function App() {
             <p className="text-sm font-semibold text-slate-800 mt-5 mb-2">Colour</p>
             <div className="flex gap-3">
               {p.colors.map((c) => (
-                <button key={c} onClick={() => setSelColor(c)} className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${selColor === c ? "border-blue-500" : "border-transparent"}`} style={{ outline: "1px solid #e2e8f0" }}>
+                <button key={c} onClick={() => setSelColor(c)} className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${selColor === c ? "border-brand-500" : "border-transparent"}`} style={{ outline: "1px solid #e2e8f0" }}>
                   <span className="w-7 h-7 rounded-full" style={{ background: c }} />
                 </button>
               ))}
@@ -832,14 +953,14 @@ export default function App() {
             <p className="text-sm font-semibold text-slate-800 mt-5 mb-2">Size</p>
             <div className="flex gap-2 flex-wrap">
               {p.sizes.map((s) => (
-                <button key={s} onClick={() => setSelSize(s)} className={`min-w-[48px] px-3 py-2.5 rounded-xl text-sm font-semibold ${selSize === s ? "bg-blue-600 text-white shadow-md shadow-blue-500/25" : "bg-slate-100 text-slate-500"}`}>{s}</button>
+                <button key={s} onClick={() => setSelSize(s)} className={`min-w-[48px] px-3 py-2.5 rounded-xl text-sm font-semibold ${selSize === s ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{s}</button>
               ))}
             </div>
           </div>
 
           {/* Add to cart */}
           <div className="p-4 border-t border-slate-100 bg-white shrink-0">
-            <button onClick={() => addToCart(p, selSize, selColor)} className="w-full bg-gradient-to-r from-blue-600 to-sky-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+            <button onClick={() => addToCart(p, selSize, selColor)} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2">
               <ShoppingCart size={19} /> Add to cart · {formatINR(p.price)}
             </button>
           </div>
@@ -854,7 +975,7 @@ export default function App() {
       <div className="pb-4">
         <StatusBar />
         <div className="px-5 pt-2 flex items-center gap-3">
-          <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"><ChevronLeft size={20} /></button>
+          <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
           <h2 className="text-2xl font-extrabold text-slate-900">Favourites</h2>
         </div>
         {favs.length === 0 ? (
@@ -862,7 +983,7 @@ export default function App() {
             <div className="w-20 h-20 rounded-full bg-rose-50 flex items-center justify-center mb-4"><Heart size={32} className="text-rose-400" /></div>
             <p className="font-bold text-slate-800 text-lg">No favourites yet</p>
             <p className="text-slate-400 text-sm mt-1">Tap the heart on any item to save it here.</p>
-            <button onClick={() => setScreen("home")} className="mt-5 bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl">Browse items</button>
+            <button onClick={() => setScreen("home")} className="mt-5 bg-brand-600 text-white font-semibold px-6 py-3 rounded-xl">Browse items</button>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-5 mt-4">
@@ -877,16 +998,16 @@ export default function App() {
     <div className="flex flex-col min-h-full">
       <StatusBar />
       <div className="px-5 pt-2 flex items-center gap-3">
-        <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-extrabold text-slate-900">My cart</h2>
       </div>
 
       {cart.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
-          <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mb-4"><ShoppingCart size={32} className="text-blue-500" /></div>
+          <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4"><ShoppingCart size={32} className="text-brand-500" /></div>
           <p className="font-bold text-slate-800 text-lg">Your cart is empty</p>
           <p className="text-slate-400 text-sm mt-1">Find something you'll love.</p>
-          <button onClick={() => setScreen("home")} className="mt-5 bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl">Start shopping</button>
+          <button onClick={() => setScreen("home")} className="mt-5 bg-brand-600 text-white font-semibold px-6 py-3 rounded-xl">Start shopping</button>
         </div>
       ) : (
         <>
@@ -895,8 +1016,8 @@ export default function App() {
               const p = products.find((x) => x.id === item.id);
               if (!p) return null;
               return (
-                <div key={idx} className="bg-white rounded-2xl p-3 shadow-sm flex gap-3">
-                  <div className="relative w-20 h-20 rounded-xl bg-gradient-to-br from-sky-50 to-blue-100 overflow-hidden shrink-0">
+                <div key={idx} className="bg-white rounded-2xl p-3 shadow-xs flex gap-3">
+                  <div className="relative w-20 h-20 rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0">
                     <ProductImage p={p} color={item.color} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -924,7 +1045,7 @@ export default function App() {
               <span className="text-2xl font-extrabold text-slate-900">{formatINR(cartTotal)}</span>
             </div>
             <p className="text-xs text-slate-400 mb-3">Inclusive of all taxes</p>
-            <button onClick={() => setScreen("checkout")} className="w-full bg-gradient-to-r from-blue-600 to-sky-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30">Check out</button>
+            <button onClick={() => setScreen("checkout")} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30">Check out</button>
           </div>
         </>
       )}
@@ -935,37 +1056,46 @@ export default function App() {
     <div className="flex flex-col min-h-full">
       <StatusBar />
       <div className="px-5 pt-2 flex items-center gap-3">
-        <button onClick={() => setScreen("cart")} className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => setScreen("cart")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-extrabold text-slate-900">Checkout</h2>
       </div>
 
       <div className="flex-1 px-6 pt-5">
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex justify-between items-center mb-5">
-          <span className="text-sm text-blue-700 font-medium">{cartCount} item{cartCount !== 1 ? "s" : ""} · to pay</span>
-          <span className="font-extrabold text-blue-700 text-lg">{formatINR(cartTotal)}</span>
+        <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 flex justify-between items-center mb-5">
+          <span className="text-sm text-brand-700 font-medium">{cartCount} item{cartCount !== 1 ? "s" : ""} · to pay</span>
+          <span className="font-extrabold text-brand-700 text-lg">{formatINR(cartTotal)}</span>
         </div>
 
         <p className="text-sm font-semibold text-slate-800 mb-3">Where should we send your order updates?</p>
         <label className="block text-xs text-slate-500 mb-1">Full name</label>
-        <input value={coName} onChange={(e) => setCoName(e.target.value)} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-none text-sm focus:border-blue-500 mb-4" />
+        <input value={coName} onChange={(e) => setCoName(e.target.value)} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 mb-4" />
 
         <label className="block text-xs text-slate-500 mb-1">Phone number</label>
-        <div className="flex items-center border border-slate-200 rounded-xl px-3 focus-within:border-blue-500 mb-4">
+        <div className="flex items-center border border-slate-200 rounded-xl px-3 focus-within:border-brand-500 mb-4">
           <span className="text-slate-500 text-sm pr-2 border-r border-slate-200">+91</span>
-          <input value={coPhone} onChange={(e) => setCoPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} inputMode="numeric" placeholder="Mobile number" className="flex-1 py-3 px-3 outline-none text-sm" />
+          <input value={coPhone} onChange={(e) => setCoPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} inputMode="numeric" placeholder="Mobile number" className="flex-1 py-3 px-3 outline-hidden text-sm" />
         </div>
 
         <div className="flex items-center gap-3 my-1 text-slate-300 text-xs"><div className="flex-1 h-px bg-slate-200" />or<div className="flex-1 h-px bg-slate-200" /></div>
 
         <label className="block text-xs text-slate-500 mb-1 mt-2">Email</label>
-        <input value={coEmail} onChange={(e) => setCoEmail(e.target.value)} type="email" placeholder="you@email.com" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-none text-sm focus:border-blue-500" />
+        <input value={coEmail} onChange={(e) => setCoEmail(e.target.value)} type="email" placeholder="you@email.com" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
         <p className="text-[11px] text-slate-400 mt-2">Add at least one — a phone number or an email.</p>
       </div>
 
       <div className="p-5 border-t border-slate-100">
-        <button onClick={placeOrder} disabled={!coName.trim() || (!coPhone.trim() && !coEmail.trim())} className="w-full bg-gradient-to-r from-blue-600 to-sky-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 disabled:opacity-50">
-          Place order · {formatINR(cartTotal)}
-        </button>
+        {auth.role === "guest" ? (
+          <>
+            <button onClick={() => goToLogin("checkout")} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2">
+              <User size={18} /> Log in to place order
+            </button>
+            <p className="text-[11px] text-slate-400 text-center mt-2">Please log in or create an account to complete your order.</p>
+          </>
+        ) : (
+          <button onClick={placeOrder} disabled={!coName.trim() || (!coPhone.trim() && !coEmail.trim())} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 disabled:opacity-50">
+            Place order · {formatINR(cartTotal)}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -974,7 +1104,7 @@ export default function App() {
     <div className="flex flex-col min-h-full">
       <StatusBar />
       <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-sky-500 flex items-center justify-center shadow-lg shadow-blue-500/30 mb-6">
+        <div className="w-24 h-24 rounded-full bg-linear-to-br from-brand-600 to-accent-500 flex items-center justify-center shadow-lg shadow-brand-500/30 mb-6">
           <Check size={44} className="text-white" strokeWidth={3} />
         </div>
         <h2 className="text-2xl font-extrabold text-slate-900">Order placed!</h2>
@@ -983,7 +1113,7 @@ export default function App() {
           <p className="text-xs text-slate-400">Order ID</p>
           <p className="font-bold text-slate-800 text-lg">{lastOrder?.id}</p>
         </div>
-        <button onClick={() => setScreen("home")} className="mt-6 w-full bg-blue-600 text-white font-semibold py-3.5 rounded-xl">Continue shopping</button>
+        <button onClick={() => setScreen("home")} className="mt-6 w-full bg-brand-600 text-white font-semibold py-3.5 rounded-xl">Continue shopping</button>
       </div>
     </div>
   );
@@ -993,20 +1123,20 @@ export default function App() {
       <div className="rounded-b-[2.5rem] pb-8" style={panelBlue}>
         <StatusBar light />
         <div className="px-6 pt-4 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
             {auth.role === "admin" ? <Shield size={28} className="text-white" /> : <User size={28} className="text-white" />}
           </div>
           <div>
             <p className="text-white font-bold text-lg">{auth.role === "guest" ? "Guest user" : auth.role === "admin" ? "Administrator" : "Customer"}</p>
-            <p className="text-blue-100 text-sm">{auth.id ? (pending?.mode === "phone" || /^\d+$/.test(auth.id) ? "+91 " + auth.id : auth.id) : "Not signed in"}</p>
+            <p className="text-brand-100 text-sm">{auth.id || "Not signed in"}</p>
           </div>
         </div>
       </div>
 
       <div className="px-5 mt-5 space-y-2.5">
         {auth.role === "admin" && (
-          <button onClick={() => setScreen("admin")} className="w-full bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"><Shield size={19} className="text-blue-600" /></div>
+          <button onClick={() => setScreen("admin")} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center"><Shield size={19} className="text-brand-600" /></div>
             <span className="flex-1 text-left font-semibold text-slate-800">Admin dashboard</span>
             <ChevronRight size={20} className="text-slate-300" />
           </button>
@@ -1015,7 +1145,7 @@ export default function App() {
           { icon: Package, label: "My orders", note: orders.length + " placed" },
           { icon: ShoppingCart, label: "My cart", note: cartCount + " items", action: () => setScreen("cart") },
         ].map((row, i) => (
-          <button key={i} onClick={row.action} className="w-full bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3.5">
+          <button key={i} onClick={row.action} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"><row.icon size={19} className="text-slate-600" /></div>
             <span className="flex-1 text-left font-semibold text-slate-800">{row.label}</span>
             <span className="text-xs text-slate-400">{row.note}</span>
@@ -1023,7 +1153,7 @@ export default function App() {
         ))}
 
         {auth.role === "guest" ? (
-          <button onClick={() => setScreen("login")} className="w-full mt-3 bg-gradient-to-r from-blue-600 to-sky-500 text-white font-semibold py-3.5 rounded-2xl shadow-lg shadow-blue-500/25">Sign in / Sign up</button>
+          <button onClick={() => goToLogin()} className="w-full mt-3 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-2xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2"><User size={18} /> Log in / Sign up</button>
         ) : (
           <button onClick={logout} className="w-full mt-3 border border-red-200 text-red-500 font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2"><LogOut size={18} /> Log out</button>
         )}
@@ -1046,16 +1176,16 @@ export default function App() {
               <button onClick={() => setScreen("account")} className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center"><ChevronLeft size={18} className="text-white" /></button>
               <div>
                 <p className="text-white font-bold text-lg">Admin</p>
-                <p className="text-blue-100 text-[11px]">{auth.id}</p>
+                <p className="text-brand-100 text-[11px]">{auth.id}</p>
               </div>
             </div>
             <button onClick={logout} className="text-white/90"><LogOut size={20} /></button>
           </div>
           <div className="grid grid-cols-3 gap-2 px-5 pb-5">
             {stats.map((s) => (
-              <div key={s.label} className="bg-white/15 backdrop-blur rounded-xl p-2.5 text-center">
+              <div key={s.label} className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5 text-center">
                 <p className="text-white font-bold text-base leading-tight">{s.value}</p>
-                <p className="text-blue-100 text-[10px]">{s.label}</p>
+                <p className="text-brand-100 text-[10px]">{s.label}</p>
               </div>
             ))}
           </div>
@@ -1063,34 +1193,41 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {/* Add / edit form */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+          <div className="bg-white rounded-2xl p-4 shadow-xs mb-4">
             <p className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-              {form.id ? <><Edit3 size={16} className="text-blue-600" /> Edit product</> : <><Plus size={16} className="text-blue-600" /> Add product</>}
+              {form.id ? <><Edit3 size={16} className="text-brand-600" /> Edit product</> : <><Plus size={16} className="text-brand-600" /> Add product</>}
             </p>
             <div className="flex gap-3 items-center mb-3">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center shrink-0">
+              <div className="w-16 h-16 rounded-xl bg-linear-to-br from-accent-50 to-brand-100 flex items-center justify-center shrink-0">
                 <Garment shape={form.shape} color={form.color} className="h-[80%]" />
               </div>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" className="flex-1 border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-blue-500" />
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" className="flex-1 border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500" />
             </div>
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 px-2 text-sm outline-none">
+              <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 px-2 text-sm outline-hidden">
                 <option value="women">Women</option><option value="men">Men</option><option value="kids">Kids</option>
               </select>
-              <select value={form.shape} onChange={(e) => setForm({ ...form, shape: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 px-2 text-sm outline-none">
+              <select value={form.shape} onChange={(e) => setForm({ ...form, shape: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 px-2 text-sm outline-hidden">
                 {["dress", "tee", "shirt", "tunic", "jacket", "pants", "shorts", "overall"].map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Price ₹" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-blue-500" />
-              <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-blue-500" />
+              <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Price ₹" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500" />
+              <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500" />
             </div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs text-slate-500">Colour</span>
-              <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-9 h-9 rounded-lg border border-slate-200 bg-white" />
+            <input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} type="url" placeholder="Image URL (optional)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 mb-2" />
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">Colour</span>
+                <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-9 h-9 rounded-lg border border-slate-200 bg-white" />
+              </div>
+              <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={form.trending} onChange={(e) => setForm({ ...form, trending: e.target.checked })} className="w-4 h-4 accent-brand-600" />
+                Show in Trending
+              </label>
             </div>
             <div className="flex gap-2">
-              <button onClick={saveProduct} className="flex-1 bg-blue-600 text-white font-semibold py-2.5 rounded-lg text-sm">{form.id ? "Save changes" : "Add product"}</button>
+              <button onClick={saveProduct} disabled={adminBusy} className="flex-1 bg-brand-600 text-white font-semibold py-2.5 rounded-lg text-sm disabled:opacity-60">{adminBusy ? "Saving…" : (form.id ? "Save changes" : "Add product")}</button>
               {form.id && <button onClick={() => setForm(blankForm)} className="px-4 border border-slate-200 rounded-lg text-sm text-slate-500">Cancel</button>}
             </div>
           </div>
@@ -1099,8 +1236,8 @@ export default function App() {
           <p className="font-bold text-slate-800 mb-2 px-1">All products ({products.length})</p>
           <div className="space-y-2">
             {products.map((p) => (
-              <div key={p.id} className="bg-white rounded-xl p-2.5 shadow-sm flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-sky-50 to-blue-100 flex items-center justify-center shrink-0">
+              <div key={p.id} className="bg-white rounded-xl p-2.5 shadow-xs flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-linear-to-br from-accent-50 to-brand-100 flex items-center justify-center shrink-0">
                   <Garment shape={p.shape} color={p.colors[0]} className="h-[80%]" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -1108,12 +1245,12 @@ export default function App() {
                   <p className="text-xs text-slate-400">{CAT_LABEL[p.cat]} · {formatINR(p.price)}</p>
                 </div>
                 <button onClick={() => editProduct(p)} className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600"><Edit3 size={15} /></button>
-                <button onClick={() => deleteProduct(p.id)} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500"><Trash2 size={15} /></button>
+                <button onClick={() => deleteProduct(p.id)} disabled={adminBusy} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 disabled:opacity-50"><Trash2 size={15} /></button>
               </div>
             ))}
           </div>
-          <button onClick={resetDemo} className="w-full mt-5 mb-1 border border-red-200 text-red-500 font-semibold py-2.5 rounded-xl text-sm">
-            Reset demo data to default
+          <button onClick={refreshFromDb} disabled={adminBusy} className="w-full mt-5 mb-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-xl text-sm disabled:opacity-60">
+            Refresh from database
           </button>
         </div>
       </div>
@@ -1125,10 +1262,10 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center font-sans" style={panelBlue}>
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
-            <ShoppingCart size={30} className="text-white" />
+            <Logo size={30} className="text-white" />
           </div>
-          <p className="text-white text-xl font-extrabold">Mini & Me</p>
-          <p className="text-blue-100 text-sm mt-1">Loading your store…</p>
+          <p className="text-white text-xl font-extrabold">{BRAND.name}</p>
+          <p className="text-brand-100 text-sm mt-1">Loading your store…</p>
         </div>
       </div>
     );
@@ -1138,7 +1275,6 @@ export default function App() {
   const showNav = ["home", "category", "account", "cart", "favorites"].includes(screen);
   let content = null;
   if (screen === "login") content = renderLogin();
-  else if (screen === "otp") content = renderOtp();
   else if (screen === "home") content = renderHome();
   else if (screen === "category") content = renderCategory();
   else if (screen === "favorites") content = renderFavorites();
@@ -1148,7 +1284,7 @@ export default function App() {
   else if (screen === "account") content = renderAccount();
   else if (screen === "admin") content = renderAdmin();
 
-  const showChrome = screen !== "login" && screen !== "otp";
+  const showChrome = screen !== "login";
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : screen === "admin" ? "lg:max-w-4xl" : "lg:max-w-2xl";
   return (
     <div className="min-h-screen bg-slate-300 lg:bg-slate-50 flex justify-center sm:py-6 lg:py-0 font-sans">
@@ -1164,7 +1300,7 @@ export default function App() {
         {/* Toast */}
         {toast && (
           <div className="absolute lg:fixed left-1/2 -translate-x-1/2 bottom-24 lg:bottom-8 bg-slate-900 text-white text-sm px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 z-50">
-            <Check size={15} className="text-sky-400" /> {toast}
+            <Check size={15} className="text-accent-400" /> {toast}
           </div>
         )}
       </div>

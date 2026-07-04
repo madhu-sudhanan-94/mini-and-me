@@ -1,3 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/*
+  Brand colours + font come from the single source of truth:
+  src/brand.config.js → tailwind.config.js → loaded here via @config.
+  This keeps rebranding a one-file edit (see src/brand.config.js).
+*/
+@config "../tailwind.config.js";
+
+/*
+  The default border color changed to `currentcolor` in Tailwind CSS v4,
+  so these compatibility styles keep the v3 look (gray-200 default border).
+  To remove them later, add an explicit border-color utility wherever an
+  element relies on the default.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}

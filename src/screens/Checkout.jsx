@@ -1,12 +1,12 @@
 import React from "react";
-import { ChevronLeft, User } from "lucide-react";
+import { ChevronLeft, User, MapPin } from "lucide-react";
 import { formatINR } from "../lib/format.js";
 import { useStore } from "../store.jsx";
 
 export default function Checkout() {
   const {
     cartCount, cartTotal, coName, setCoName, coPhone, setCoPhone,
-    coEmail, setCoEmail, auth, goToLogin, placeOrder, setScreen,
+    coEmail, setCoEmail, auth, goToLogin, placeOrder, setScreen, defaultAddress,
   } = useStore();
 
   return (
@@ -17,6 +17,25 @@ export default function Checkout() {
       </div>
 
       <div className="flex-1 px-6 pt-5">
+        {auth.role !== "guest" && (
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-slate-800">Deliver to</p>
+              <button onClick={() => setScreen("addresses")} className="text-xs font-semibold text-brand-600">{defaultAddress ? "Change" : "Add"}</button>
+            </div>
+            {defaultAddress ? (
+              <div className="border border-slate-200 rounded-2xl p-3 flex gap-3">
+                <div className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center shrink-0"><MapPin size={17} className="text-brand-600" /></div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">{defaultAddress.label}{defaultAddress.full_name ? " · " + defaultAddress.full_name : ""}</p>
+                  <p className="text-xs text-slate-500">{[defaultAddress.line1, defaultAddress.line2, defaultAddress.area, defaultAddress.city, defaultAddress.state, defaultAddress.pincode].filter(Boolean).join(", ")}</p>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setScreen("addresses")} className="w-full border border-dashed border-brand-300 text-brand-600 font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 text-sm"><MapPin size={16} /> Add a delivery address</button>
+            )}
+          </div>
+        )}
         <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 flex justify-between items-center mb-5">
           <span className="text-sm text-brand-700 font-medium">{cartCount} item{cartCount !== 1 ? "s" : ""} · to pay</span>
           <span className="font-extrabold text-brand-700 text-lg">{formatINR(cartTotal)}</span>

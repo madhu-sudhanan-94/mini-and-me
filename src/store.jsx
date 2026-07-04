@@ -36,6 +36,8 @@ export function StoreProvider({ children }) {
   const [returnTo, setReturnTo] = useState(null); // screen to return to after logging in
   const [profile, setProfile] = useState(null); // profiles row for the signed-in user
   const [profileBusy, setProfileBusy] = useState(false);
+  const [addresses, setAddresses] = useState([]); // delivery addresses for the signed-in user
+  const [addrBusy, setAddrBusy] = useState(false);
 
   const [selProduct, setSelProduct] = useState(null);
   const [selColor, setSelColor] = useState(null);
@@ -54,6 +56,8 @@ export function StoreProvider({ children }) {
   // admin form
   const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", color: "#2563EB", image: "", trending: false };
   const [form, setForm] = useState(blankForm);
+
+  const defaultAddress = addresses.find((a) => a.is_default) || addresses[0] || null;
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cart.reduce((s, i) => {
@@ -113,6 +117,20 @@ export function StoreProvider({ children }) {
     } catch (e) { /* offline — keep whatever we have */ }
   };
   useEffect(() => { loadProfile(); }, [session?.user?.id]);
+
+  // Load the signed-in user's delivery addresses (default first)
+  const loadAddresses = async () => {
+    const uid = session?.user?.id;
+    if (!uid) { setAddresses([]); return; }
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&select=*&order=is_default.desc,created_at.desc", { headers: writeHeaders() });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows)) setAddresses(rows);
+      }
+    } catch (e) { /* offline */ }
+  };
+  useEffect(() => { loadAddresses(); }, [session?.user?.id]);
 
   // Restore a saved login session on load (refresh the token so it stays valid)
   useEffect(() => {
@@ -276,6 +294,7 @@ export function StoreProvider({ children }) {
     if (session?.access_token) authSignOut(session.access_token);
     setSession(null);
     setProfile(null);
+    setAddresses([]);
     setAuth({ role: "guest", id: null });
     setReturnTo(null);
     setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice(""); setAuthMode("login");
@@ -370,6 +389,65 @@ export function StoreProvider({ children }) {
     showToast("Refreshed from database");
   };
 
+  // ----- Delivery addresses (add / edit / delete / set default) -----
+  const saveAddress = async (fields, id) => {
+    const uid = session?.user?.id;
+    if (!uid) { showToast("Log in to save addresses"); return false; }
+    setAddrBusy(true);
+    try {
+      const body = { ...fields };
+      let res, savedId = id;
+      if (id) {
+        res = await fetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "PATCH", headers: { ...writeHeaders(), Prefer: "return=representation" }, body: JSON.stringify(body) });
+      } else {
+        body.user_id = uid;
+        res = await fetch(SUPABASE_URL + "/rest/v1/addresses", { method: "POST", headers: { ...writeHeaders(), Prefer: "return=representation" }, body: JSON.stringify(body) });
+      }
+      if (!res.ok) { showToast("Couldn't save address"); return false; }
+      const rows = await res.json().catch(() => []);
+      savedId = (Array.isArray(rows) && rows[0]?.id) || savedId;
+      // if this one is the default, clear the flag on the others
+      if (fields.is_default && savedId) {
+        await fetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&id=neq." + savedId, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: false }) });
+      }
+      await loadAddresses();
+      showToast(id ? "Address updated" : "Address added");
+      return true;
+    } catch (e) {
+      showToast("Network error — not saved");
+      return false;
+    } finally {
+      setAddrBusy(false);
+    }
+  };
+
+  const deleteAddress = async (id) => {
+    if (!session?.user?.id) return;
+    setAddrBusy(true);
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "DELETE", headers: writeHeaders() });
+      if (!res.ok) { showToast("Couldn't remove address"); return; }
+      await loadAddresses();
+      showToast("Address removed");
+    } catch (e) {
+      showToast("Network error");
+    } finally {
+      setAddrBusy(false);
+    }
+  };
+
+  const makeDefaultAddress = async (id) => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    setAddrBusy(true);
+    try {
+      await fetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: false }) });
+      await fetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: true }) });
+      await loadAddresses();
+    } catch (e) { /* ignore */ }
+    finally { setAddrBusy(false); }
+  };
+
   // Save the signed-in user's profile fields (name, phone, gender, dob, avatar_url…)
   const saveProfile = async (fields) => {
     const uid = session?.user?.id;
@@ -401,6 +479,7 @@ export function StoreProvider({ children }) {
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
     authBusy, session, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy,
+    addresses, addrBusy, defaultAddress,
     selProduct, setSelProduct,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
@@ -412,6 +491,7 @@ export function StoreProvider({ children }) {
     toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     loadProfile, saveProfile,
+    loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

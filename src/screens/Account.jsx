@@ -1,10 +1,10 @@
 import React from "react";
-import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut } from "lucide-react";
+import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin } from "lucide-react";
 import { panelBlue } from "../theme.js";
 import { useStore } from "../store.jsx";
 
 export default function Account() {
-  const { auth, orders, cartCount, setScreen, goToLogin, logout, profile } = useStore();
+  const { auth, orders, cartCount, setScreen, goToLogin, logout, profile, addresses } = useStore();
   return (
     <div className="pb-4">
       <div className="rounded-b-[2.5rem] pb-8" style={panelBlue}>
@@ -26,6 +26,14 @@ export default function Account() {
           <button onClick={() => setScreen("profile")} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center"><User size={19} className="text-brand-600" /></div>
             <span className="flex-1 text-left font-semibold text-slate-800">Edit profile</span>
+            <ChevronRight size={20} className="text-slate-300" />
+          </button>
+        )}
+        {auth.role !== "guest" && (
+          <button onClick={() => setScreen("addresses")} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"><MapPin size={19} className="text-slate-600" /></div>
+            <span className="flex-1 text-left font-semibold text-slate-800">Delivery addresses</span>
+            <span className="text-xs text-slate-400">{addresses.length}</span>
             <ChevronRight size={20} className="text-slate-300" />
           </button>
         )}

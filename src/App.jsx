@@ -14,6 +14,7 @@ import Checkout from "./screens/Checkout.jsx";
 import Success from "./screens/Success.jsx";
 import Account from "./screens/Account.jsx";
 import Profile from "./screens/Profile.jsx";
+import Addresses from "./screens/Addresses.jsx";
 import Admin from "./screens/Admin.jsx";
 import ProductModal from "./screens/ProductModal.jsx";
 
@@ -21,7 +22,8 @@ const Logo = BRAND.logo;
 
 const SCREENS = {
   login: Login, home: Home, category: Category, favorites: Favorites,
-  cart: Cart, checkout: Checkout, success: Success, account: Account, profile: Profile, admin: Admin,
+  cart: Cart, checkout: Checkout, success: Success, account: Account, profile: Profile,
+  addresses: Addresses, admin: Admin,
 };
 
 function Shell() {

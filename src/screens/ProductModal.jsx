@@ -1,20 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import { X, Heart, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
+import { SIZE_GUIDE } from "../lib/sizeguide.js";
 import ProductImage from "../components/ProductImage.jsx";
 import PriceTag from "../components/PriceTag.jsx";
+import ProductCard from "../components/ProductCard.jsx";
 import { useStore } from "../store.jsx";
 
 /* Product detail pop-up. Renders nothing unless a product is selected. */
 export default function ProductModal() {
   const {
-    selProduct, closeProduct, toggleFav, isFav,
+    products, selProduct, closeProduct, toggleFav, isFav,
     imgIndex, setImgIndex, selColor, setSelColor, selSize, setSelSize, addToCart,
   } = useStore();
+  const [guide, setGuide] = useState(false);
 
   const p = selProduct;
   if (!p) return null;
   const imgs = p.images || [];
+  const chart = SIZE_GUIDE[p.cat] || SIZE_GUIDE.women;
+  const related = products.filter((x) => x.cat === p.cat && x.id !== p.id).slice(0, 8);
   return (
     <div className="absolute lg:fixed inset-0 z-40 flex flex-col lg:items-center lg:justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={closeProduct} />
@@ -55,12 +60,42 @@ export default function ProductModal() {
             ))}
           </div>
 
-          <p className="text-sm font-semibold text-slate-800 mt-5 mb-2">Size</p>
+          <div className="flex items-center justify-between mt-5 mb-2">
+            <p className="text-sm font-semibold text-slate-800">Size</p>
+            <button onClick={() => setGuide((g) => !g)} className="text-xs font-semibold text-brand-600">Size guide</button>
+          </div>
+          {guide && (
+            <div className="mb-3 bg-white rounded-xl border border-slate-100 overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-500">
+                    {chart.cols.map((c) => <th key={c} className="text-left font-semibold px-3 py-2">{c}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {chart.rows.map((r, i) => (
+                    <tr key={i} className="border-t border-slate-100 text-slate-600">
+                      {r.map((cell, j) => <td key={j} className="px-3 py-2">{cell}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           <div className="flex gap-2 flex-wrap">
             {p.sizes.map((s) => (
               <button key={s} onClick={() => setSelSize(s)} className={`min-w-[48px] px-3 py-2.5 rounded-xl text-sm font-semibold ${selSize === s ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{s}</button>
             ))}
           </div>
+
+          {related.length > 0 && (
+            <div className="mt-6">
+              <p className="text-sm font-semibold text-slate-800 mb-2">You may also like</p>
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                {related.map((rp) => <ProductCard key={rp.id} p={rp} wide />)}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Add to cart */}

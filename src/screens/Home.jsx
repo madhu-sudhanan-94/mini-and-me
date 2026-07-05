@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart, ShoppingCart, Search, Package, Sparkles } from "lucide-react";
+import { Heart, ShoppingCart, Search, Sparkles, ArrowRight } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import { heroBlue } from "../theme.js";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
@@ -16,6 +16,7 @@ export default function Home() {
   const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 6);
   const cats = ["women", "men", "kids"];
   const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
+  const catEmoji = { women: "👗", men: "👔", kids: "🧸" };
   const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
   return (
     <div className="pb-4">
@@ -81,16 +82,35 @@ export default function Home() {
               {cats.map((c) => {
                 const n = products.filter((p) => p.cat === c).length;
                 return (
-                  <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className={`rounded-2xl p-3 h-24 lg:h-40 lg:p-5 flex flex-col justify-between bg-linear-to-br ${catColor[c]} shadow-md active:scale-95 transition`}>
-                    <Package size={20} className="text-white" />
-                    <div className="text-left">
-                      <p className="text-white font-bold text-sm leading-none">{CAT_LABEL[c]}</p>
-                      <p className="text-white/80 text-[10px] mt-1">{n} items</p>
+                  <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className={`relative overflow-hidden rounded-2xl p-3 h-28 lg:h-44 lg:p-5 flex flex-col justify-between bg-linear-to-br ${catColor[c]} shadow-md hover:shadow-lg active:scale-95 transition`}>
+                    <span className="absolute -right-2 -top-3 text-5xl lg:text-7xl opacity-30 select-none">{catEmoji[c]}</span>
+                    <span className="text-2xl lg:text-4xl drop-shadow-sm">{catEmoji[c]}</span>
+                    <div className="text-left relative z-10">
+                      <p className="text-white font-extrabold text-sm lg:text-lg leading-none">{CAT_LABEL[c]}</p>
+                      <p className="text-white/85 text-[10px] lg:text-xs mt-1">{n} items</p>
                     </div>
                   </button>
                 );
               })}
             </div>
+          </div>
+
+          {/* Offers */}
+          <div className="px-5 mt-6 grid grid-cols-2 gap-3">
+            <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-fuchsia-500 to-pink-500 shadow-md active:scale-95 transition">
+              <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Festive Edit</span>
+              <div>
+                <p className="text-white font-extrabold text-lg leading-tight">Up to 40% off</p>
+                <p className="text-white/85 text-[11px] flex items-center gap-1">Shop the sale <ArrowRight size={12} /></p>
+              </div>
+            </button>
+            <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-brand-600 to-accent-500 shadow-md active:scale-95 transition">
+              <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Just In</span>
+              <div>
+                <p className="text-white font-extrabold text-lg leading-tight">New Arrivals</p>
+                <p className="text-white/85 text-[11px] flex items-center gap-1">Explore now <ArrowRight size={12} /></p>
+              </div>
+            </button>
           </div>
 
           {/* Trending */}

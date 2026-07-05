@@ -11,13 +11,6 @@ const GENDERS = [
   { value: "other", label: "Other" },
 ];
 
-function initials(name, email) {
-  const base = (name || email || "").trim();
-  if (!base) return "🙂";
-  const parts = base.split(/\s+/);
-  return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || base[0].toUpperCase();
-}
-
 export default function Profile() {
   const { profile, saveProfile, profileBusy, auth, setScreen, uploadAvatar, avatarBusy } = useStore();
   const email = profile?.email || auth.id || "";
@@ -57,20 +50,26 @@ export default function Profile() {
           <h2 className="text-2xl font-semibold text-slate-900">Edit profile</h2>
         </div>
         <div className="flex flex-col items-center mt-4">
-          <div className="relative">
-            <div className="p-[3px] rounded-full bg-linear-to-br from-brand-500 to-accent-400 shadow-sm">
-              <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center overflow-hidden">
-                {avatarSrc
-                  ? <img src={avatarSrc} alt="Profile photo" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
-                  : <span className="text-brand-500 text-2xl font-extrabold">{initials(f.full_name, email)}</span>}
-              </div>
-            </div>
-            <label title="Change photo" className={`absolute bottom-0 right-0 w-8 h-8 rounded-full bg-brand-600 text-white shadow-md ring-2 ring-white flex items-center justify-center ${avatarBusy ? "opacity-60 cursor-wait" : "cursor-pointer"}`}>
-              <Camera size={15} />
-              <input type="file" accept="image/*" className="hidden" disabled={avatarBusy}
-                onChange={(e) => { const file = e.target.files && e.target.files[0]; if (file) { setPreview(URL.createObjectURL(file)); uploadAvatar(file); } e.target.value = ""; }} />
-            </label>
-          </div>
+          <label className={`group relative flex flex-col items-center justify-center w-28 h-28 rounded-full transition ${avatarBusy ? "cursor-wait" : "cursor-pointer"} ${avatarSrc ? "overflow-hidden ring-4 ring-white shadow-lg" : "border-2 border-dashed border-brand-300 bg-linear-to-br from-brand-50 to-accent-50 hover:from-brand-100 hover:to-accent-100"}`}>
+            {avatarSrc ? (
+              <>
+                <img src={avatarSrc} alt="Profile photo" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
+                {/* subtle change hint — whole circle is tappable to swap the photo */}
+                <div className="absolute inset-x-0 bottom-0 pt-6 pb-2 flex items-center justify-center gap-1 text-white bg-linear-to-t from-black/55 to-transparent group-hover:from-black/65 transition">
+                  <Camera size={13} /><span className="text-[11px] font-medium">Change</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <Camera size={22} className="text-brand-500" />
+                <span className="mt-1 text-[11px] font-semibold text-brand-600">Add photo</span>
+              </>
+            )}
+            {avatarBusy && <div className="absolute inset-0 rounded-full bg-white/60 flex items-center justify-center"><span className="w-6 h-6 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" /></div>}
+            <input type="file" accept="image/*" className="hidden" disabled={avatarBusy}
+              onChange={(e) => { const file = e.target.files && e.target.files[0]; if (file) { setPreview(URL.createObjectURL(file)); uploadAvatar(file); } e.target.value = ""; }} />
+          </label>
+          <p className="mt-2.5 text-xs text-slate-400">{avatarSrc ? "Tap the photo to change it" : "Add a profile photo — JPG or PNG"}</p>
         </div>
       </div>
 

@@ -48,3 +48,25 @@ export async function authSignOut(token) {
 export function authErrText(data) {
   return data?.error_description || data?.msg || data?.error || data?.message || "Something went wrong. Please try again.";
 }
+
+// Send a password-reset email (GoTrue /recover). Redirects back to the app.
+export async function authRecover(email) {
+  const res = await fetch(SUPA_AUTH + "/recover", { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ email }) });
+  return { ok: res.ok, data: await res.json().catch(() => ({})) };
+}
+// Read the user for a given access token (used for email-confirm / recovery callbacks).
+export async function authGetUser(token) {
+  try {
+    const res = await fetch(SUPA_AUTH + "/user", { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + token } });
+    return res.ok ? await res.json().catch(() => null) : null;
+  } catch { return null; }
+}
+// Update the signed-in user (e.g. { password } or { email }).
+export async function authUpdateUser(token, fields) {
+  const res = await fetch(SUPA_AUTH + "/user", {
+    method: "PUT",
+    headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+  return { ok: res.ok, data: await res.json().catch(() => ({})) };
+}

@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin, LifeBuoy } from "lucide-react";
+import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin, LifeBuoy, KeyRound } from "lucide-react";
 import { panelBlue } from "../theme.js";
 import { mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
@@ -36,6 +36,13 @@ export default function Account() {
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"><MapPin size={19} className="text-slate-600" /></div>
             <span className="flex-1 text-left font-semibold text-slate-800">Delivery addresses</span>
             <span className="text-xs text-slate-400">{addresses.length}</span>
+            <ChevronRight size={20} className="text-slate-300" />
+          </button>
+        )}
+        {session && (
+          <button onClick={() => setScreen("security")} className="w-full bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"><KeyRound size={19} className="text-slate-600" /></div>
+            <span className="flex-1 text-left font-semibold text-slate-800">Login &amp; security</span>
             <ChevronRight size={20} className="text-slate-300" />
           </button>
         )}

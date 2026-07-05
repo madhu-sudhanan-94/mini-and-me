@@ -13,7 +13,7 @@ export default function Login() {
     loginEmail, setLoginEmail, setAuthErr, loginPassword, setLoginPassword,
     authMode, setAuthMode, authErr, authNotice, setAuthNotice,
     loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
-    sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin,
+    sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, requestPasswordReset,
   } = useStore();
 
   return (
@@ -63,7 +63,10 @@ export default function Login() {
                 </button>
               </form>
 
-              <button onClick={() => { setAuthMode(authMode === "signup" ? "login" : "signup"); setAuthErr(""); setAuthNotice(""); }} className="w-full mt-3 text-brand-600 text-sm font-semibold py-1.5">
+              {authMode === "login" && (
+                <button type="button" onClick={requestPasswordReset} className="w-full mt-2 text-slate-400 text-xs font-medium">Forgot password?</button>
+              )}
+              <button onClick={() => { setAuthMode(authMode === "signup" ? "login" : "signup"); setAuthErr(""); setAuthNotice(""); }} className="w-full mt-2 text-brand-600 text-sm font-semibold py-1.5">
                 {authMode === "signup" ? "Already have an account? Log in" : "New here? Create an account"}
               </button>
             </>

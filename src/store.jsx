@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import {
   ADMIN_EMAIL, SUPABASE_URL, SUPABASE_KEY, SB_HEADERS, mapDbProduct,
   authSignUp, authSignIn, authRefresh, authSignOut, authErrText,
+  authRecover, authGetUser, authUpdateUser,
 } from "./lib/supabase.js";
 import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
@@ -105,10 +106,24 @@ export function StoreProvider({ children }) {
     "Content-Type": "application/json",
   });
 
+  // fetch that retries once on a 401 by refreshing the access token (so a
+  // long-open session doesn't fail a write when the token expires).
+  const authedFetch = async (url, opts = {}) => {
+    let res = await fetch(url, opts);
+    if (res.status === 401 && session?.refresh_token) {
+      const fresh = await authRefresh(session.refresh_token);
+      if (fresh && fresh.access_token) {
+        setSession((s) => (s ? { ...s, access_token: fresh.access_token, refresh_token: fresh.refresh_token || s.refresh_token, user: fresh.user || s.user } : s));
+        res = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + fresh.access_token } });
+      }
+    }
+    return res;
+  };
+
   // Load live products from Supabase (falls back to samples if unreachable)
   const loadProducts = async ({ allowEmpty = false } = {}) => {
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/products?select=*&order=id.asc", { headers: SB_HEADERS });
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/products?select=*&order=id.asc", { headers: SB_HEADERS });
       if (res.ok) {
         const rows = await res.json();
         if (Array.isArray(rows) && (rows.length || allowEmpty)) setProducts(rows.map(mapDbProduct));
@@ -117,12 +132,33 @@ export function StoreProvider({ children }) {
   };
   useEffect(() => { loadProducts(); }, []);
 
+  // Handle auth callbacks from email links: signup confirmation and password recovery.
+  // Supabase redirects back with #access_token=...&type=signup|recovery in the URL.
+  useEffect(() => {
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    if (!hash || hash.indexOf("access_token") === -1) return;
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    const type = params.get("type");
+    if (!access_token) return;
+    (async () => {
+      const user = await authGetUser(access_token);
+      const email = (user?.email || "").toLowerCase();
+      setSession({ access_token, refresh_token, user });
+      setAuth({ role: email === ADMIN_EMAIL ? "admin" : "customer", id: user?.email || email, uid: user?.id || null });
+      if (type === "recovery") setScreen("resetpw");
+      else { setScreen("home"); showToast("Email verified — you're signed in"); }
+      try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch {}
+    })();
+  }, []);
+
   // Load the signed-in user's profile row whenever the session changes
   const loadProfile = async () => {
     const uid = session?.user?.id;
     if (!uid) { setProfile(null); return; }
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid + "&select=*", { headers: writeHeaders() });
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid + "&select=*", { headers: writeHeaders() });
       if (res.ok) {
         const rows = await res.json();
         if (Array.isArray(rows) && rows[0]) setProfile(rows[0]);
@@ -136,7 +172,7 @@ export function StoreProvider({ children }) {
     const uid = session?.user?.id;
     if (!uid) { setAddresses([]); return; }
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&select=*&order=is_default.desc,created_at.desc", { headers: writeHeaders() });
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&select=*&order=is_default.desc,created_at.desc", { headers: writeHeaders() });
       if (res.ok) {
         const rows = await res.json();
         if (Array.isArray(rows)) setAddresses(rows);
@@ -150,7 +186,7 @@ export function StoreProvider({ children }) {
     const uid = session?.user?.id;
     if (!uid) { setMyOrders([]); return; }
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/orders?user_id=eq." + uid + "&select=*,order_items(*)&order=created_at.desc", { headers: writeHeaders() });
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?user_id=eq." + uid + "&select=*,order_items(*)&order=created_at.desc", { headers: writeHeaders() });
       if (res.ok) {
         const rows = await res.json();
         if (Array.isArray(rows)) setMyOrders(rows);
@@ -164,7 +200,7 @@ export function StoreProvider({ children }) {
     if (auth.role !== "admin" || !session?.access_token) return;
     setOrdersBusy(true);
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/orders?select=*,order_items(*)&order=created_at.desc", { headers: writeHeaders() });
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?select=*,order_items(*)&order=created_at.desc", { headers: writeHeaders() });
       if (res.ok) {
         const rows = await res.json();
         if (Array.isArray(rows)) setAdminOrders(rows);
@@ -176,7 +212,7 @@ export function StoreProvider({ children }) {
     if (auth.role !== "admin" || !session?.access_token) return;
     setOrdersBusy(true);
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/orders?id=eq." + id, {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?id=eq." + id, {
         method: "PATCH",
         headers: { ...writeHeaders(), Prefer: "return=representation" },
         body: JSON.stringify({ status }),
@@ -242,6 +278,39 @@ export function StoreProvider({ children }) {
   const resetPhoneLogin = () => { setOtpSent(false); setOtp(""); setOtpErr(""); };
 
   const openLegal = (key) => { setLegalPage(key); setScreen("legal"); };
+
+  /* ---------- password recovery & account changes ---------- */
+  const requestPasswordReset = async () => {
+    const email = loginEmail.trim().toLowerCase();
+    setAuthErr(""); setAuthNotice("");
+    if (!email) { setAuthErr("Enter your email above first, then tap Forgot password."); return; }
+    setAuthBusy(true);
+    try {
+      await authRecover(email);
+      setAuthNotice("If an account exists for " + email + ", a password reset link is on its way.");
+    } catch (e) {
+      setAuthErr("Couldn't send the reset email. Please try again.");
+    } finally { setAuthBusy(false); }
+  };
+
+  // Set a new password using the recovery session from the email link.
+  const setNewPassword = async (pw) => {
+    if (!session?.access_token) { showToast("Reset link expired — request a new one"); return false; }
+    if (!pw || pw.length < 6) { showToast("Password must be at least 6 characters"); return false; }
+    const { ok, data } = await authUpdateUser(session.access_token, { password: pw });
+    if (!ok) { showToast(authErrText(data)); return false; }
+    showToast("Password updated");
+    setScreen("home");
+    return true;
+  };
+
+  // Change email / password for a signed-in user. Returns { ok, data }.
+  const updateAccount = async (fields) => {
+    if (!session?.access_token) { showToast("Log in first"); return { ok: false }; }
+    const { ok, data } = await authUpdateUser(session.access_token, fields);
+    if (!ok) { showToast(authErrText(data)); return { ok: false, data }; }
+    return { ok: true, data };
+  };
   const verifyPhoneOtp = () => {
     if (otp !== DEMO_OTP) { setOtpErr("Incorrect code. For this demo, use " + DEMO_OTP + "."); return; }
     const phone = loginPhone.trim();
@@ -329,7 +398,7 @@ export function StoreProvider({ children }) {
 
   const saveOrderToDb = async (order, items, phone, email, extra = {}) => {
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/orders", {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders", {
         method: "POST",
         headers: { ...writeHeaders(), Prefer: "return=representation" },
         body: JSON.stringify({
@@ -344,7 +413,7 @@ export function StoreProvider({ children }) {
       const rows = await res.json();
       const dbId = rows && rows[0] && rows[0].id;
       if (!dbId || !items.length) return;
-      await fetch(SUPABASE_URL + "/rest/v1/order_items", {
+      await authedFetch(SUPABASE_URL + "/rest/v1/order_items", {
         method: "POST",
         headers: writeHeaders(),
         body: JSON.stringify(items.map((it) => ({ ...it, order_id: dbId }))),
@@ -418,14 +487,14 @@ export function StoreProvider({ children }) {
     try {
       let res;
       if (form.id) {
-        res = await fetch(SUPABASE_URL + "/rest/v1/products?id=eq." + form.id, {
+        res = await authedFetch(SUPABASE_URL + "/rest/v1/products?id=eq." + form.id, {
           method: "PATCH",
           headers: { ...writeHeaders(), Prefer: "return=representation" },
           body: JSON.stringify(body),
         });
       } else {
         body.description = "Added by admin.";
-        res = await fetch(SUPABASE_URL + "/rest/v1/products", {
+        res = await authedFetch(SUPABASE_URL + "/rest/v1/products", {
           method: "POST",
           headers: { ...writeHeaders(), Prefer: "return=representation" },
           body: JSON.stringify(body),
@@ -465,7 +534,7 @@ export function StoreProvider({ children }) {
     setAvatarBusy(true);
     try {
       const path = uid + "/avatar";
-      const up = await fetch(SUPABASE_URL + "/storage/v1/object/avatars/" + path, {
+      const up = await authedFetch(SUPABASE_URL + "/storage/v1/object/avatars/" + path, {
         method: "POST",
         headers: {
           apikey: SUPABASE_KEY,
@@ -481,7 +550,7 @@ export function StoreProvider({ children }) {
         return;
       }
       const url = SUPABASE_URL + "/storage/v1/object/public/avatars/" + path + "?v=" + Date.now();
-      const res = await fetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid, {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid, {
         method: "PATCH",
         headers: { ...writeHeaders(), Prefer: "return=representation" },
         body: JSON.stringify({ avatar_url: url }),
@@ -511,7 +580,7 @@ export function StoreProvider({ children }) {
     if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin to delete"); return; }
     setAdminBusy(true);
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/products?id=eq." + id, {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/products?id=eq." + id, {
         method: "DELETE",
         headers: writeHeaders(),
       });
@@ -542,17 +611,17 @@ export function StoreProvider({ children }) {
       const body = { ...fields };
       let res, savedId = id;
       if (id) {
-        res = await fetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "PATCH", headers: { ...writeHeaders(), Prefer: "return=representation" }, body: JSON.stringify(body) });
+        res = await authedFetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "PATCH", headers: { ...writeHeaders(), Prefer: "return=representation" }, body: JSON.stringify(body) });
       } else {
         body.user_id = uid;
-        res = await fetch(SUPABASE_URL + "/rest/v1/addresses", { method: "POST", headers: { ...writeHeaders(), Prefer: "return=representation" }, body: JSON.stringify(body) });
+        res = await authedFetch(SUPABASE_URL + "/rest/v1/addresses", { method: "POST", headers: { ...writeHeaders(), Prefer: "return=representation" }, body: JSON.stringify(body) });
       }
       if (!res.ok) { showToast("Couldn't save address"); return false; }
       const rows = await res.json().catch(() => []);
       savedId = (Array.isArray(rows) && rows[0]?.id) || savedId;
       // if this one is the default, clear the flag on the others
       if (fields.is_default && savedId) {
-        await fetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&id=neq." + savedId, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: false }) });
+        await authedFetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&id=neq." + savedId, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: false }) });
       }
       await loadAddresses();
       showToast(id ? "Address updated" : "Address added");
@@ -569,7 +638,7 @@ export function StoreProvider({ children }) {
     if (!session?.user?.id) return;
     setAddrBusy(true);
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "DELETE", headers: writeHeaders() });
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "DELETE", headers: writeHeaders() });
       if (!res.ok) { showToast("Couldn't remove address"); return; }
       await loadAddresses();
       showToast("Address removed");
@@ -585,8 +654,8 @@ export function StoreProvider({ children }) {
     if (!uid) return;
     setAddrBusy(true);
     try {
-      await fetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: false }) });
-      await fetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: true }) });
+      await authedFetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: false }) });
+      await authedFetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: true }) });
       await loadAddresses();
     } catch (e) { /* ignore */ }
     finally { setAddrBusy(false); }
@@ -598,7 +667,7 @@ export function StoreProvider({ children }) {
     if (!uid) { showToast("Log in to save your profile"); return false; }
     setProfileBusy(true);
     try {
-      const res = await fetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid, {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/profiles?id=eq." + uid, {
         method: "PATCH",
         headers: { ...writeHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(fields),
@@ -634,7 +703,8 @@ export function StoreProvider({ children }) {
     // derived
     cartCount, cartTotal,
     // actions
-    showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth, openProduct, closeProduct,
+    showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth,
+    requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
     toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     loadProfile, saveProfile, uploadAvatar,

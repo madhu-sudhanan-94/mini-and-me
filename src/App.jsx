@@ -21,6 +21,8 @@ import Admin from "./screens/Admin.jsx";
 import AdminOrders from "./screens/AdminOrders.jsx";
 import LegalPage from "./screens/LegalPage.jsx";
 import Contact from "./screens/Contact.jsx";
+import ResetPassword from "./screens/ResetPassword.jsx";
+import Security from "./screens/Security.jsx";
 import ProductModal from "./screens/ProductModal.jsx";
 
 const Logo = BRAND.logo;
@@ -29,7 +31,7 @@ const SCREENS = {
   login: Login, home: Home, category: Category, favorites: Favorites,
   cart: Cart, checkout: Checkout, success: Success, account: Account, profile: Profile,
   addresses: Addresses, orders: Orders, admin: Admin, adminorders: AdminOrders,
-  legal: LegalPage, contact: Contact,
+  legal: LegalPage, contact: Contact, resetpw: ResetPassword, security: Security,
 };
 
 function Shell() {
@@ -52,7 +54,7 @@ function Shell() {
   const Current = SCREENS[screen] || Home;
   const showNav = ["home", "category", "account", "cart", "favorites", "legal", "contact"].includes(screen);
   const showFooter = ["home", "category", "favorites"].includes(screen);
-  const showChrome = screen !== "login";
+  const showChrome = screen !== "login" && screen !== "resetpw";
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-2xl";
 
   return (

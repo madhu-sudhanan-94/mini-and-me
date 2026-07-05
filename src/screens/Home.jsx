@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, SearchX } from "lucide-react";
 import EmptyState from "../components/EmptyState.jsx";
 import { heroBlue } from "../theme.js";
@@ -8,7 +8,10 @@ import ProductCard from "../components/ProductCard.jsx";
 import ProductImage from "../components/ProductImage.jsx";
 import Garment from "../components/Garment.jsx";
 import { useSwipe } from "../lib/useSwipe.js";
+import Pagination from "../components/Pagination.jsx";
 import { useStore } from "../store.jsx";
+
+const ALL_PAGE = 8;
 
 export default function Home() {
   const { products, query, setQuery, favorites, cartCount, setScreen, setSelCategory, heroIndex, setHeroIndex, openProduct, profile } = useStore();
@@ -18,6 +21,10 @@ export default function Home() {
   const heroP = featured.length ? featured[heroIndex % featured.length] : products[0];
   const trending = products.filter((p) => p.trending);
   const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 6);
+  const [allPage, setAllPage] = useState(1);
+  const allPageCount = Math.max(1, Math.ceil(products.length / ALL_PAGE));
+  const allSafe = Math.min(allPage, allPageCount);
+  const allShown = products.slice((allSafe - 1) * ALL_PAGE, allSafe * ALL_PAGE);
   const cats = ["kids", "women", "men"];
   const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
   const catShape = { women: "dress", men: "shirt", kids: "overall" };
@@ -160,6 +167,15 @@ export default function Home() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {newIn.map((p) => <ProductCard key={p.id} p={p} />)}
             </div>
+          </div>
+
+          {/* All items */}
+          <div className="mt-8 px-5">
+            <h3 className="font-bold text-slate-900 text-lg mb-3">All items</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {allShown.map((p) => <ProductCard key={p.id} p={p} />)}
+            </div>
+            <Pagination page={allSafe} pageCount={allPageCount} onChange={setAllPage} />
           </div>
         </>
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useLayoutEffect, useEffect, useMemo } from "react";
 import { ChevronLeft, PackageOpen, SlidersHorizontal, X } from "lucide-react";
 import { CAT_LABEL } from "../lib/format.js";
 import { SORTS, sortProducts, COLOR_FAMILIES, productFamilies } from "../lib/catalog.js";
@@ -10,6 +10,7 @@ import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 const PAGE = 8;
+const PRICE_BOUNDS = [0, 10000]; // fixed price range for the slider
 
 export default function Category() {
   const { products, selCategory, setSelCategory, setScreen } = useStore();
@@ -17,25 +18,22 @@ export default function Category() {
 
   const inCat = useMemo(() => products.filter((p) => p.cat === selCategory), [products, selCategory]);
   const shapes = useMemo(() => ["all", ...Array.from(new Set(inCat.map((p) => p.shape)))], [inCat]);
-  const bounds = useMemo(() => {
-    if (!inCat.length) return [0, 0];
-    const prices = inCat.map((p) => p.price);
-    return [Math.min(...prices), Math.max(...prices)];
-  }, [inCat]);
   const families = useMemo(
     () => COLOR_FAMILIES.map((f) => f.key).filter((k) => inCat.some((p) => productFamilies(p).has(k))),
     [inCat]
   );
+  const bounds = PRICE_BOUNDS;
 
   const [shape, setShape] = useState("all");
   const [sort, setSort] = useState("featured");
-  const [price, setPrice] = useState(bounds);
+  const [price, setPrice] = useState(PRICE_BOUNDS);
   const [colors, setColors] = useState(new Set());
   const [page, setPage] = useState(1);
   const [sheet, setSheet] = useState(false);
 
-  // reset filters whenever the category changes
-  useEffect(() => { setShape("all"); setColors(new Set()); setPrice(bounds); setPage(1); }, [selCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+  // reset filters when the category changes — layout effect so it runs before
+  // paint (no stale-filter flash on switch)
+  useLayoutEffect(() => { setShape("all"); setColors(new Set()); setPrice(PRICE_BOUNDS); setPage(1); }, [selCategory]);
   // back to page 1 whenever the result set changes
   useEffect(() => { setPage(1); }, [shape, sort, price, colors]);
 
@@ -44,7 +42,7 @@ export default function Category() {
     n.has(key) ? n.delete(key) : n.add(key);
     return n;
   });
-  const resetFilters = () => { setShape("all"); setColors(new Set()); setPrice(bounds); };
+  const resetFilters = () => { setShape("all"); setColors(new Set()); setPrice(PRICE_BOUNDS); };
   const activeFilters = (shape !== "all" ? 1 : 0) + colors.size + (price[0] > bounds[0] || price[1] < bounds[1] ? 1 : 0);
 
   let list = inCat
@@ -54,7 +52,8 @@ export default function Category() {
   list = sortProducts(list, sort);
 
   const pageCount = Math.max(1, Math.ceil(list.length / PAGE));
-  const shown = list.slice((page - 1) * PAGE, page * PAGE);
+  const safePage = Math.min(page, pageCount); // clamp so a narrowed result never shows a blank page
+  const shown = list.slice((safePage - 1) * PAGE, safePage * PAGE);
 
   const panelProps = { shapes, shape, setShape, bounds, price, setPrice, families, colors, toggleColor, onReset: resetFilters };
   const sortSelect = (extra = "") => (
@@ -79,24 +78,14 @@ export default function Category() {
         ))}
       </div>
 
-      {/* mobile: type chips + sort */}
+      {/* mobile: filters + count + sort */}
       <div className="lg:hidden flex items-center gap-2 px-5 mt-3">
-        <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar">
-          {shapes.map((s) => (
-            <button key={s} onClick={() => setShape(s)} className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap capitalize ${shape === s ? "bg-slate-900 text-white" : "bg-white text-slate-500 shadow-xs"}`}>
-              {s === "all" ? "All" : s}
-            </button>
-          ))}
-        </div>
-        {sortSelect()}
-      </div>
-      {/* mobile: filters button + count */}
-      <div className="lg:hidden flex items-center justify-between px-5 mt-3">
-        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-600 active:scale-95 transition">
-          <SlidersHorizontal size={14} /> Filters
+        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-600 active:scale-95 transition shrink-0">
+          <SlidersHorizontal size={15} /> Filters
           {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
         </button>
-        <p className="text-xs text-slate-400">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+        <p className="flex-1 text-xs text-slate-400">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+        {sortSelect()}
       </div>
 
       <div className="lg:flex lg:gap-6 lg:px-6 lg:mt-5">
@@ -118,13 +107,13 @@ export default function Category() {
             {sortSelect()}
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 px-5 lg:px-0 mt-2 lg:mt-0">
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 px-5 lg:px-0 mt-3 lg:mt-0">
             {shown.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
 
           {list.length === 0 && <EmptyState icon={PackageOpen} title="No items match" subtitle="Try clearing a filter or picking another category." className="py-16" />}
 
-          <div className="px-5 lg:px-0"><Pagination page={page} pageCount={pageCount} onChange={(p) => { setPage(p); if (typeof window !== "undefined") window.scrollTo({ top: 0 }); }} /></div>
+          <div className="px-5 lg:px-0"><Pagination page={safePage} pageCount={pageCount} onChange={(p) => { setPage(p); if (typeof window !== "undefined") window.scrollTo({ top: 0 }); }} /></div>
         </div>
       </div>
 
@@ -137,7 +126,7 @@ export default function Category() {
               <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
               <button onClick={() => setSheet(false)} aria-label="Close" className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center"><X size={18} className="text-slate-500" /></button>
             </div>
-            <FilterPanel showType={false} {...panelProps} />
+            <FilterPanel {...panelProps} />
             <PrimaryButton size="lg" onClick={() => setSheet(false)} className="mt-6">Show {list.length} result{list.length !== 1 ? "s" : ""}</PrimaryButton>
           </div>
         </div>

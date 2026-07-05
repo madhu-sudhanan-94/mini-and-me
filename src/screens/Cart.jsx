@@ -30,7 +30,7 @@ export default function Cart() {
               const onSale = p.original && p.original > p.price;
               return (
                 <div key={idx} className="bg-white rounded-2xl p-3 shadow-xs flex gap-3">
-                  <div className="relative w-20 h-20 rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0">
+                  <div className="relative w-20 h-[84px] rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0">
                     <ProductImage p={p} color={item.color} />
                   </div>
                   <div className="flex-1 min-w-0">

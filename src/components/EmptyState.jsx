@@ -38,7 +38,7 @@ export default function EmptyState({ icon: Icon, title, subtitle, tone = "brand"
           {Icon && <Icon size={32} className={t.icon} />}
         </div>
       </div>
-      <p className="es-rise font-bold text-slate-800 text-lg" style={{ animationDelay: ".05s" }}>{title}</p>
+      <p className="es-rise font-semibold text-slate-800 text-xl" style={{ animationDelay: ".05s" }}>{title}</p>
       {subtitle && <p className="es-rise text-slate-400 text-sm mt-1" style={{ animationDelay: ".13s" }}>{subtitle}</p>}
       {children && <div className="es-rise mt-5" style={{ animationDelay: ".21s" }}>{children}</div>}
     </div>

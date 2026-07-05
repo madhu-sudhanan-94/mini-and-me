@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from "react";
 import {
   ADMIN_EMAIL, SUPABASE_URL, SUPABASE_KEY, SB_HEADERS, mapDbProduct,
   authSignUp, authSignIn, authRefresh, authSignOut, authErrText,
@@ -7,6 +7,8 @@ import {
 import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
 import { parseCsv } from "./lib/csv.js";
+import { gstBreakdown } from "./lib/format.js";
+import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
 
 // Temporary demo phone login. Real SMS OTP needs a paid provider (roadmap).
 const DEMO_OTP = "1234";
@@ -66,6 +68,10 @@ export function StoreProvider({ children }) {
   const [coName, setCoName] = useState("");
   const [coPhone, setCoPhone] = useState("");
   const [coEmail, setCoEmail] = useState("");
+  const [coupon, setCoupon] = useState(null);       // applied coupon object (or null)
+  const [couponMsg, setCouponMsg] = useState("");   // coupon error / hint text
+  const [billingSame, setBillingSame] = useState(true);  // billing address == delivery?
+  const [billingAddrId, setBillingAddrId] = useState(null);
   const [lastOrder, setLastOrder] = useState(null);
 
   // admin form
@@ -84,6 +90,42 @@ export function StoreProvider({ children }) {
     setToast(msg);
     setTimeout(() => setToast(null), 2200);
   };
+
+  // ----- cart bill: MRP savings, coupon discount, delivery threshold -----
+  const cartSavings = cart.reduce((s, i) => {
+    const p = products.find((x) => x.id === i.id);
+    return s + (p && p.original && p.original > p.price ? (p.original - p.price) * i.qty : 0);
+  }, 0);
+  const bill = useMemo(() => {
+    const itemsTotal = cartTotal;
+    const g = gstBreakdown(itemsTotal);
+    const discount = couponDiscount(coupon, itemsTotal);
+    const qualifiesFree = itemsTotal >= SHOP.freeDeliveryThreshold;
+    const deliveryFee = itemsTotal === 0 || qualifiesFree ? 0 : SHOP.deliveryFee;
+    const toFreeDelivery = qualifiesFree ? 0 : Math.max(0, SHOP.freeDeliveryThreshold - itemsTotal);
+    const total = Math.max(0, itemsTotal - discount + deliveryFee);
+    return {
+      ...g, itemsTotal, savings: cartSavings, coupon, discount, deliveryFee,
+      freeThreshold: SHOP.freeDeliveryThreshold, toFreeDelivery, qualifiesFree,
+      totalSaved: cartSavings + discount, total,
+    };
+  }, [cartTotal, cartSavings, coupon]);
+  const applyCoupon = (code) => {
+    const c = findCoupon(code);
+    if (!c) { setCouponMsg("That code isn't valid."); return; }
+    if (cartTotal < (c.minSubtotal || 0)) { setCouponMsg(`Spend ₹${c.minSubtotal.toLocaleString("en-IN")}+ to use ${c.code}.`); return; }
+    setCoupon(c); setCouponMsg(""); showToast(`Coupon ${c.code} applied 🎉`);
+  };
+  const removeCoupon = () => { setCoupon(null); setCouponMsg(""); };
+  const billingAddress = billingSame ? defaultAddress : (addresses.find((a) => a.id === billingAddrId) || defaultAddress);
+
+  // Prefill the checkout contact fields from the signed-in profile (only fills blanks).
+  useEffect(() => {
+    if (screen !== "checkout" || !session) return;
+    setCoName((v) => v || profile?.full_name || "");
+    setCoPhone((v) => v || profile?.phone || defaultAddress?.phone || "");
+    setCoEmail((v) => v || auth?.id || "");
+  }, [screen, session, profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Hydrate from persistent storage on first load
   useEffect(() => {
@@ -507,27 +549,32 @@ export function StoreProvider({ children }) {
     if (!coName.trim() || (!coPhone.trim() && !coEmail.trim())) return;
     const order = {
       id: "PP" + Math.floor(100000 + Math.random() * 900000),
-      total: cartTotal,
+      total: bill.total,
       count: cartCount,
       name: coName.trim(),
       contact: coPhone.trim() || coEmail.trim(),
       ts: Date.now(),
+      coupon: bill.coupon ? { code: bill.coupon.code, discount: bill.discount } : null,
+      delivery_fee: bill.deliveryFee,
+      saved: bill.totalSaved,
     };
     const itemsSnapshot = cart.map((it) => {
       const p = products.find((x) => x.id === it.id);
       return { product_id: it.id, product_name: p ? p.name : "Item", size: it.size, color: it.color, unit_price: p ? p.price : 0, qty: it.qty };
     });
-    // snapshot the delivery address onto the order so past orders keep the right destination
-    const a = defaultAddress;
-    const shipping = a ? {
+    // snapshot the delivery (and optional billing) address so past orders keep the right destination
+    const snap = (a) => a ? {
       label: a.label, full_name: a.full_name, phone: a.phone,
       line1: a.line1, line2: a.line2, area: a.area, city: a.city,
       state: a.state, pincode: a.pincode, country: a.country,
     } : null;
+    const shipping = snap(defaultAddress);
+    const billing = billingSame ? null : snap(billingAddress);
     saveOrderToDb(order, itemsSnapshot, coPhone.trim() || null, coEmail.trim().toLowerCase() || null, { userId: session?.user?.id || null, shipping });
-    setOrders((o) => [{ ...order, status: "placed", shipping, items: itemsSnapshot }, ...o]);
+    setOrders((o) => [{ ...order, status: "placed", shipping, billing, items: itemsSnapshot }, ...o]);
     setLastOrder(order);
     setCart([]);
+    setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
     setCoName(""); setCoPhone(""); setCoEmail("");
     setScreen("success");
   };
@@ -541,6 +588,7 @@ export function StoreProvider({ children }) {
     setAdminOrders([]);
     setCart([]);            // don't leave this account's cart/wishlist for the next person
     setFavorites([]);
+    setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
     guestMergeRef.current = null;
     setAuth({ role: "guest", id: null });
     setReturnTo(null);
@@ -854,11 +902,13 @@ export function StoreProvider({ children }) {
     selProduct, setSelProduct,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
+    coupon, couponMsg, setCouponMsg, billingSame, setBillingSame, billingAddrId, setBillingAddrId,
     lastOrder, form, setForm, blankForm,
     // derived
-    cartCount, cartTotal,
+    cartCount, cartTotal, cartSavings, bill, billingAddress,
     // actions
     showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth,
+    applyCoupon, removeCoupon,
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
     toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,

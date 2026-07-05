@@ -4,6 +4,7 @@ import { BRAND } from "../brand.config.js";
 import { panelBlue } from "../theme.js";
 import PhoneField from "../components/PhoneField.jsx";
 import PasswordField from "../components/PasswordField.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 const Logo = BRAND.logo;
@@ -59,9 +60,9 @@ export default function Login() {
                   </div>
                 )}
 
-                <button type="submit" disabled={authBusy} className="w-full mt-4 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-500/25 disabled:opacity-60 flex items-center justify-center gap-2">
+                <PrimaryButton type="submit" disabled={authBusy} className="mt-4">
                   {authBusy ? "Please wait…" : (<>{authMode === "signup" ? "Create account" : "Log in"} <ArrowRight size={18} /></>)}
-                </button>
+                </PrimaryButton>
               </form>
 
               {authMode === "login" && (
@@ -77,9 +78,9 @@ export default function Login() {
                 <form onSubmit={(e) => { e.preventDefault(); sendPhoneOtp(); }}>
                   <PhoneField value={loginPhone} onChange={setLoginPhone} />
                   {otpErr && <p className="text-red-500 text-xs mt-2.5">{otpErr}</p>}
-                  <button type="submit" className="w-full mt-4 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2">
+                  <PrimaryButton type="submit" className="mt-4">
                     Send OTP <ArrowRight size={18} />
-                  </button>
+                  </PrimaryButton>
                 </form>
               ) : (
                 <form onSubmit={(e) => { e.preventDefault(); verifyPhoneOtp(); }}>
@@ -87,9 +88,9 @@ export default function Login() {
                   <input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoFocus placeholder="• • • •" className="w-full text-center tracking-[0.6em] text-xl font-bold border border-slate-200 rounded-xl py-3 outline-hidden focus:border-brand-500" />
                   <div className="mt-2.5 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 text-xs text-brand-700">Demo mode — your code is <b>1234</b>.</div>
                   {otpErr && <p className="text-red-500 text-xs mt-2.5">{otpErr}</p>}
-                  <button type="submit" disabled={otp.length < 4} className="w-full mt-4 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-500/25 disabled:opacity-60 flex items-center justify-center gap-2">
+                  <PrimaryButton type="submit" disabled={otp.length < 4} className="mt-4">
                     Verify &amp; continue <ArrowRight size={18} />
-                  </button>
+                  </PrimaryButton>
                   <button type="button" onClick={resetPhoneLogin} className="w-full mt-3 text-brand-600 text-sm font-semibold py-1.5">Change number</button>
                 </form>
               )}

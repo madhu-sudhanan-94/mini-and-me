@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronLeft, Heart } from "lucide-react";
 import ProductCard from "../components/ProductCard.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Favorites() {
@@ -17,7 +18,7 @@ export default function Favorites() {
           <div className="w-20 h-20 rounded-full bg-rose-50 flex items-center justify-center mb-4"><Heart size={32} className="text-rose-400" /></div>
           <p className="font-bold text-slate-800 text-lg">No favourites yet</p>
           <p className="text-slate-400 text-sm mt-1">Tap the heart on any item to save it here.</p>
-          <button onClick={() => setScreen("home")} className="mt-5 bg-brand-600 text-white font-semibold px-6 py-3 rounded-xl">Browse items</button>
+          <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="mt-5 px-6">Browse items</PrimaryButton>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-5 mt-4">

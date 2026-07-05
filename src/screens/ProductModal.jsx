@@ -5,6 +5,7 @@ import { SIZE_GUIDE } from "../lib/sizeguide.js";
 import ProductImage from "../components/ProductImage.jsx";
 import PriceTag from "../components/PriceTag.jsx";
 import ProductCard from "../components/ProductCard.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 /* Product detail pop-up. Renders nothing unless a product is selected. */
@@ -100,9 +101,9 @@ export default function ProductModal() {
 
         {/* Add to cart */}
         <div className="p-4 border-t border-slate-100 bg-white shrink-0">
-          <button onClick={() => addToCart(p, selSize, selColor)} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2">
+          <PrimaryButton variant="gradient" size="xl" onClick={() => addToCart(p, selSize, selColor)}>
             <ShoppingCart size={19} /> Add to cart · {formatINR(p.price)}
-          </button>
+          </PrimaryButton>
         </div>
       </div>
     </div>

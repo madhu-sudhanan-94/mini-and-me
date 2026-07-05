@@ -3,6 +3,7 @@ import { ChevronLeft, Package, MapPin } from "lucide-react";
 import { formatINR } from "../lib/format.js";
 import { ORDER_STEPS, STATUS_LABEL, fmtDate, normalizeOrder, shipLines, mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 
 function StatusTracker({ status }) {
   if (status === "cancelled") return <p className="text-xs font-semibold text-red-500 mt-3">Order cancelled</p>;
@@ -41,7 +42,7 @@ export default function Orders() {
           <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4"><Package size={32} className="text-brand-500" /></div>
           <p className="font-bold text-slate-800 text-lg">No orders yet</p>
           <p className="text-slate-400 text-sm mt-1">Your placed orders will show up here.</p>
-          <button onClick={() => setScreen("home")} className="mt-5 bg-brand-600 text-white font-semibold px-6 py-3 rounded-xl">Start shopping</button>
+          <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="mt-5 px-6">Start shopping</PrimaryButton>
         </div>
       ) : (
         <div className="px-5 mt-4 space-y-3">

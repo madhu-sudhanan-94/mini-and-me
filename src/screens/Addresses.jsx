@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronLeft, Plus, Edit3, Trash2, MapPin, Star } from "lucide-react";
 import PhoneField from "../components/PhoneField.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { COUNTRY_NAMES } from "../lib/countries.js";
 import { INDIAN_STATES } from "../lib/india.js";
 import { useStore } from "../store.jsx";
@@ -111,7 +112,7 @@ export default function Addresses() {
             {err && <p className="text-red-500 text-xs">{err}</p>}
 
             <div className="flex gap-2 pt-1">
-              <button onClick={submit} disabled={addrBusy} className="flex-1 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3 rounded-xl shadow-md shadow-brand-500/25 disabled:opacity-60">{addrBusy ? "Saving…" : "Save address"}</button>
+              <PrimaryButton onClick={submit} disabled={addrBusy} full={false} className="flex-1">{addrBusy ? "Saving…" : "Save address"}</PrimaryButton>
               <button onClick={() => setEditing(null)} className="px-5 border border-slate-200 rounded-xl text-sm text-slate-500">Cancel</button>
             </div>
           </div>
@@ -121,7 +122,7 @@ export default function Addresses() {
           <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4"><MapPin size={32} className="text-brand-500" /></div>
           <p className="font-bold text-slate-800 text-lg">No addresses yet</p>
           <p className="text-slate-400 text-sm mt-1">Add a delivery address to speed up checkout.</p>
-          <button onClick={startNew} className="mt-5 bg-brand-600 text-white font-semibold px-6 py-3 rounded-xl flex items-center gap-2"><Plus size={18} /> Add address</button>
+          <PrimaryButton variant="solid" onClick={startNew} full={false} className="mt-5 px-6"><Plus size={18} /> Add address</PrimaryButton>
         </div>
       ) : (
         <div className="px-5 mt-4 space-y-3">

@@ -22,3 +22,10 @@
     border-color: var(--color-gray-200, currentcolor);
   }
 }
+
+/* Ripple used by the shared PrimaryButton (click feedback). */
+@keyframes pb-ripple {
+  from { transform: scale(0); opacity: 0.5; }
+  to   { transform: scale(2.4); opacity: 0; }
+}
+.pb-ripple { animation: pb-ripple 0.55s ease-out forwards; }

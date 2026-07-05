@@ -3,6 +3,7 @@ import { ChevronLeft, LogOut, Edit3, Plus, Trash2, Package, ChevronRight, Upload
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { panelBlueDeep } from "../theme.js";
 import Garment from "../components/Garment.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Admin() {
@@ -89,7 +90,7 @@ export default function Admin() {
             </label>
           </div>
           <div className="flex gap-2">
-            <button onClick={saveProduct} disabled={adminBusy} className="flex-1 bg-brand-600 text-white font-semibold py-2.5 rounded-lg text-sm disabled:opacity-60">{adminBusy ? "Saving…" : (form.id ? "Save changes" : "Add product")}</button>
+            <PrimaryButton variant="solid" size="md" full={false} onClick={saveProduct} disabled={adminBusy} className="flex-1 text-sm">{adminBusy ? "Saving…" : (form.id ? "Save changes" : "Add product")}</PrimaryButton>
             {form.id && <button onClick={() => setForm(blankForm)} className="px-4 border border-slate-200 rounded-lg text-sm text-slate-500">Cancel</button>}
           </div>
         </div>

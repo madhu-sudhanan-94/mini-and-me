@@ -1,7 +1,7 @@
 import React from "react";
 import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User } from "lucide-react";
-import { BRAND } from "../brand.config.js";
 import { heroBlue } from "../theme.js";
+import BrandLogo from "../components/BrandLogo.jsx";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import ProductCard from "../components/ProductCard.jsx";
 import ProductImage from "../components/ProductImage.jsx";
@@ -29,8 +29,8 @@ export default function Home() {
     <div className="pb-4">
       <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
         <div>
-          {firstName && <p className="text-slate-400 text-xs">Hi, {firstName} 👋</p>}
-          <p className="font-extrabold text-slate-900 text-lg">{BRAND.name}</p>
+          {firstName && <p className="text-slate-400 text-xs mb-0.5">Hi, {firstName} 👋</p>}
+          <BrandLogo imgClass="h-6" />
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">

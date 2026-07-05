@@ -23,8 +23,17 @@ export const BRAND = {
   name: "Mini & Me",
   tagline: "Kids · Men · Women — fashion delivered across India.",
 
-  // Logo mark — swap ShoppingCart for any lucide icon, or a custom component
+  // Logo mark — swap ShoppingCart for any lucide icon, or a custom component.
+  // Used as a fallback if the wordmark image below is missing.
   logo: ShoppingCart,
+
+  // Wordmark image shown in the header top-left (clicking it → Home).
+  // Put your logo at public/brand-logo.png (set to null to use the `logo` icon + name instead).
+  logoImage: "/brand-logo.png",
+
+  // App icon / mascot — used for the browser favicon & installed-app (PWA) icon.
+  // Put your icon at public/brand-icon.png.
+  icon: "/brand-icon.png",
 
   // Font family used across the app (wired into Tailwind's `font-sans`)
   font: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",

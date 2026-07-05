@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronLeft, Camera } from "lucide-react";
 import { panelBlue } from "../theme.js";
 import PhoneField from "../components/PhoneField.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 const GENDERS = [
@@ -103,9 +104,9 @@ export default function Profile() {
             </div>
           </div>
 
-          <button onClick={save} disabled={profileBusy} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-500/25 disabled:opacity-60">
+          <PrimaryButton onClick={save} disabled={profileBusy}>
             {profileBusy ? "Saving…" : "Save profile"}
-          </button>
+          </PrimaryButton>
         </div>
       </div>
     </div>

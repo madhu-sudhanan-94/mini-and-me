@@ -3,6 +3,7 @@ import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin, Life
 import { panelBlue } from "../theme.js";
 import { mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 
 export default function Account() {
   const { auth, orders, cartCount, setScreen, goToLogin, logout, profile, addresses, session, myOrders } = useStore();
@@ -66,7 +67,7 @@ export default function Account() {
         ))}
 
         {auth.role === "guest" ? (
-          <button onClick={() => goToLogin()} className="w-full mt-3 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-2xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2"><User size={18} /> Log in / Sign up</button>
+          <PrimaryButton onClick={() => goToLogin()} size="xl" className="mt-3"><User size={18} /> Log in / Sign up</PrimaryButton>
         ) : (
           <button onClick={logout} className="w-full mt-3 border border-red-200 text-red-500 font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2"><LogOut size={18} /> Log out</button>
         )}

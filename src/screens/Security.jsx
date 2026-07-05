@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronLeft, KeyRound, Mail, Trash2 } from "lucide-react";
 import { SUPPORT } from "../content/legal.js";
 import PasswordField from "../components/PasswordField.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Security() {
@@ -48,7 +49,7 @@ export default function Security() {
         <div className="bg-white rounded-2xl shadow-xs p-4">
           <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3"><KeyRound size={16} className="text-brand-600" /> Change password</p>
           <PasswordField value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" placeholder="New password (min 6 characters)" />
-          <button onClick={changePassword} disabled={busy} className="w-full mt-3 bg-brand-600 text-white font-semibold py-2.5 rounded-xl text-sm disabled:opacity-60">Update password</button>
+          <PrimaryButton variant="solid" size="md" onClick={changePassword} disabled={busy} className="mt-3 text-sm">Update password</PrimaryButton>
         </div>
 
         {/* Change email */}
@@ -56,7 +57,7 @@ export default function Security() {
           <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-1"><Mail size={16} className="text-brand-600" /> Change email</p>
           <p className="text-xs text-slate-400 mb-3">Current: {email || "—"}</p>
           <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoComplete="email" placeholder="New email address" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-          <button onClick={changeEmail} disabled={busy} className="w-full mt-3 bg-brand-600 text-white font-semibold py-2.5 rounded-xl text-sm disabled:opacity-60">Update email</button>
+          <PrimaryButton variant="solid" size="md" onClick={changeEmail} disabled={busy} className="mt-3 text-sm">Update email</PrimaryButton>
           <p className="text-[11px] text-slate-400 mt-2">You'll get a confirmation link at the new address.</p>
         </div>
 

@@ -2,6 +2,7 @@ import React from "react";
 import { ChevronLeft, User, MapPin } from "lucide-react";
 import { formatINR, gstBreakdown, isEmail } from "../lib/format.js";
 import PhoneField from "../components/PhoneField.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Checkout() {
@@ -69,15 +70,15 @@ export default function Checkout() {
       <div className="p-5 border-t border-slate-100">
         {auth.role === "guest" ? (
           <>
-            <button onClick={() => goToLogin("checkout")} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2">
+            <PrimaryButton onClick={() => goToLogin("checkout")} size="xl">
               <User size={18} /> Log in to place order
-            </button>
+            </PrimaryButton>
             <p className="text-[11px] text-slate-400 text-center mt-2">Please log in or create an account to complete your order.</p>
           </>
         ) : (
-          <button onClick={placeOrder} disabled={!coName.trim() || !hasContact} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 disabled:opacity-50">
+          <PrimaryButton onClick={placeOrder} disabled={!coName.trim() || !hasContact} size="xl">
             Place order · {formatINR(bill.total)}
-          </button>
+          </PrimaryButton>
         )}
       </div>
     </div>

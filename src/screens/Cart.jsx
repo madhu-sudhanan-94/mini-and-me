@@ -2,6 +2,7 @@ import React from "react";
 import { ChevronLeft, ShoppingCart, Trash2, Minus, Plus } from "lucide-react";
 import { formatINR, gstBreakdown } from "../lib/format.js";
 import ProductImage from "../components/ProductImage.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
@@ -19,7 +20,7 @@ export default function Cart() {
           <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4"><ShoppingCart size={32} className="text-brand-500" /></div>
           <p className="font-bold text-slate-800 text-lg">Your cart is empty</p>
           <p className="text-slate-400 text-sm mt-1">Find something you'll love.</p>
-          <button onClick={() => setScreen("home")} className="mt-5 bg-brand-600 text-white font-semibold px-6 py-3 rounded-xl">Start shopping</button>
+          <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="mt-5 px-6">Start shopping</PrimaryButton>
         </div>
       ) : (
         <>
@@ -61,7 +62,7 @@ export default function Cart() {
                 <span className="text-2xl font-extrabold text-slate-900">{formatINR(bill.total)}</span>
               </div>
             </div>
-            <button onClick={() => setScreen("checkout")} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30">Check out</button>
+            <PrimaryButton size="xl" onClick={() => setScreen("checkout")}>Check out</PrimaryButton>
           </div>
         </>
       )}

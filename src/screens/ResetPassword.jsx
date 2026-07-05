@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import { panelBlue } from "../theme.js";
 import PasswordField from "../components/PasswordField.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
 const Logo = BRAND.logo;
@@ -41,9 +42,9 @@ export default function ResetPassword() {
           <PasswordField value={pw} onChange={(e) => { setPw(e.target.value); setErr(""); }} autoComplete="new-password" placeholder="New password (min 6 characters)" />
           <PasswordField value={pw2} onChange={(e) => { setPw2(e.target.value); setErr(""); }} autoComplete="new-password" placeholder="Confirm new password" wrapClass="mt-2.5" />
           {err && <p className="text-red-500 text-xs mt-2.5">{err}</p>}
-          <button type="submit" disabled={busy} className="w-full mt-4 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-500/25 disabled:opacity-60 flex items-center justify-center gap-2">
+          <PrimaryButton type="submit" disabled={busy} className="mt-4">
             {busy ? "Saving…" : (<>Update password <ArrowRight size={18} /></>)}
-          </button>
+          </PrimaryButton>
         </form>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Check } from "lucide-react";
 import { useStore } from "../store.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 
 export default function Success() {
   const { lastOrder, setScreen } = useStore();
@@ -16,7 +17,7 @@ export default function Success() {
           <p className="text-xs text-slate-400">Order ID</p>
           <p className="font-bold text-slate-800 text-lg">{lastOrder?.id}</p>
         </div>
-        <button onClick={() => setScreen("home")} className="mt-6 w-full bg-brand-600 text-white font-semibold py-3.5 rounded-xl">Continue shopping</button>
+        <PrimaryButton variant="solid" onClick={() => setScreen("home")} className="mt-6">Continue shopping</PrimaryButton>
       </div>
     </div>
   );

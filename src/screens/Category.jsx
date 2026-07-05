@@ -58,7 +58,7 @@ export default function Category() {
   const panelProps = { shapes, shape, setShape, bounds, price, setPrice, families, colors, toggleColor, onReset: resetFilters };
   const sortSelect = (extra = "") => (
     <div className={`relative shrink-0 ${extra}`}>
-      <ArrowUpDown size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      <ArrowUpDown size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
       <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className="border border-slate-200 rounded-full py-1.5 pl-8 pr-8 text-xs font-semibold text-slate-600 outline-hidden bg-white select-chevron">
         {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
       </select>
@@ -88,7 +88,7 @@ export default function Category() {
           {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
         </button>
         {sortSelect()}
-        <p className="flex-1 text-sm text-slate-400 text-right pr-1">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+        <p className="flex-1 text-sm text-slate-500 text-right pr-1">{list.length} item{list.length !== 1 ? "s" : ""}</p>
       </div>
 
       <div className="lg:flex lg:gap-6 lg:px-6 lg:mt-5">

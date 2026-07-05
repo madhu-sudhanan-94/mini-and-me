@@ -89,9 +89,39 @@
   pointer-events: none;
 }
 
+/* Orders cards: gentle staggered entrance + progress-bar fill. */
+@keyframes ord-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.ord-rise { animation: ord-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes ord-fill { from { transform: scaleX(0); } to { transform: scaleX(var(--ord-progress, 0)); } }
+.ord-fill { transform-origin: left center; animation: ord-fill 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both; }
+
+/* Home "Festive Sale" promo banner — living gradient + shimmer text. */
+.promo-drift { background-size: 220% 100%; animation: promo-drift 9s ease-in-out infinite; }
+@keyframes promo-drift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.promo-textshine {
+  background: linear-gradient(100deg, #fff 0%, #fff 38%, rgba(255, 255, 255, 0.55) 50%, #fff 62%, #fff 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+  animation: promo-textshine 4.5s ease-in-out infinite;
+}
+@keyframes promo-textshine { 0% { background-position: 120% 0; } 60%, 100% { background-position: -20% 0; } }
+.promo-pop { animation: promo-pop 2.4s ease-in-out infinite; transform-origin: center; }
+@keyframes promo-pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+.promo-nudge { animation: promo-nudge 1.6s ease-in-out infinite; }
+@keyframes promo-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+
 @media (prefers-reduced-motion: reduce) {
   .es-float, .es-halo, .es-twinkle, .es-rise, .pb-ripple,
-  .confetti-blast, .confetti-grav, .sc-pop, .sc-pulse, .offer-fade { animation: none; }
+  .confetti-blast, .confetti-grav, .sc-pop, .sc-pulse, .offer-fade,
+  .ord-rise, .promo-drift, .promo-pop, .promo-nudge { animation: none; }
+  .ord-fill { animation: none; transform: scaleX(var(--ord-progress, 0)); }
+  .promo-drift { background-size: 100% 100%; }
+  .promo-textshine {
+    animation: none; background: none;
+    -webkit-background-clip: initial; background-clip: initial;
+    color: #fff; -webkit-text-fill-color: #fff;
+  }
   .offer-shine::after { display: none; }
 }
 

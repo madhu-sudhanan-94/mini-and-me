@@ -156,15 +156,27 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Promo banner */}
+          {/* Promo banner — living gradient + shimmer text (clickable) */}
           <div className="px-5 mt-5">
-            <div className="rounded-2xl p-4 flex items-center gap-3 bg-linear-to-r from-violet-500 to-fuchsia-500 shadow-md">
-              <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center shrink-0"><Sparkles size={22} className="text-white" /></div>
-              <div>
-                <p className="text-white font-bold">Festive Sale is live</p>
-                <p className="text-white/85 text-xs">Up to 40% off across the store</p>
+            <button
+              type="button"
+              onClick={() => { setSelCategory("women"); setScreen("category"); }}
+              className="offer-shine promo-drift relative w-full overflow-hidden rounded-2xl p-4 flex items-center gap-3 text-left text-white bg-linear-to-r from-violet-500 via-fuchsia-500 to-violet-500 shadow-md active:scale-95 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <div className="relative z-10 w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Sparkles size={22} className="text-white es-twinkle" />
               </div>
-            </div>
+              <div className="relative z-10 min-w-0 flex-1">
+                <p className="font-bold text-white promo-textshine">Festive Sale is live</p>
+                <p className="text-white/85 text-xs mt-0.5">
+                  Up to <span className="inline-block font-semibold text-white promo-pop">40%</span> off across the store
+                </p>
+              </div>
+              <span className="relative z-10 shrink-0 inline-flex items-center gap-1 text-white text-sm font-semibold">
+                Shop now
+                <span className="promo-nudge inline-block" aria-hidden="true">&rarr;</span>
+              </span>
+            </button>
           </div>
 
           {/* New in */}

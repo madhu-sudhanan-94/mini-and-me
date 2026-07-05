@@ -7,6 +7,7 @@ import { formatINR, CAT_LABEL } from "../lib/format.js";
 import ProductCard from "../components/ProductCard.jsx";
 import ProductImage from "../components/ProductImage.jsx";
 import Garment from "../components/Garment.jsx";
+import { useSwipe } from "../lib/useSwipe.js";
 import { useStore } from "../store.jsx";
 
 export default function Home() {
@@ -26,6 +27,9 @@ export default function Home() {
     if (withImg) catImg[c] = withImg.images[0];
   }
   const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+  const heroLen = featured.length;
+  const goHero = (dir) => { if (heroLen) setHeroIndex((((heroIndex % heroLen) + dir) % heroLen + heroLen) % heroLen); };
+  const heroSwipe = useSwipe({ onLeft: () => goHero(1), onRight: () => goHero(-1) });
   return (
     <div className="pb-4">
       <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
@@ -67,7 +71,7 @@ export default function Home() {
         <>
           {/* Hero carousel */}
           <div className="px-5 mt-5">
-            <button onClick={() => openProduct(heroP)} className="w-full text-left relative rounded-3xl overflow-hidden p-5 h-52 lg:h-80 flex flex-col justify-end" style={heroBlue}>
+            <button {...heroSwipe} onClick={() => openProduct(heroP)} className="w-full text-left relative rounded-3xl overflow-hidden p-5 h-52 lg:h-80 flex flex-col justify-end touch-pan-y select-none" style={heroBlue}>
               <ProductImage p={heroP} color="#ffffff" />
               <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/15 to-transparent" />
               <span className="absolute top-4 left-4 z-10 bg-white/25 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">✨ Featured</span>

@@ -6,6 +6,7 @@ import ProductImage from "../components/ProductImage.jsx";
 import PriceTag from "../components/PriceTag.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
+import { useSwipe } from "../lib/useSwipe.js";
 import { useStore } from "../store.jsx";
 
 /* Product detail pop-up. Renders nothing unless a product is selected. */
@@ -15,6 +16,11 @@ export default function ProductModal() {
     imgIndex, setImgIndex, selColor, setSelColor, selSize, setSelSize, addToCart,
   } = useStore();
   const [guide, setGuide] = useState(false);
+  // Swipe between product images (declared before the early-return to satisfy rules of hooks).
+  const imgSwipe = useSwipe({
+    onLeft: () => setImgIndex((i) => { const n = (selProduct?.images || []).length; return n ? (i + 1) % n : i; }),
+    onRight: () => setImgIndex((i) => { const n = (selProduct?.images || []).length; return n ? (i - 1 + n) % n : i; }),
+  });
 
   const p = selProduct;
   if (!p) return null;
@@ -26,7 +32,7 @@ export default function ProductModal() {
       <div className="absolute inset-0 bg-black/40" onClick={closeProduct} />
       <div className="relative mt-auto lg:mt-0 bg-slate-50 rounded-t-4xl lg:rounded-4xl max-h-[94%] lg:max-h-[88vh] w-full lg:w-[460px] lg:max-w-[92vw] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
         {/* Image carousel */}
-        <div className="relative h-72 lg:h-80 bg-linear-to-br from-accent-100 to-brand-200 shrink-0">
+        <div {...(imgs.length > 1 ? imgSwipe : {})} className="relative h-72 lg:h-80 bg-linear-to-br from-accent-100 to-brand-200 shrink-0 touch-pan-y select-none">
           <ProductImage key={imgIndex} p={p} color={selColor} index={imgIndex} />
           <button onClick={closeProduct} aria-label="Close" className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center"><X size={18} /></button>
           <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center active:scale-90 transition">

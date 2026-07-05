@@ -15,7 +15,7 @@ export const SUPPORT = {
   email: "miniandme.in@gmail.com",             // real support inbox
   phone: "+91 89715 83502",                    // real support number
   hours: "Monday–Saturday, 10:00–18:00 IST",
-  address: "Registered address, City, State, PIN — India",  // EDIT
+  address: "Bengaluru, Karnataka, India",      // support address
   jurisdiction: "Bengaluru, Karnataka",        // EDIT — courts/jurisdiction city
   gstin: "",                                   // EDIT — add once registered
 };

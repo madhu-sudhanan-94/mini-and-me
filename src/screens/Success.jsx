@@ -42,9 +42,9 @@ export default function Success() {
         </div>
 
         {/* Actions */}
-        <div className="w-full max-w-xs mt-6 space-y-2.5">
+        <div className="w-full max-w-xs mt-6 space-y-4">
           <PrimaryButton onClick={() => setScreen("home")}>Continue shopping</PrimaryButton>
-          <button onClick={() => setScreen("orders")} className="w-full mt-2.5 text-sm font-semibold text-slate-500 py-1.5 active:scale-95 transition"> View my orders</button>
+          <button onClick={() => setScreen("orders")} className="w-full text-base font-semibold text-slate-500 py-1.5 active:scale-95 transition"> View my orders</button>
         </div>
       </div>
     </div>

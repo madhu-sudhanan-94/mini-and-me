@@ -15,11 +15,10 @@ import React, { useRef, useState } from "react";
 const VARIANTS = {
   gradient: "bg-linear-to-r from-brand-600 to-accent-500 shadow-brand-500/25",
   solid: "bg-brand-600 hover:bg-brand-700 shadow-brand-500/25",
-  text: "!text-brand-600 hover:!text-brand-700",
 };
 const SIZES = {
-  md: "py-3 rounded-xl text-base",
-  lg: "py-3.5 rounded-xl text-base",
+  md: "py-2.5 rounded-xl text-base",
+  lg: "py-3 rounded-xl text-base",
   xl: "py-4 rounded-xl text-base",
 };
 

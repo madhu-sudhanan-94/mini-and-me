@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ChevronLeft, Mail, Phone, Check, ArrowRight } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import { panelBlue } from "../theme.js";
@@ -17,22 +17,28 @@ export default function Login() {
     loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
     sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, requestPasswordReset,
   } = useStore();
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [bannerFailed, setBannerFailed] = useState(false);
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="relative pb-8 rounded-b-[2.5rem] shrink-0" style={panelBlue}>
-        <div className="px-6 pt-2">
-          <button onClick={() => { const dest = returnTo || "home"; setReturnTo(null); setScreen(dest); }} aria-label="Back" className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <ChevronLeft size={20} className="text-white" />
-          </button>
-        </div>
-        <div className="px-6 pt-4">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-5">
-            <Logo size={26} className="text-white" />
+      <div className="relative shrink-0">
+        <button onClick={() => { const dest = returnTo || "home"; setReturnTo(null); setScreen(dest); }} aria-label="Back" className="absolute top-3 left-4 z-10 w-10 h-10 rounded-full bg-white/85 backdrop-blur-sm shadow-sm flex items-center justify-center active:scale-95 transition">
+          <ChevronLeft size={20} className="text-slate-700" />
+        </button>
+        {BRAND.banner && !bannerFailed ? (
+          <img src={BRAND.banner} alt={BRAND.name} onError={() => setBannerFailed(true)} className="w-full h-auto block rounded-b-2xl" />
+        ) : (
+          <div className="pb-8 pt-16 px-6 rounded-b-[2rem]" style={panelBlue}>
+            <div className="w-16 h-16 rounded-2xl bg-white shadow-lg flex items-center justify-center overflow-hidden mb-4">
+              {BRAND.icon && !logoFailed
+                ? <img src={BRAND.icon} alt={BRAND.name} onError={() => setLogoFailed(true)} className="w-full h-full object-contain p-1.5" />
+                : <Logo size={28} className="text-brand-600" />}
+            </div>
+            <h1 className="text-white text-3xl font-extrabold leading-tight">{BRAND.name}</h1>
+            <p className="text-brand-100 mt-1.5 text-sm">{BRAND.tagline}</p>
           </div>
-          <h1 className="text-white text-3xl font-extrabold leading-tight">{BRAND.name}</h1>
-          <p className="text-brand-100 mt-1.5 text-sm">{BRAND.tagline}</p>
-        </div>
+        )}
       </div>
 
       <div className="px-6 pt-5 pb-8">

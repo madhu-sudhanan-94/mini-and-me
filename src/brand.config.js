@@ -35,6 +35,10 @@ export const BRAND = {
   // Put your icon at public/brand-icon.png.
   icon: "/brand-icon.png",
 
+  // Wide header banner (logo + name + tagline) shown on the Login screen.
+  // Put it at public/brand-banner.png (falls back to a gradient header if missing).
+  banner: "/brand-banner.png",
+
   // Font family used across the app (wired into Tailwind's `font-sans`)
   font: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
 

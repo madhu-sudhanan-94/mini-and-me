@@ -90,7 +90,7 @@ export default function Cart() {
             </div>
 
             <PrimaryButton size="xl" onClick={() => setScreen("checkout")} className="mt-4">Check out</PrimaryButton>
-            <button onClick={() => setScreen("home")} className="w-full mt-2.5 text-sm font-semibold text-slate-500 py-1.5 active:scale-95 transition">Continue shopping</button>
+            <button onClick={() => setScreen("home")} className="w-full mt-4 text-sm font-semibold text-slate-500 py-1.5 active:scale-95 transition">Continue shopping</button>
           </div>
         </>
       )}

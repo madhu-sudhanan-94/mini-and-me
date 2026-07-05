@@ -59,10 +59,10 @@ export default function Profile() {
         </div>
         <div className="flex flex-col items-center mt-3">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden ring-4 ring-white/25">
+            <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center overflow-hidden ring-4 ring-white/40 shadow-lg">
               {avatarSrc
                 ? <img src={avatarSrc} alt="Profile photo" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
-                : <span className="text-white text-2xl font-extrabold">{initials(f.full_name, email)}</span>}
+                : <span className="text-brand-500 text-2xl font-extrabold">{initials(f.full_name, email)}</span>}
             </div>
             <label title="Change photo" className={`absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-white text-brand-600 shadow-md flex items-center justify-center ${avatarBusy ? "opacity-60 cursor-wait" : "cursor-pointer"}`}>
               <Camera size={16} />

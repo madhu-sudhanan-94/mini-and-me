@@ -19,10 +19,15 @@ export default function Home() {
   const cats = ["kids", "women", "men"];
   const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
   const catShape = { women: "dress", men: "shirt", kids: "overall" };
+  const catImg = {};
+  for (const c of cats) {
+    const withImg = products.find((p) => p.cat === c && p.images && p.images[0]);
+    if (withImg) catImg[c] = withImg.images[0];
+  }
   const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
   return (
     <div className="pb-4">
-      <div className="lg:hidden sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
+      <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
         <div>
           {firstName && <p className="text-slate-400 text-xs">Hi, {firstName} 👋</p>}
           <p className="font-extrabold text-slate-900 text-lg">{BRAND.name}</p>
@@ -89,8 +94,14 @@ export default function Home() {
             <div className="flex justify-around lg:justify-start lg:gap-12">
               {cats.map((c) => (
                 <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className="flex flex-col items-center gap-2 group">
-                  <div className={`w-16 h-16 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-linear-to-br ${catColor[c]} shadow-md group-hover:shadow-lg group-active:scale-95 transition`}>
-                    <Garment shape={catShape[c]} color="#ffffff" className="h-[58%]" />
+                  <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-full overflow-hidden shadow-md ring-1 ring-black/5 group-hover:shadow-lg group-active:scale-95 transition">
+                    {catImg[c] ? (
+                      <img src={catImg[c]} alt={CAT_LABEL[c]} loading="lazy" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className={`w-full h-full flex items-center justify-center bg-linear-to-br ${catColor[c]}`}>
+                        <Garment shape={catShape[c]} color="#ffffff" className="h-[58%]" />
+                      </div>
+                    )}
                   </div>
                   <span className="text-xs lg:text-sm font-semibold text-slate-700">{CAT_LABEL[c]}</span>
                 </button>

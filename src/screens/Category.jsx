@@ -14,7 +14,7 @@ const PAGE = 12;
 
 export default function Category() {
   const { products, selCategory, setSelCategory, setScreen } = useStore();
-  const cats = ["women", "men", "kids"];
+  const cats = ["kids", "women", "men"];
   const [shape, setShape] = useState("all");
   const [sort, setSort] = useState("featured");
   const [visible, setVisible] = useState(PAGE);

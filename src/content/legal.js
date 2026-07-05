@@ -12,8 +12,8 @@ const NAME = BRAND.name;
 
 // ---- Business & support details (EDIT THESE) ----
 export const SUPPORT = {
-  email: "support@miniandme.example",          // EDIT — real support inbox
-  phone: "+91 00000 00000",                    // EDIT
+  email: "miniandme.in@gmail.com",             // real support inbox
+  phone: "+91 89715 83502",                    // real support number
   hours: "Monday–Saturday, 10:00–18:00 IST",
   address: "Registered address, City, State, PIN — India",  // EDIT
   jurisdiction: "Bengaluru, Karnataka",        // EDIT — courts/jurisdiction city

@@ -33,10 +33,10 @@ export default function BrandLogo({ imgClass = "h-7 lg:h-8", className = "" }) {
         />
       ) : (
         <>
-          <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={panelBlue}>
+          {/* <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={panelBlue}>
             <Logo size={18} className="text-white" />
-          </span>
-          <span className="font-extrabold text-lg text-slate-900">{BRAND.name}</span>
+          </span> */}
+          <span className="font-bold text-xl text-slate-900">{BRAND.name}</span>
         </>
       )}
     </button>

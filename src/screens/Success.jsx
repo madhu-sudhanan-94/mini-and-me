@@ -10,7 +10,7 @@ export default function Success() {
   return (
     <div className="relative flex flex-col min-h-full overflow-hidden">
       <Confetti />
-      <div className="relative flex-1 flex flex-col items-center justify-center text-center px-8 py-10">
+      <div className="relative flex-1 flex flex-col items-center justify-center text-center px-8 pt-[60px] pb-10">
         {/* Animated tick with a pulsing halo */}
         <div className="relative mb-6">
           <span className="sc-pulse absolute inset-0 rounded-full bg-brand-400/40" />
@@ -43,8 +43,8 @@ export default function Success() {
 
         {/* Actions */}
         <div className="w-full max-w-xs mt-6 space-y-2.5">
-          <PrimaryButton onClick={() => setScreen("orders")}><Package size={18} /> View my orders</PrimaryButton>
-          <PrimaryButton variant="solid" onClick={() => setScreen("home")}>Continue shopping</PrimaryButton>
+          <PrimaryButton onClick={() => setScreen("home")}>Continue shopping</PrimaryButton>
+          <button onClick={() => setScreen("orders")} className="w-full mt-2.5 text-sm font-semibold text-slate-500 py-1.5 active:scale-95 transition"> View my orders</button>
         </div>
       </div>
     </div>

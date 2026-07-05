@@ -1,6 +1,5 @@
 import React from "react";
 import { User, Shield, ChevronRight, ChevronLeft, Package, ShoppingCart, LogOut, MapPin, LifeBuoy, KeyRound } from "lucide-react";
-import { panelBlue } from "../theme.js";
 import { mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -38,24 +37,25 @@ export default function Account() {
 
   return (
     <div className="pb-6">
-      <div className="rounded-b-[2rem] pb-7" style={panelBlue}>
-        <div className="px-5 pt-[18px]">
-          <button onClick={() => setScreen("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-white" /></button>
-        </div>
-        <div className="px-5 pt-5 flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-white ring-4 ring-white/30 shadow-lg flex items-center justify-center overflow-hidden shrink-0">
-            {profile?.avatar_url
-              ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-              : (auth.role === "admin" ? <Shield size={30} className="text-brand-600" /> : <User size={30} className="text-brand-500" />)}
+      {/* light profile header */}
+      <div className="px-5 pt-[18px]">
+        <button onClick={() => setScreen("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-slate-700" /></button>
+        <div className="flex items-center gap-4 mt-4">
+          <div className="p-[3px] rounded-full bg-linear-to-br from-brand-500 to-accent-400 shrink-0 shadow-sm">
+            <div className="w-[70px] h-[70px] rounded-full bg-white flex items-center justify-center overflow-hidden">
+              {profile?.avatar_url
+                ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                : (auth.role === "admin" ? <Shield size={28} className="text-brand-600" /> : <User size={28} className="text-brand-500" />)}
+            </div>
           </div>
           <div className="min-w-0">
-            <p className="text-white font-extrabold text-xl truncate">{name}</p>
-            <p className="text-white/80 text-sm truncate">{auth.id || "Not signed in"}</p>
+            <p className="text-xl font-extrabold text-slate-900 truncate">{name}</p>
+            <p className="text-sm text-slate-500 truncate">{auth.id || "Not signed in"}</p>
           </div>
         </div>
       </div>
 
-      <div className="px-5 mt-5 space-y-5">
+      <div className="px-5 mt-6 space-y-5">
         {groups.map((g) => (
           <div key={g.label}>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1 mb-2">{g.label}</p>

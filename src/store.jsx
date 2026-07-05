@@ -89,7 +89,7 @@ export function StoreProvider({ children }) {
   const [placingOrder, setPlacingOrder] = useState(false);
 
   // admin form
-  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", color: "#2563EB", image: "", trending: false, stock: "" };
+  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, stock: "" };
   const [form, setForm] = useState(blankForm);
 
   const defaultAddress = addresses.find((a) => a.is_default) || addresses[0] || null;
@@ -674,7 +674,7 @@ export function StoreProvider({ children }) {
       shape: form.shape,
       price: Number(form.price),
       original_price: form.original ? Number(form.original) : null,
-      colors: form.id ? [form.color, ...((form._colors || []).slice(1))] : [form.color],
+      colors: (form.colors && form.colors.length) ? form.colors : ["#2563EB"],
       sizes,
       trending: !!form.trending,
       images,
@@ -773,7 +773,7 @@ export function StoreProvider({ children }) {
   const editProduct = (p) => setForm({
     id: p.id, name: p.name, cat: p.cat, shape: p.shape,
     price: String(p.price), original: p.original ? String(p.original) : "",
-    color: p.colors[0], _colors: p.colors, image: (p.images || []).join("\n"), trending: !!p.trending,
+    colors: (p.colors && p.colors.length) ? p.colors : ["#2563EB"], image: (p.images || []).join("\n"), trending: !!p.trending,
     stock: p.stock != null ? String(p.stock) : "",
   });
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin, LifeBuoy, KeyRound } from "lucide-react";
+import { User, Shield, ChevronRight, ChevronLeft, Package, ShoppingCart, LogOut, MapPin, LifeBuoy, KeyRound } from "lucide-react";
 import { panelBlue } from "../theme.js";
 import { mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
@@ -11,6 +11,9 @@ export default function Account() {
   return (
     <div className="pb-4">
       <div className="rounded-b-[2.5rem] pb-8" style={panelBlue}>
+        <div className="px-6 pt-3">
+          <button onClick={() => setScreen("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-white" /></button>
+        </div>
         <div className="px-6 pt-4 flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden">
             {profile?.avatar_url

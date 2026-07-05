@@ -34,7 +34,7 @@ const SCREENS = {
 };
 
 function Shell() {
-  const { hydrated, screen, toast } = useStore();
+  const { hydrated, screen, toast, query } = useStore();
 
   if (!hydrated) {
     return (
@@ -51,18 +51,16 @@ function Shell() {
   }
 
   const Current = SCREENS[screen] || Home;
-  const showFooter = screen === "home";
+  const showFooter = screen === "home" && !query.trim(); // hide footer while showing search results
   const showChrome = screen !== "login" && screen !== "resetpw";
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-xl";
-  // Soft ambient wash behind the profile / account section + home + login (mobile only — reset at the lg breakpoint).
-  const washScreen = ["home", "login", "account", "profile", "security", "addresses", "orders"].includes(screen);
 
   return (
     <div className="min-h-screen bg-slate-300 lg:bg-slate-50 flex justify-center sm:py-6 lg:py-0 font-sans">
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}@keyframes vkUp{from{transform:translateY(100%);opacity:.7}to{transform:translateY(0);opacity:1}}.screen-wash{background:${profileWash};background-attachment:local}@media(min-width:900px){.screen-wash{background:none}}`}</style>
       <div className="relative w-full max-w-[430px] lg:max-w-none bg-slate-50 sm:rounded-[2.5rem] lg:rounded-none sm:shadow-2xl lg:shadow-none overflow-hidden lg:overflow-visible flex flex-col h-screen sm:h-[880px] lg:h-auto lg:min-h-screen">
         {showChrome && <DesktopNav />}
-        <div className={`flex-1 overflow-y-auto no-scrollbar lg:overflow-visible ${washScreen ? "screen-wash" : ""}`}>
+        <div className="flex-1 overflow-y-auto no-scrollbar lg:overflow-visible screen-wash">
           <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>
           {showFooter && <Footer />}
         </div>

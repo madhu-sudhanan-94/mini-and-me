@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, ShoppingCart, User, Heart } from "lucide-react";
+import { Search, ShoppingCart, User, Heart, X } from "lucide-react";
 import { CAT_LABEL } from "../lib/format.js";
 import BrandLogo from "./BrandLogo.jsx";
 import { useStore } from "../store.jsx";
@@ -21,6 +21,11 @@ export default function DesktopNav() {
         <div className="flex items-center bg-slate-100 rounded-full px-4 py-2">
           <Search size={17} className="text-slate-400" />
           <input value={query} onChange={(e) => { setQuery(e.target.value); setScreen("home"); }} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-2 outline-hidden text-sm bg-transparent" />
+          {query && (
+            <button onClick={() => setQuery("")} aria-label="Clear search" className="ml-2 w-5 h-5 rounded-full bg-slate-300/70 hover:bg-slate-400/70 flex items-center justify-center shrink-0 transition">
+              <X size={12} className="text-slate-600" />
+            </button>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-1 shrink-0">

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, SearchX } from "lucide-react";
+import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, SearchX, X } from "lucide-react";
 import EmptyState from "../components/EmptyState.jsx";
 import { heroBlue } from "../theme.js";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -63,6 +63,11 @@ export default function Home() {
         <div className="flex items-center bg-white rounded-2xl px-4 py-3 shadow-xs">
           <Search size={18} className="text-slate-400" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-3 outline-hidden text-sm bg-transparent" />
+          {query && (
+            <button onClick={() => setQuery("")} aria-label="Clear search" className="ml-2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-90 flex items-center justify-center shrink-0 transition">
+              <X size={14} className="text-slate-500" />
+            </button>
+          )}
         </div>
       </div>
 

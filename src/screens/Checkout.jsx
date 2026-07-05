@@ -16,9 +16,9 @@ export default function Checkout() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="px-5 pt-2 flex items-center gap-3">
+      <div className="px-5 pt-[18px] flex items-center gap-3">
         <button onClick={() => setScreen("cart")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-extrabold text-slate-900">Checkout</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Checkout</h2>
       </div>
 
       <div className="flex-1 px-6 pt-5">

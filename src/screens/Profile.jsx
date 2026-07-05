@@ -53,7 +53,7 @@ export default function Profile() {
   return (
     <div className="pb-6">
       <div className="rounded-b-[2.5rem] pb-10" style={panelBlue}>
-        <div className="px-5 pt-2 flex items-center gap-3">
+        <div className="px-5 pt-[18px] flex items-center gap-3">
           <button onClick={() => setScreen("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"><ChevronLeft size={20} className="text-white" /></button>
           <h2 className="text-xl font-bold text-white">Edit profile</h2>
         </div>

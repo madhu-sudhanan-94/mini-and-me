@@ -11,9 +11,9 @@ export default function Cart() {
   const bill = gstBreakdown(cartTotal);
   return (
     <div className="flex flex-col min-h-full">
-      <div className="px-5 pt-5 flex items-center gap-3">
+      <div className="px-5 pt-[18px] flex items-center gap-3">
         <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-extrabold text-slate-900">My cart</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">My cart</h2>
       </div>
 
       {cart.length === 0 ? (

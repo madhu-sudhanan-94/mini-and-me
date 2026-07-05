@@ -27,7 +27,7 @@ export default function AdminOrders() {
   return (
     <div className="flex flex-col min-h-full bg-slate-50">
       <div className="rounded-b-3xl" style={panelBlueDeep}>
-        <div className="px-5 pt-2 pb-4 flex items-center gap-3">
+        <div className="px-5 pt-[18px] pb-4 flex items-center gap-3">
           <button onClick={() => setScreen("admin")} aria-label="Back" className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center"><ChevronLeft size={18} className="text-white" /></button>
           <div>
             <p className="text-white font-bold text-lg">Orders</p>

@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User } from "lucide-react";
+import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, Baby, Shirt } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import { heroBlue } from "../theme.js";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
@@ -17,11 +17,11 @@ export default function Home() {
   const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 6);
   const cats = ["kids", "women", "men"];
   const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
-  const catEmoji = { women: "👗", men: "👔", kids: "🧸" };
+  const catIcon = { women: Shirt, men: Shirt, kids: Baby };
   const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
   return (
     <div className="pb-4">
-      <div className="lg:hidden px-5 pt-2 flex items-center justify-between">
+      <div className="lg:hidden sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
         <div>
           {firstName && <p className="text-slate-400 text-xs">Hi, {firstName} 👋</p>}
           <p className="font-extrabold text-slate-900 text-lg">{BRAND.name}</p>
@@ -86,14 +86,17 @@ export default function Home() {
               <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
             </div>
             <div className="flex justify-around lg:justify-start lg:gap-12">
-              {cats.map((c) => (
-                <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className="flex flex-col items-center gap-2 group">
-                  <div className={`w-16 h-16 lg:w-24 lg:h-24 rounded-full flex items-center justify-center text-3xl lg:text-5xl bg-linear-to-br ${catColor[c]} shadow-md group-hover:shadow-lg group-active:scale-95 transition`}>
-                    <span className="drop-shadow-sm">{catEmoji[c]}</span>
-                  </div>
-                  <span className="text-xs lg:text-sm font-semibold text-slate-700">{CAT_LABEL[c]}</span>
-                </button>
-              ))}
+              {cats.map((c) => {
+                const Icon = catIcon[c];
+                return (
+                  <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className="flex flex-col items-center gap-2 group">
+                    <div className={`w-16 h-16 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-linear-to-br ${catColor[c]} shadow-md group-hover:shadow-lg group-active:scale-95 transition`}>
+                      <Icon className="w-7 h-7 lg:w-11 lg:h-11 text-white" strokeWidth={1.75} />
+                    </div>
+                    <span className="text-xs lg:text-sm font-semibold text-slate-700">{CAT_LABEL[c]}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

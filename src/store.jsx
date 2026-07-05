@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import {
   ADMIN_EMAIL, SUPABASE_URL, SUPABASE_KEY, SB_HEADERS, mapDbProduct,
   authSignUp, authSignIn, authRefresh, authSignOut, authErrText,
@@ -195,6 +195,69 @@ export function StoreProvider({ children }) {
     } catch (e) { /* offline */ }
   };
   useEffect(() => { loadMyOrders(); }, [session?.user?.id]);
+
+  // ----- Cart & wishlist synced per user, + claim guest orders on login -----
+  const userStateLoaded = useRef(false);
+
+  const upsertUserState = async (uid, cartVal, favVal) => {
+    try {
+      await authedFetch(SUPABASE_URL + "/rest/v1/user_state?on_conflict=user_id", {
+        method: "POST",
+        headers: { ...writeHeaders(), Prefer: "resolution=merge-duplicates" },
+        body: JSON.stringify({ user_id: uid, cart: cartVal, favorites: favVal, updated_at: new Date().toISOString() }),
+      });
+    } catch (e) { /* offline */ }
+  };
+
+  const loadUserState = async () => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    let remoteCart = [], remoteFav = [];
+    try {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/user_state?user_id=eq." + uid + "&select=*", { headers: writeHeaders() });
+      if (res.ok) {
+        const rows = await res.json();
+        const row = Array.isArray(rows) && rows[0];
+        if (row) {
+          remoteCart = Array.isArray(row.cart) ? row.cart : [];
+          remoteFav = Array.isArray(row.favorites) ? row.favorites : [];
+        }
+      }
+      let mergedCart, mergedFav;
+      setCart((c) => (mergedCart = remoteCart.length ? remoteCart : c));                 // remote wins if it has items
+      setFavorites((f) => (mergedFav = Array.from(new Set([...(f || []), ...remoteFav])))); // union of wishlists
+      await upsertUserState(uid, mergedCart, mergedFav);
+    } catch (e) { /* offline */ }
+    finally { userStateLoaded.current = true; }
+  };
+
+  // Claim guest orders (user_id null) placed with this account's email
+  const claimGuestOrders = async () => {
+    const uid = session?.user?.id;
+    const email = session?.user?.email;
+    if (!uid || !email) return;
+    try {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?user_id=is.null&customer_email=eq." + encodeURIComponent(email), {
+        method: "PATCH",
+        headers: writeHeaders(),
+        body: JSON.stringify({ user_id: uid }),
+      });
+      if (res.ok) loadMyOrders();
+    } catch (e) { /* ignore */ }
+  };
+
+  // On login: pull the saved cart/wishlist and claim any matching guest orders
+  useEffect(() => {
+    userStateLoaded.current = false;
+    if (session?.user?.id) { loadUserState(); claimGuestOrders(); }
+  }, [session?.user?.id]);
+
+  // Persist cart/wishlist to the DB while signed in (debounced, after the initial load)
+  useEffect(() => {
+    if (!hydrated || !session?.user?.id || !userStateLoaded.current) return;
+    const t = setTimeout(() => upsertUserState(session.user.id, cart, favorites), 600);
+    return () => clearTimeout(t);
+  }, [cart, favorites, session?.user?.id, hydrated]);
 
   // Admin: read & manage ALL orders
   const loadAdminOrders = async () => {

@@ -150,3 +150,23 @@ create policy "products_admin_write" on storage.objects
 drop policy if exists "products_admin_update" on storage.objects;
 create policy "products_admin_update" on storage.objects
   for update using (bucket_id = 'products' and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+-- ---------- Cart & wishlist synced per user + claim guest orders ----------
+create table if not exists public.user_state (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  cart       jsonb not null default '[]',
+  favorites  jsonb not null default '[]',
+  updated_at timestamptz not null default now()
+);
+alter table public.user_state enable row level security;
+
+drop policy if exists "user_state_own" on public.user_state;
+create policy "user_state_own" on public.user_state
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Let a signed-in user claim their own guest orders (user_id null + matching email)
+drop policy if exists "orders_claim_guest" on public.orders;
+create policy "orders_claim_guest" on public.orders
+  for update
+  using (user_id is null and lower(coalesce(customer_email, '')) = lower(coalesce(auth.jwt() ->> 'email', '')))
+  with check (auth.uid() = user_id);

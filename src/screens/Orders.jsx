@@ -4,6 +4,7 @@ import { formatINR } from "../lib/format.js";
 import { ORDER_STEPS, STATUS_LABEL, fmtDate, normalizeOrder, shipLines, mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 
 function StatusTracker({ status }) {
   if (status === "cancelled") return <p className="text-xs font-semibold text-red-500 mt-3">Order cancelled</p>;
@@ -38,12 +39,9 @@ export default function Orders() {
       </div>
 
       {list.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center px-8 mt-20">
-          <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4"><Package size={32} className="text-brand-500" /></div>
-          <p className="font-bold text-slate-800 text-lg">No orders yet</p>
-          <p className="text-slate-400 text-sm mt-1">Your placed orders will show up here.</p>
-          <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="mt-5 px-6">Start shopping</PrimaryButton>
-        </div>
+        <EmptyState icon={Package} title="No orders yet" subtitle="Your placed orders will show up here." className="mt-20">
+          <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Start shopping</PrimaryButton>
+        </EmptyState>
       ) : (
         <div className="px-5 mt-4 space-y-3">
           {list.map((o) => (

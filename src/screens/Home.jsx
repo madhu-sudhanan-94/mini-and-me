@@ -1,5 +1,6 @@
 import React from "react";
-import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User } from "lucide-react";
+import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, SearchX } from "lucide-react";
+import EmptyState from "../components/EmptyState.jsx";
 import { heroBlue } from "../theme.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
@@ -60,7 +61,7 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {results.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
-          {results.length === 0 && <p className="text-slate-400 text-sm py-10 text-center">No matches. Try another search.</p>}
+          {results.length === 0 && <EmptyState icon={SearchX} title="No matches" subtitle="Try another search term." className="py-16" />}
         </div>
       ) : (
         <>

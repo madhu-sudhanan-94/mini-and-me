@@ -51,7 +51,7 @@ function Shell() {
   }
 
   const Current = SCREENS[screen] || Home;
-  const showFooter = ["home", "category", "favorites"].includes(screen);
+  const showFooter = screen === "home";
   const showChrome = screen !== "login" && screen !== "resetpw";
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-2xl";
 

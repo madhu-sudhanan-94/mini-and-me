@@ -3,6 +3,7 @@ import { ChevronLeft, ShoppingCart, Trash2, Minus, Plus } from "lucide-react";
 import { formatINR, gstBreakdown } from "../lib/format.js";
 import ProductImage from "../components/ProductImage.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
@@ -16,12 +17,9 @@ export default function Cart() {
       </div>
 
       {cart.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
-          <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4"><ShoppingCart size={32} className="text-brand-500" /></div>
-          <p className="font-bold text-slate-800 text-lg">Your cart is empty</p>
-          <p className="text-slate-400 text-sm mt-1">Find something you'll love.</p>
-          <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="mt-5 px-6">Start shopping</PrimaryButton>
-        </div>
+        <EmptyState icon={ShoppingCart} title="Your cart is empty" subtitle="Find something you'll love." className="flex-1">
+          <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Start shopping</PrimaryButton>
+        </EmptyState>
       ) : (
         <>
           <div className="flex-1 overflow-y-auto lg:overflow-visible px-5 mt-3 space-y-3">

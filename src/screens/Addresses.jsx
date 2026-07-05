@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronLeft, Plus, Edit3, Trash2, MapPin, Star } from "lucide-react";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { COUNTRY_NAMES } from "../lib/countries.js";
 import { INDIAN_STATES } from "../lib/india.js";
 import { useStore } from "../store.jsx";
@@ -118,12 +119,9 @@ export default function Addresses() {
           </div>
         </div>
       ) : addresses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center px-8 mt-20">
-          <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4"><MapPin size={32} className="text-brand-500" /></div>
-          <p className="font-bold text-slate-800 text-lg">No addresses yet</p>
-          <p className="text-slate-400 text-sm mt-1">Add a delivery address to speed up checkout.</p>
-          <PrimaryButton variant="solid" onClick={startNew} full={false} className="mt-5 px-6"><Plus size={18} /> Add address</PrimaryButton>
-        </div>
+        <EmptyState icon={MapPin} title="No addresses yet" subtitle="Add a delivery address to speed up checkout." className="mt-20">
+          <PrimaryButton variant="solid" onClick={startNew} full={false} className="px-6"><Plus size={18} /> Add address</PrimaryButton>
+        </EmptyState>
       ) : (
         <div className="px-5 mt-4 space-y-3">
           {addresses.map((a) => (

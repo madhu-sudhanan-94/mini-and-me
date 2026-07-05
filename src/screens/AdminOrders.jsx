@@ -60,7 +60,7 @@ export default function AdminOrders() {
             ))}
           </div>
         )}
-        {!ordersBusy && list.length === 0 && <p className="text-center text-slate-400 text-sm py-10">No orders yet.</p>}
+        {!ordersBusy && list.length === 0 && <EmptyState icon={Package} title="No orders yet" subtitle="New orders will appear here." className="py-16" />}
 
         <div className="space-y-3">
           {list.map((o) => (

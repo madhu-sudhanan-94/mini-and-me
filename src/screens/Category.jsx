@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, PackageOpen } from "lucide-react";
 import { CAT_LABEL } from "../lib/format.js";
 import ProductCard from "../components/ProductCard.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { useStore } from "../store.jsx";
 
 const SORTS = [
@@ -66,7 +67,7 @@ export default function Category() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-5 mt-2">
         {shown.map((p) => <ProductCard key={p.id} p={p} />)}
       </div>
-      {list.length === 0 && <p className="text-slate-400 text-sm py-10 text-center">No items here yet.</p>}
+      {list.length === 0 && <EmptyState icon={PackageOpen} title="No items here yet" subtitle="Try a different filter or category." className="py-16" />}
       {visible < list.length && (
         <div className="px-5 mt-5">
           <button onClick={() => setVisible((v) => v + PAGE)} className="w-full border border-slate-200 text-slate-600 font-semibold py-3 rounded-xl">Load more ({list.length - visible} left)</button>

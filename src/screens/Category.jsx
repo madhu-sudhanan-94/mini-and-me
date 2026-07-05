@@ -1,47 +1,77 @@
-import React, { useState, useEffect } from "react";
-import { ChevronLeft, PackageOpen } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { ChevronLeft, PackageOpen, SlidersHorizontal, X } from "lucide-react";
 import { CAT_LABEL } from "../lib/format.js";
+import { SORTS, sortProducts, COLOR_FAMILIES, productFamilies } from "../lib/catalog.js";
 import ProductCard from "../components/ProductCard.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import FilterPanel from "../components/FilterPanel.jsx";
+import Pagination from "../components/Pagination.jsx";
+import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
-const SORTS = [
-  { key: "featured", label: "Featured" },
-  { key: "price-low", label: "Price: Low to High" },
-  { key: "price-high", label: "Price: High to Low" },
-  { key: "newest", label: "Newest" },
-];
-const PAGE = 12;
+const PAGE = 8;
 
 export default function Category() {
   const { products, selCategory, setSelCategory, setScreen } = useStore();
   const cats = ["kids", "women", "men"];
+
+  const inCat = useMemo(() => products.filter((p) => p.cat === selCategory), [products, selCategory]);
+  const shapes = useMemo(() => ["all", ...Array.from(new Set(inCat.map((p) => p.shape)))], [inCat]);
+  const bounds = useMemo(() => {
+    if (!inCat.length) return [0, 0];
+    const prices = inCat.map((p) => p.price);
+    return [Math.min(...prices), Math.max(...prices)];
+  }, [inCat]);
+  const families = useMemo(
+    () => COLOR_FAMILIES.map((f) => f.key).filter((k) => inCat.some((p) => productFamilies(p).has(k))),
+    [inCat]
+  );
+
   const [shape, setShape] = useState("all");
   const [sort, setSort] = useState("featured");
-  const [visible, setVisible] = useState(PAGE);
+  const [price, setPrice] = useState(bounds);
+  const [colors, setColors] = useState(new Set());
+  const [page, setPage] = useState(1);
+  const [sheet, setSheet] = useState(false);
 
-  useEffect(() => { setShape("all"); setVisible(PAGE); }, [selCategory]);
-  useEffect(() => { setVisible(PAGE); }, [shape, sort]);
+  // reset filters whenever the category changes
+  useEffect(() => { setShape("all"); setColors(new Set()); setPrice(bounds); setPage(1); }, [selCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+  // back to page 1 whenever the result set changes
+  useEffect(() => { setPage(1); }, [shape, sort, price, colors]);
 
-  const inCat = products.filter((p) => p.cat === selCategory);
-  const shapes = ["all", ...Array.from(new Set(inCat.map((p) => p.shape)))];
-  let list = shape === "all" ? inCat : inCat.filter((p) => p.shape === shape);
-  list = [...list].sort((a, b) => {
-    if (sort === "price-low") return a.price - b.price;
-    if (sort === "price-high") return b.price - a.price;
-    if (sort === "newest") return (b.tag === "new" ? 1 : 0) - (a.tag === "new" ? 1 : 0) || b.id - a.id;
-    return (b.trending ? 1 : 0) - (a.trending ? 1 : 0); // featured
+  const toggleColor = (key) => setColors((prev) => {
+    const n = new Set(prev);
+    n.has(key) ? n.delete(key) : n.add(key);
+    return n;
   });
-  const shown = list.slice(0, visible);
+  const resetFilters = () => { setShape("all"); setColors(new Set()); setPrice(bounds); };
+  const activeFilters = (shape !== "all" ? 1 : 0) + colors.size + (price[0] > bounds[0] || price[1] < bounds[1] ? 1 : 0);
+
+  let list = inCat
+    .filter((p) => shape === "all" || p.shape === shape)
+    .filter((p) => p.price >= price[0] && p.price <= price[1])
+    .filter((p) => colors.size === 0 || [...productFamilies(p)].some((k) => colors.has(k)));
+  list = sortProducts(list, sort);
+
+  const pageCount = Math.max(1, Math.ceil(list.length / PAGE));
+  const shown = list.slice((page - 1) * PAGE, page * PAGE);
+
+  const panelProps = { shapes, shape, setShape, bounds, price, setPrice, families, colors, toggleColor, onReset: resetFilters };
+  const sortSelect = (extra = "") => (
+    <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className={`shrink-0 border border-slate-200 rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-600 outline-hidden bg-white select-chevron ${extra}`}>
+      {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+    </select>
+  );
 
   return (
-    <div className="pb-4">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
+    <div className="pb-4 lg:pb-10">
+      <div className="px-5 lg:px-6 pt-[18px] flex items-center gap-3">
         <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">Shop</h2>
       </div>
 
-      <div className="flex gap-2 px-5 mt-4 overflow-x-auto no-scrollbar">
+      {/* category tabs */}
+      <div className="flex gap-2 px-5 lg:px-6 mt-4 overflow-x-auto no-scrollbar">
         {cats.map((c) => (
           <button key={c} onClick={() => setSelCategory(c)} className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${selCategory === c ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-white text-slate-500 shadow-xs"}`}>
             {CAT_LABEL[c]}
@@ -49,7 +79,8 @@ export default function Category() {
         ))}
       </div>
 
-      <div className="flex items-center gap-2 px-5 mt-3">
+      {/* mobile: type chips + sort */}
+      <div className="lg:hidden flex items-center gap-2 px-5 mt-3">
         <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar">
           {shapes.map((s) => (
             <button key={s} onClick={() => setShape(s)} className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap capitalize ${shape === s ? "bg-slate-900 text-white" : "bg-white text-slate-500 shadow-xs"}`}>
@@ -57,20 +88,58 @@ export default function Category() {
             </button>
           ))}
         </div>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className="shrink-0 border border-slate-200 rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-600 outline-hidden bg-white select-chevron">
-          {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-        </select>
+        {sortSelect()}
+      </div>
+      {/* mobile: filters button + count */}
+      <div className="lg:hidden flex items-center justify-between px-5 mt-3">
+        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-600 active:scale-95 transition">
+          <SlidersHorizontal size={14} /> Filters
+          {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
+        </button>
+        <p className="text-xs text-slate-400">{list.length} item{list.length !== 1 ? "s" : ""}</p>
       </div>
 
-      <p className="px-5 mt-3 text-xs text-slate-400">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+      <div className="lg:flex lg:gap-6 lg:px-6 lg:mt-5">
+        {/* desktop sidebar */}
+        <aside className="hidden lg:block w-64 shrink-0">
+          <div className="bg-white rounded-2xl border border-slate-100 p-5 sticky top-20">
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold text-slate-900">Filters</p>
+              {activeFilters > 0 && <button onClick={resetFilters} className="text-xs font-semibold text-brand-600">Clear ({activeFilters})</button>}
+            </div>
+            <FilterPanel {...panelProps} />
+          </div>
+        </aside>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-5 mt-2">
-        {shown.map((p) => <ProductCard key={p.id} p={p} />)}
+        <div className="flex-1 min-w-0">
+          {/* desktop sort toolbar */}
+          <div className="hidden lg:flex items-center justify-between mb-4">
+            <p className="text-sm text-slate-500">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+            {sortSelect()}
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 px-5 lg:px-0 mt-2 lg:mt-0">
+            {shown.map((p) => <ProductCard key={p.id} p={p} />)}
+          </div>
+
+          {list.length === 0 && <EmptyState icon={PackageOpen} title="No items match" subtitle="Try clearing a filter or picking another category." className="py-16" />}
+
+          <div className="px-5 lg:px-0"><Pagination page={page} pageCount={pageCount} onChange={(p) => { setPage(p); if (typeof window !== "undefined") window.scrollTo({ top: 0 }); }} /></div>
+        </div>
       </div>
-      {list.length === 0 && <EmptyState icon={PackageOpen} title="No items here yet" subtitle="Try a different filter or category." className="py-16" />}
-      {visible < list.length && (
-        <div className="px-5 mt-5">
-          <button onClick={() => setVisible((v) => v + PAGE)} className="w-full border border-slate-200 text-slate-600 font-semibold py-3 rounded-xl">Load more ({list.length - visible} left)</button>
+
+      {/* mobile filters bottom sheet */}
+      {sheet && (
+        <div className="lg:hidden absolute inset-0 z-40 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSheet(false)} />
+          <div className="relative bg-white rounded-t-3xl max-h-[85%] overflow-y-auto no-scrollbar p-5 pb-8" style={{ animation: "vkUp .25s ease" }}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+              <button onClick={() => setSheet(false)} aria-label="Close" className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center"><X size={18} className="text-slate-500" /></button>
+            </div>
+            <FilterPanel showType={false} {...panelProps} />
+            <PrimaryButton size="lg" onClick={() => setSheet(false)} className="mt-6">Show {list.length} result{list.length !== 1 ? "s" : ""}</PrimaryButton>
+          </div>
         </div>
       )}
     </div>

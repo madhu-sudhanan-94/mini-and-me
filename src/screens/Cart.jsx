@@ -36,7 +36,7 @@ export default function Cart() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                       <p className="font-semibold text-slate-800 text-[15px] truncate pr-2">{p.name}</p>
-                      <button onClick={() => removeItem(idx)} className="text-slate-300 hover:text-red-500 shrink-0"><Trash2 size={17} /></button>
+                      <button onClick={() => removeItem(idx)} className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={17} /></button>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">
                       Size {item.size}
@@ -49,8 +49,8 @@ export default function Cart() {
                         <button onClick={() => changeQty(idx, 1)} className="w-7 h-7 flex items-center justify-center"><Plus size={14} /></button>
                       </div>
                       <div className="flex flex-col items-end leading-tight">
-                        <span className="font-bold text-slate-900">{formatINR(p.price * item.qty)}</span>
                         {onSale && <span className="text-[11px] text-slate-400 line-through">{formatINR(p.original * item.qty)}</span>}
+                        <span className="font-bold text-slate-900">{formatINR(p.price * item.qty)}</span>
                       </div>
                     </div>
                   </div>

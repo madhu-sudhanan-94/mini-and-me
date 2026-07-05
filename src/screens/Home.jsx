@@ -62,7 +62,7 @@ export default function Home() {
       {query.trim() ? (
         <div className="px-5 mt-5">
           <p className="text-sm font-semibold text-slate-700 mb-3">Results for “{query}”</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {results.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
           {results.length === 0 && <EmptyState icon={SearchX} title="No matches" subtitle="Try another search term." className="py-16" />}
@@ -157,7 +157,7 @@ export default function Home() {
           {/* New in */}
           <div className="mt-6 px-5">
             <h3 className="font-bold text-slate-900 text-lg mb-3">New in</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {newIn.map((p) => <ProductCard key={p.id} p={p} />)}
             </div>
           </div>

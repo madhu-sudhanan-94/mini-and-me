@@ -58,3 +58,27 @@ select.select-chevron {
   background-position: right 0.7rem center;
   background-size: 15px;
 }
+
+/* Dual-handle price range slider (two stacked range inputs, transparent tracks,
+   only the thumbs are interactive). Used by components/PriceRangeSlider.jsx. */
+.range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+.range-thumb::-webkit-slider-runnable-track { background: transparent; border: none; }
+.range-thumb::-moz-range-track { background: transparent; border: none; }
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 18px; height: 18px; border-radius: 9999px;
+  background: #fff; border: 2px solid #2563eb;
+  box-shadow: 0 1px 3px rgba(2, 6, 23, 0.25); cursor: pointer;
+}
+.range-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px; height: 18px; border-radius: 9999px;
+  background: #fff; border: 2px solid #2563eb;
+  box-shadow: 0 1px 3px rgba(2, 6, 23, 0.25); cursor: pointer;
+}

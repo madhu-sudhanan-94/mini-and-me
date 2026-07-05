@@ -19,7 +19,7 @@ export default function Favorites() {
           <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Browse items</PrimaryButton>
         </EmptyState>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-5 mt-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-5 mt-4">
           {favs.map((p) => <ProductCard key={p.id} p={p} />)}
         </div>
       )}

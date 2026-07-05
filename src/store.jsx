@@ -149,7 +149,7 @@ export function StoreProvider({ children }) {
       setSession({ access_token, refresh_token, user });
       setAuth({ role: email === ADMIN_EMAIL ? "admin" : "customer", id: user?.email || email, uid: user?.id || null });
       if (type === "recovery") setScreen("resetpw");
-      else { setScreen("home"); showToast("Email verified — you're signed in"); }
+      else { setScreen(email === ADMIN_EMAIL ? "admin" : "home"); showToast("Email verified — you're signed in"); }
       try { window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch {}
     })();
   }, []);

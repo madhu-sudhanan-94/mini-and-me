@@ -146,6 +146,7 @@ export function StoreProvider({ children }) {
     (async () => {
       const user = await authGetUser(access_token);
       const email = (user?.email || "").toLowerCase();
+      guestMergeRef.current = { cart, favorites };
       setSession({ access_token, refresh_token, user });
       setAuth({ role: email === ADMIN_EMAIL ? "admin" : "customer", id: user?.email || email, uid: user?.id || null });
       if (type === "recovery") setScreen("resetpw");
@@ -198,6 +199,16 @@ export function StoreProvider({ children }) {
 
   // ----- Cart & wishlist synced per user, + claim guest orders on login -----
   const userStateLoaded = useRef(false);
+  const guestMergeRef = useRef(null); // guest cart/wishlist captured at interactive login, merged into the account
+  const mergeCart = (base, extra) => {
+    const out = base.map((x) => ({ ...x }));
+    for (const it of extra) {
+      const i = out.findIndex((x) => x.id === it.id && x.size === it.size && x.color === it.color);
+      if (i >= 0) out[i].qty = (out[i].qty || 0) + (it.qty || 0);
+      else out.push({ ...it });
+    }
+    return out;
+  };
 
   const upsertUserState = async (uid, cartVal, favVal) => {
     try {
@@ -223,10 +234,15 @@ export function StoreProvider({ children }) {
           remoteFav = Array.isArray(row.favorites) ? row.favorites : [];
         }
       }
-      let mergedCart, mergedFav;
-      setCart((c) => (mergedCart = remoteCart.length ? remoteCart : c));                 // remote wins if it has items
-      setFavorites((f) => (mergedFav = Array.from(new Set([...(f || []), ...remoteFav])))); // union of wishlists
-      await upsertUserState(uid, mergedCart, mergedFav);
+      // Merge a genuine guest cart/wishlist captured at interactive login; on a plain
+      // session restore (no snapshot), the account's saved data is authoritative.
+      const snap = guestMergeRef.current;
+      guestMergeRef.current = null;
+      const mergedCart = snap ? mergeCart(remoteCart, snap.cart || []) : remoteCart;
+      const mergedFav = snap ? Array.from(new Set([...remoteFav, ...(snap.favorites || [])])) : remoteFav;
+      setCart(mergedCart);
+      setFavorites(mergedFav);
+      if (session?.user?.id === uid) await upsertUserState(uid, mergedCart, mergedFav); // skip if the account switched mid-fetch
     } catch (e) { /* offline */ }
     finally { userStateLoaded.current = true; }
   };
@@ -237,7 +253,7 @@ export function StoreProvider({ children }) {
     const email = session?.user?.email;
     if (!uid || !email) return;
     try {
-      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?user_id=is.null&customer_email=eq." + encodeURIComponent(email), {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?user_id=is.null&customer_email=eq." + encodeURIComponent(email.toLowerCase()), {
         method: "PATCH",
         headers: writeHeaders(),
         body: JSON.stringify({ user_id: uid }),
@@ -386,6 +402,7 @@ export function StoreProvider({ children }) {
   };
 
   const applySession = (data) => {
+    guestMergeRef.current = { cart, favorites }; // merge this guest cart/wishlist into the account
     const user = data.user || { email: loginEmail.trim().toLowerCase() };
     const email = (user.email || "").toLowerCase();
     const isAdmin = email === ADMIN_EMAIL;
@@ -507,7 +524,7 @@ export function StoreProvider({ children }) {
       line1: a.line1, line2: a.line2, area: a.area, city: a.city,
       state: a.state, pincode: a.pincode, country: a.country,
     } : null;
-    saveOrderToDb(order, itemsSnapshot, coPhone.trim() || null, coEmail.trim() || null, { userId: session?.user?.id || null, shipping });
+    saveOrderToDb(order, itemsSnapshot, coPhone.trim() || null, coEmail.trim().toLowerCase() || null, { userId: session?.user?.id || null, shipping });
     setOrders((o) => [{ ...order, status: "placed", shipping, items: itemsSnapshot }, ...o]);
     setLastOrder(order);
     setCart([]);
@@ -522,6 +539,9 @@ export function StoreProvider({ children }) {
     setAddresses([]);
     setMyOrders([]);
     setAdminOrders([]);
+    setCart([]);            // don't leave this account's cart/wishlist for the next person
+    setFavorites([]);
+    guestMergeRef.current = null;
     setAuth({ role: "guest", id: null });
     setReturnTo(null);
     setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice(""); setAuthMode("login");

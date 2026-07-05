@@ -164,9 +164,15 @@ drop policy if exists "user_state_own" on public.user_state;
 create policy "user_state_own" on public.user_state
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- Let a signed-in user claim their own guest orders (user_id null + matching email)
+-- Let a signed-in user claim their own guest orders (user_id null + matching email).
+-- Both emails must be non-empty so a null/empty email can never match another.
 drop policy if exists "orders_claim_guest" on public.orders;
 create policy "orders_claim_guest" on public.orders
   for update
-  using (user_id is null and lower(coalesce(customer_email, '')) = lower(coalesce(auth.jwt() ->> 'email', '')))
+  using (
+    user_id is null
+    and customer_email is not null
+    and (auth.jwt() ->> 'email') is not null
+    and lower(customer_email) = lower(auth.jwt() ->> 'email')
+  )
   with check (auth.uid() = user_id);

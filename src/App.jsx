@@ -4,7 +4,6 @@ import { BRAND } from "./brand.config.js";
 import { panelBlue } from "./theme.js";
 import { StoreProvider, useStore } from "./store.jsx";
 import DesktopNav from "./components/DesktopNav.jsx";
-import BottomNav from "./components/BottomNav.jsx";
 import Footer from "./components/Footer.jsx";
 import Login from "./screens/Login.jsx";
 import Home from "./screens/Home.jsx";
@@ -52,7 +51,6 @@ function Shell() {
   }
 
   const Current = SCREENS[screen] || Home;
-  const showNav = ["home", "category", "account", "cart", "favorites", "legal", "contact"].includes(screen);
   const showFooter = ["home", "category", "favorites"].includes(screen);
   const showChrome = screen !== "login" && screen !== "resetpw";
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-2xl";
@@ -66,7 +64,6 @@ function Shell() {
           <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>
           {showFooter && <Footer />}
         </div>
-        {showNav && <BottomNav />}
         <ProductModal />
 
         {/* Toast */}

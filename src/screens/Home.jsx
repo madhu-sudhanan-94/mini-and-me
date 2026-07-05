@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart, ShoppingCart, Search, Sparkles, ArrowRight } from "lucide-react";
+import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import { heroBlue } from "../theme.js";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
@@ -8,13 +8,14 @@ import ProductImage from "../components/ProductImage.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Home() {
-  const { products, query, setQuery, favorites, cartCount, setScreen, setSelCategory, heroIndex, setHeroIndex, openProduct } = useStore();
+  const { products, query, setQuery, favorites, cartCount, setScreen, setSelCategory, heroIndex, setHeroIndex, openProduct, profile } = useStore();
+  const firstName = (profile?.full_name || "").trim().split(/\s+/)[0] || "";
 
   const featured = products.filter((p) => p.trending).slice(0, 5);
   const heroP = featured.length ? featured[heroIndex % featured.length] : products[0];
   const trending = products.filter((p) => p.trending);
   const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 6);
-  const cats = ["women", "men", "kids"];
+  const cats = ["kids", "women", "men"];
   const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
   const catEmoji = { women: "👗", men: "👔", kids: "🧸" };
   const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
@@ -22,7 +23,7 @@ export default function Home() {
     <div className="pb-4">
       <div className="lg:hidden px-5 pt-2 flex items-center justify-between">
         <div>
-          <p className="text-slate-400 text-xs">Welcome back 👋</p>
+          {firstName && <p className="text-slate-400 text-xs">Hi, {firstName} 👋</p>}
           <p className="font-extrabold text-slate-900 text-lg">{BRAND.name}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -33,6 +34,9 @@ export default function Home() {
           <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
             <ShoppingCart size={19} className="text-slate-700" />
             {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{cartCount}</span>}
+          </button>
+          <button onClick={() => setScreen("account")} aria-label="Account" className="w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center overflow-hidden">
+            {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <User size={19} className="text-slate-700" />}
           </button>
         </div>
       </div>
@@ -75,23 +79,21 @@ export default function Home() {
             )}
           </div>
 
-          {/* Category cards */}
+          {/* Categories */}
           <div className="mt-6 px-5">
-            <h3 className="font-bold text-slate-900 text-lg mb-3">Shop by category</h3>
-            <div className="grid grid-cols-3 gap-3 lg:gap-5">
-              {cats.map((c) => {
-                const n = products.filter((p) => p.cat === c).length;
-                return (
-                  <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className={`relative overflow-hidden rounded-2xl p-3 h-28 lg:h-44 lg:p-5 flex flex-col justify-between bg-linear-to-br ${catColor[c]} shadow-md hover:shadow-lg active:scale-95 transition`}>
-                    <span className="absolute -right-2 -top-3 text-5xl lg:text-7xl opacity-30 select-none">{catEmoji[c]}</span>
-                    <span className="text-2xl lg:text-4xl drop-shadow-sm">{catEmoji[c]}</span>
-                    <div className="text-left relative z-10">
-                      <p className="text-white font-extrabold text-sm lg:text-lg leading-none">{CAT_LABEL[c]}</p>
-                      <p className="text-white/85 text-[10px] lg:text-xs mt-1">{n} items</p>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-900 text-lg">Shop by category</h3>
+              <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
+            </div>
+            <div className="flex justify-around lg:justify-start lg:gap-12">
+              {cats.map((c) => (
+                <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className="flex flex-col items-center gap-2 group">
+                  <div className={`w-16 h-16 lg:w-24 lg:h-24 rounded-full flex items-center justify-center text-3xl lg:text-5xl bg-linear-to-br ${catColor[c]} shadow-md group-hover:shadow-lg group-active:scale-95 transition`}>
+                    <span className="drop-shadow-sm">{catEmoji[c]}</span>
+                  </div>
+                  <span className="text-xs lg:text-sm font-semibold text-slate-700">{CAT_LABEL[c]}</span>
+                </button>
+              ))}
             </div>
           </div>
 

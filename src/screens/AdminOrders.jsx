@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
-import { ChevronLeft, MapPin } from "lucide-react";
+import { ChevronLeft, MapPin, Package } from "lucide-react";
 import { formatINR } from "../lib/format.js";
 import { ALL_STATUSES, STATUS_LABEL, fmtDate, normalizeOrder, shipLines } from "../lib/orders.js";
 import { panelBlueDeep } from "../theme.js";
 import Skeleton from "../components/Skeleton.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { useStore } from "../store.jsx";
 
 const statusChip = {
@@ -64,7 +65,7 @@ export default function AdminOrders() {
 
         <div className="space-y-3">
           {list.map((o) => (
-            <div key={o.key} className="bg-white rounded-2xl shadow-xs p-4">
+            <div key={o.key} className="bg-white rounded-2xl border border border-slate-200 p-4">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-bold text-slate-800">#{o.ref}</p>

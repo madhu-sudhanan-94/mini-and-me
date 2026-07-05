@@ -72,7 +72,7 @@ export default function Login() {
               </form>
 
               {authMode === "login" && (
-                <button type="button" onClick={requestPasswordReset} className="w-full mt-2 text-slate-400 text-xs font-medium">Forgot password?</button>
+                <button type="button" onClick={requestPasswordReset} className="w-full mt-3 text-slate-400 text-sm font-medium">Forgot password?</button>
               )}
               <button onClick={() => { setAuthMode(authMode === "signup" ? "login" : "signup"); setAuthErr(""); setAuthNotice(""); }} className="w-full mt-2 text-brand-600 text-sm font-semibold py-1.5">
                 {authMode === "signup" ? "Already have an account? Log in" : "New here? Create an account"}

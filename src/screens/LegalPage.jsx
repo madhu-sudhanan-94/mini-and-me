@@ -4,12 +4,12 @@ import { LEGAL_PAGES, LEGAL_ORDER, LAST_UPDATED } from "../content/legal.js";
 import { useStore } from "../store.jsx";
 
 export default function LegalPage() {
-  const { legalPage, openLegal, setScreen } = useStore();
+  const { legalPage, openLegal, goBack } = useStore();
   const page = LEGAL_PAGES[legalPage] || LEGAL_PAGES.privacy;
   return (
     <div className="pb-10">
       <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => setScreen("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => goBack("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">{page.title}</h2>
       </div>
 

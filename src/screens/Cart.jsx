@@ -8,12 +8,12 @@ import CouponBox from "../components/CouponBox.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
-  const { cart, products, setScreen, removeItem, changeQty, bill, coupon, cartCount } = useStore();
+  const { cart, products, setScreen, goBack, removeItem, changeQty, bill, coupon, cartCount } = useStore();
 
   return (
     <div className="flex flex-col min-h-full">
       <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => goBack("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">My cart</h2>
       </div>
 

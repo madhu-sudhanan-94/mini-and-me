@@ -23,7 +23,19 @@ export const useStore = () => useContext(StoreContext);
 
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [screen, setScreen] = useState("home"); // open on the store; login only when needed
+  const [screen, setScreenRaw] = useState("home"); // open on the store; login only when needed
+  // Navigation history so a screen's Back button returns to where the user actually
+  // came from (e.g. Account → My cart → Back → Account, not always Home).
+  const navStack = useRef([]);
+  const setScreen = (next) => setScreenRaw((cur) => {
+    const target = typeof next === "function" ? next(cur) : next;
+    if (target !== cur) { navStack.current.push(cur); if (navStack.current.length > 40) navStack.current.shift(); }
+    return target;
+  });
+  const goBack = (fallback = "home") => setScreenRaw((cur) => {
+    const prev = navStack.current.pop();
+    return prev && prev !== cur ? prev : fallback;
+  });
   const [auth, setAuth] = useState({ role: "guest", id: null });
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -891,7 +903,7 @@ export function StoreProvider({ children }) {
 
   const value = {
     // state
-    products, setProducts, screen, setScreen, auth, setAuth, cart, setCart,
+    products, setProducts, screen, setScreen, goBack, auth, setAuth, cart, setCart,
     orders, setOrders, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,

@@ -9,7 +9,7 @@ import { useStore } from "../store.jsx";
 export default function Checkout() {
   const {
     cartCount, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
-    auth, goToLogin, placeOrder, setScreen, defaultAddress, addresses, session, bill, coupon,
+    auth, goToLogin, placeOrder, setScreen, goBack, defaultAddress, addresses, session, bill, coupon,
     billingSame, setBillingSame, billingAddrId, setBillingAddrId, billingAddress,
   } = useStore();
   const emailInvalid = coEmail.trim() && !isEmail(coEmail);
@@ -29,7 +29,7 @@ export default function Checkout() {
   return (
     <div className="flex flex-col min-h-full">
       <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => setScreen("cart")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => goBack("cart")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">Checkout</h2>
       </div>
 

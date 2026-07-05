@@ -46,14 +46,14 @@ export default function Security() {
 
       <div className="px-5 mt-4 space-y-4">
         {/* Change password */}
-        <div className="bg-white rounded-2xl shadow-xs p-4">
+        <div className="bg-white rounded-2xl border border border-slate-200 p-4">
           <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3"><KeyRound size={16} className="text-brand-600" /> Change password</p>
           <PasswordField value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" placeholder="New password (min 6 characters)" />
           <PrimaryButton variant="solid" size="md" onClick={changePassword} disabled={busy} className="mt-3 text-sm">Update password</PrimaryButton>
         </div>
 
         {/* Change email */}
-        <div className="bg-white rounded-2xl shadow-xs p-4">
+        <div className="bg-white rounded-2xl border border border-slate-200 p-4">
           <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-1"><Mail size={16} className="text-brand-600" /> Change email</p>
           <p className="text-xs text-slate-400 mb-3">Current: {email || "—"}</p>
           <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoComplete="email" placeholder="New email address" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
@@ -62,7 +62,7 @@ export default function Security() {
         </div>
 
         {/* Delete account */}
-        <div className="bg-white rounded-2xl shadow-xs p-4">
+        <div className="bg-white rounded-2xl border border border-slate-200 p-4">
           <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-1"><Trash2 size={16} className="text-red-500" /> Delete account</p>
           <p className="text-xs text-slate-400 mb-3">Permanently remove your account and data. This sends a request to our team and signs you out.</p>
           <button onClick={deleteAccount} className="w-full border border-red-200 text-red-500 font-semibold py-2.5 rounded-xl text-sm">Request account deletion</button>

@@ -72,14 +72,13 @@ export default function Login() {
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
               <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); setAuthErr(""); }} type="email" autoComplete="email" placeholder="Enter your email" className={inputCls} />
 
-              <label className="block text-sm font-medium text-slate-700 mb-1.5 mt-4">Password</label>
-              <PasswordField value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} autoComplete={isSignup ? "new-password" : "current-password"} placeholder="Enter your password" />
-
-              {authMode === "login" && (
-                <div className="flex justify-end mt-2">
+              <div className="flex items-center justify-between mb-1.5 mt-4">
+                <label className="text-sm font-medium text-slate-700">Password</label>
+                {authMode === "login" && (
                   <button type="button" onClick={requestPasswordReset} className="text-xs font-semibold text-brand-600">Forgot password?</button>
-                </div>
-              )}
+                )}
+              </div>
+              <PasswordField value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} autoComplete={isSignup ? "new-password" : "current-password"} placeholder="Enter your password" />
 
               {authErr && <p className="text-red-500 text-xs mt-2.5">{authErr}</p>}
               {authNotice && (
@@ -133,7 +132,7 @@ export default function Login() {
           {isSignup ? "Already have an account? " : "Don't have an account? "}
           <button onClick={() => { setAuthMode(isSignup ? "login" : "signup"); setAuthErr(""); setAuthNotice(""); }} className="text-brand-600 font-semibold">{isSignup ? "Sign in" : "Sign up"}</button>
         </p>
-        <button onClick={() => { setReturnTo(null); setAuth({ role: "guest", id: null }); setScreen("home"); }} className="w-full text-slate-400 text-sm font-medium py-2 mt-1">Skip for now →</button>
+        {/* <button onClick={() => { setReturnTo(null); setAuth({ role: "guest", id: null }); setScreen("home"); }} className="w-full text-slate-400 text-sm font-medium py-2 mt-1">Skip for now →</button> */}
 
         <p className="text-center text-[11px] text-slate-400 mt-4 px-4">Admin? Log in with your admin email to manage products.</p>
       </div>

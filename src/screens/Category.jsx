@@ -9,7 +9,7 @@ import Pagination from "../components/Pagination.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
-const PAGE = 8;
+const PAGE = 20;
 const PRICE_BOUNDS = [0, 10000]; // fixed price range for the slider
 
 export default function Category() {

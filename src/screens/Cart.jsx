@@ -18,7 +18,7 @@ export default function Cart() {
       </div>
 
       {cart.length === 0 ? (
-        <EmptyState icon={ShoppingCart} title="Your cart is empty" subtitle="Find something you'll love." className="flex-1 min-h-[68vh]">
+        <EmptyState icon={ShoppingCart} title="Your cart is empty" subtitle="Find something you'll love." className="flex-1 min-h-[55vh]">
           <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Start shopping</PrimaryButton>
         </EmptyState>
       ) : (

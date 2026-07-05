@@ -10,6 +10,13 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      // The whole app uses `lg:` as the mobile-frame → desktop switch. Lower it
+      // from Tailwind's default 1024px so laptops with OS display scaling (which
+      // report a smaller CSS viewport, e.g. a 1280px screen at 150% ≈ 853px) still
+      // get the full desktop layout instead of the phone-frame mobile view.
+      screens: {
+        lg: "900px",
+      },
       colors: {
         brand: BRAND.colors.brand,
         accent: BRAND.colors.accent,

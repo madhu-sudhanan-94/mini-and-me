@@ -11,7 +11,7 @@ import { useSwipe } from "../lib/useSwipe.js";
 import Pagination from "../components/Pagination.jsx";
 import { useStore } from "../store.jsx";
 
-const ALL_PAGE = 8;
+const ALL_PAGE = 12;
 
 export default function Home() {
   const { products, query, setQuery, favorites, cartCount, setScreen, setSelCategory, heroIndex, setHeroIndex, openProduct, profile } = useStore();

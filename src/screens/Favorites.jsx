@@ -15,7 +15,7 @@ export default function Favorites() {
         <h2 className="text-2xl font-semibold text-slate-900">Favourites</h2>
       </div>
       {favs.length === 0 ? (
-        <EmptyState icon={Heart} tone="rose" title="No favourites yet" subtitle="Tap the heart on any item to save it here." className="min-h-[68vh]">
+        <EmptyState icon={Heart} tone="rose" title="No favourites yet" subtitle="Tap the heart on any item to save it here." className="min-h-[55vh]">
           <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Browse items</PrimaryButton>
         </EmptyState>
       ) : (

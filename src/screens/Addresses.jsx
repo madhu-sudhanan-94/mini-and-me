@@ -119,7 +119,7 @@ export default function Addresses() {
           </div>
         </div>
       ) : addresses.length === 0 ? (
-        <EmptyState icon={MapPin} title="No addresses yet" subtitle="Add a delivery address to speed up checkout." className="min-h-[68vh]">
+        <EmptyState icon={MapPin} title="No addresses yet" subtitle="Add a delivery address to speed up checkout." className="min-h-[55vh]">
           <PrimaryButton variant="solid" onClick={startNew} full={false} className="px-6"><Plus size={18} /> Add address</PrimaryButton>
         </EmptyState>
       ) : (

@@ -8,7 +8,7 @@ import CouponBox from "../components/CouponBox.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
-  const { cart, products, setScreen, removeItem, changeQty, bill, coupon } = useStore();
+  const { cart, products, setScreen, removeItem, changeQty, bill, coupon, cartCount } = useStore();
 
   return (
     <div className="flex flex-col min-h-full">
@@ -71,25 +71,25 @@ export default function Cart() {
             )}
 
             {/* Coupon */}
-            <div className="mb-3"><CouponBox /></div>
+            <p className="text-sm font-semibold text-slate-800 mb-2">Have a coupon?</p>
+            <div className="mb-4"><CouponBox /></div>
 
-            {/* Bill */}
-            <div className="space-y-1 mb-3 text-sm">
-              <div className="flex justify-between text-slate-500"><span>Subtotal</span><span>{formatINR(bill.subtotal)}</span></div>
-              <div className="flex justify-between text-slate-500"><span>GST ({bill.ratePct}%, incl.)</span><span>{formatINR(bill.gst)}</span></div>
-              {bill.discount > 0 && <div className="flex justify-between text-green-600 font-medium"><span>Coupon ({coupon?.code})</span><span>−{formatINR(bill.discount)}</span></div>}
-              <div className="flex justify-between text-slate-500">
-                <span>Delivery</span>
-                {bill.deliveryFee ? <span className="text-slate-700">{formatINR(bill.deliveryFee)}</span> : <span className="text-green-600 font-medium">Free</span>}
+            {/* Summary */}
+            <div className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-2xl p-4">
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(bill.subtotal)}</span></div>
+                <div className="flex justify-between text-slate-600"><span>GST ({bill.ratePct}%, incl.)</span><span>{formatINR(bill.gst)}</span></div>
+                {bill.discount > 0 && <div className="flex justify-between text-green-600 font-medium"><span>Coupon ({coupon?.code})</span><span>−{formatINR(bill.discount)}</span></div>}
+                <div className="flex justify-between text-slate-600"><span>Delivery</span>{bill.deliveryFee ? <span>{formatINR(bill.deliveryFee)}</span> : <span className="text-green-600 font-medium">Free</span>}</div>
               </div>
-              <div className="flex justify-between items-center pt-1.5 border-t border-slate-100">
-                <span className="font-semibold text-slate-800">Total</span>
-                <span className="text-2xl font-extrabold text-slate-900">{formatINR(bill.total)}</span>
+              <div className="flex justify-between items-center pt-2.5 mt-2.5 border-t border-brand-100">
+                <span className="font-semibold text-slate-800">{cartCount} item{cartCount !== 1 ? "s" : ""} · to pay</span>
+                <span className="text-xl font-extrabold text-slate-900">{formatINR(bill.total)}</span>
               </div>
-              {bill.totalSaved > 0 && <p className="text-right text-xs font-semibold text-green-600">You saved {formatINR(bill.totalSaved)} 🎉</p>}
+              {bill.totalSaved > 0 && <p className="text-right text-xs font-semibold text-green-600 mt-1">You saved {formatINR(bill.totalSaved)} 🎉</p>}
             </div>
 
-            <PrimaryButton size="xl" onClick={() => setScreen("checkout")}>Check out</PrimaryButton>
+            <PrimaryButton size="xl" onClick={() => setScreen("checkout")} className="mt-4">Check out</PrimaryButton>
             <button onClick={() => setScreen("home")} className="w-full mt-2.5 text-sm font-semibold text-slate-500 py-1.5 active:scale-95 transition">Continue shopping</button>
           </div>
         </>

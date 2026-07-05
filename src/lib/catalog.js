@@ -6,10 +6,9 @@ export const SORTS = [
   { key: "featured",    label: "Featured" },
   { key: "bestselling", label: "Best selling" },
   { key: "newest",      label: "Newest" },
-  { key: "price-low",   label: "Price: Low to High" },
-  { key: "price-high",  label: "Price: High to Low" },
-  { key: "az",          label: "Alphabetically, A–Z" },
-  { key: "za",          label: "Alphabetically, Z–A" },
+  { key: "price-low",   label: "Low to High" },
+  { key: "price-high",  label: "High to Low" },
+  { key: "az",          label: "A to Z" },
 ];
 
 export function sortProducts(list, sort) {

@@ -80,12 +80,12 @@ export default function Category() {
 
       {/* mobile: filters + count + sort */}
       <div className="lg:hidden flex items-center gap-2 px-5 mt-3">
-        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-600 active:scale-95 transition shrink-0">
+        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-600 active:scale-95 transition shrink-0">
           <SlidersHorizontal size={15} /> Filters
           {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
         </button>
-        <p className="flex-1 text-xs text-slate-400">{list.length} item{list.length !== 1 ? "s" : ""}</p>
         {sortSelect()}
+        <p className="flex-1 text-xs text-slate-400">{list.length} item{list.length !== 1 ? "s" : ""}</p>
       </div>
 
       <div className="lg:flex lg:gap-6 lg:px-6 lg:mt-5">

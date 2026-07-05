@@ -46,7 +46,7 @@ export default function Login() {
         <button onClick={back} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-slate-700" /></button>
       </div>
 
-      <div className="flex-1 px-6 pb-8 w-full max-w-sm mx-auto">
+      <div className="flex-1 px-7 pb-8 w-full mx-auto">
         {/* Header */}
         <div className="text-center mt-2 mb-6">
           {BRAND.icon && !logoFailed ? (
@@ -134,7 +134,7 @@ export default function Login() {
         </p>
         {/* <button onClick={() => { setReturnTo(null); setAuth({ role: "guest", id: null }); setScreen("home"); }} className="w-full text-slate-400 text-sm font-medium py-2 mt-1">Skip for now →</button> */}
 
-        <p className="text-center text-[11px] text-slate-400 mt-4 px-4">Admin? Log in with your admin email to manage products.</p>
+        <p className="text-center text-xs text-slate-400 mt-3 px-1">Admin? Log in with your admin email to manage products.</p>
       </div>
     </div>
   );

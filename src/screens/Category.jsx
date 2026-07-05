@@ -85,7 +85,7 @@ export default function Category() {
           {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
         </button>
         {sortSelect()}
-        <p className="flex-1 text-xs text-slate-400">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+        <p className="flex-1 text-sm text-slate-400 text-right pr-1">{list.length} item{list.length !== 1 ? "s" : ""}</p>
       </div>
 
       <div className="lg:flex lg:gap-6 lg:px-6 lg:mt-5">

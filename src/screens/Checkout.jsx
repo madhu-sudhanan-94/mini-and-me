@@ -48,7 +48,7 @@ export default function Checkout() {
         )}
 
         {/* Billing address */}
-        {session && defaultAddress && (
+        {/* {session && defaultAddress && (
           <section>
             <p className="text-sm font-semibold text-slate-800 mb-2">Billing address</p>
             <button onClick={() => setBillingSame((v) => !v)} className="flex items-center gap-2 mb-2">
@@ -68,7 +68,7 @@ export default function Checkout() {
               )
             )}
           </section>
-        )}
+        )} */}
 
         {/* Coupon */}
         <section>

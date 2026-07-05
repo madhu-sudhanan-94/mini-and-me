@@ -23,7 +23,7 @@ export function mapDbProduct(r) {
     desc: r.description || "",
     trending: !!r.trending,
     tag: r.tag || undefined,
-    images: r.image_url ? [r.image_url] : [],
+    images: (r.images && r.images.length) ? r.images : (r.image_url ? [r.image_url] : []),
   };
 }
 

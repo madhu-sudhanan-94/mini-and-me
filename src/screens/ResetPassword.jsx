@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import { panelBlue } from "../theme.js";
+import PasswordField from "../components/PasswordField.jsx";
 import { useStore } from "../store.jsx";
 
 const Logo = BRAND.logo;
@@ -37,8 +38,8 @@ export default function ResetPassword() {
 
       <div className="px-6 pt-5">
         <form onSubmit={submit} className="bg-white rounded-3xl shadow-xl p-5">
-          <input type="password" value={pw} onChange={(e) => { setPw(e.target.value); setErr(""); }} autoComplete="new-password" placeholder="New password (min 6 characters)" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-          <input type="password" value={pw2} onChange={(e) => { setPw2(e.target.value); setErr(""); }} autoComplete="new-password" placeholder="Confirm new password" className="w-full mt-2.5 border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+          <PasswordField value={pw} onChange={(e) => { setPw(e.target.value); setErr(""); }} autoComplete="new-password" placeholder="New password (min 6 characters)" />
+          <PasswordField value={pw2} onChange={(e) => { setPw2(e.target.value); setErr(""); }} autoComplete="new-password" placeholder="Confirm new password" wrapClass="mt-2.5" />
           {err && <p className="text-red-500 text-xs mt-2.5">{err}</p>}
           <button type="submit" disabled={busy} className="w-full mt-4 bg-linear-to-r from-brand-600 to-accent-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-500/25 disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? "Saving…" : (<>Update password <ArrowRight size={18} /></>)}

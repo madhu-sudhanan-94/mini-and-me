@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronLeft, KeyRound, Mail, Trash2 } from "lucide-react";
 import { SUPPORT } from "../content/legal.js";
+import PasswordField from "../components/PasswordField.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Security() {
@@ -46,7 +47,7 @@ export default function Security() {
         {/* Change password */}
         <div className="bg-white rounded-2xl shadow-xs p-4">
           <p className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3"><KeyRound size={16} className="text-brand-600" /> Change password</p>
-          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" placeholder="New password (min 6 characters)" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+          <PasswordField value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" placeholder="New password (min 6 characters)" />
           <button onClick={changePassword} disabled={busy} className="w-full mt-3 bg-brand-600 text-white font-semibold py-2.5 rounded-xl text-sm disabled:opacity-60">Update password</button>
         </div>
 

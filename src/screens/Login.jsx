@@ -3,6 +3,7 @@ import { ChevronLeft, Mail, Phone, Check, ArrowRight } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import { panelBlue } from "../theme.js";
 import PhoneField from "../components/PhoneField.jsx";
+import PasswordField from "../components/PasswordField.jsx";
 import { useStore } from "../store.jsx";
 
 const Logo = BRAND.logo;
@@ -48,7 +49,7 @@ export default function Login() {
             <>
               <form onSubmit={(e) => { e.preventDefault(); if (!authBusy) handleAuth(); }}>
                 <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); setAuthErr(""); }} type="email" autoComplete="email" placeholder="you@email.com" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-                <input value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"} placeholder="Password (min 6 characters)" className="w-full mt-2.5 border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+                <PasswordField value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} autoComplete={authMode === "signup" ? "new-password" : "current-password"} placeholder="Password (min 6 characters)" wrapClass="mt-2.5" />
 
                 {authErr && <p className="text-red-500 text-xs mt-2.5">{authErr}</p>}
                 {authNotice && (

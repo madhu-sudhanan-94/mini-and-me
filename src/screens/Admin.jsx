@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, LogOut, Edit3, Plus, Trash2, Package, ChevronRight } from "lucide-react";
+import { ChevronLeft, LogOut, Edit3, Plus, Trash2, Package, ChevronRight, Upload } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { panelBlueDeep } from "../theme.js";
 import Garment from "../components/Garment.jsx";
@@ -9,6 +9,7 @@ export default function Admin() {
   const {
     products, orders, form, setForm, blankForm, adminBusy,
     saveProduct, editProduct, deleteProduct, refreshFromDb, auth, logout, setScreen,
+    uploadProductImage, importProductsCsv,
   } = useStore();
 
   const stats = [
@@ -69,7 +70,14 @@ export default function Admin() {
             <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Price ₹" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500" />
             <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500" />
           </div>
-          <input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} type="url" placeholder="Image URL (optional)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 mb-2" />
+          <div className="mb-2">
+            <textarea value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} rows={2} placeholder="Image URLs — one per line (optional)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 resize-none" />
+            <label className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 cursor-pointer">
+              <Upload size={14} /> Upload image
+              <input type="file" accept="image/*" className="hidden" disabled={adminBusy}
+                onChange={async (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ""; if (file) { const url = await uploadProductImage(file); if (url) setForm((f) => ({ ...f, image: (f.image ? f.image + "\n" : "") + url })); } }} />
+            </label>
+          </div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500">Colour</span>
@@ -106,6 +114,14 @@ export default function Admin() {
         <button onClick={refreshFromDb} disabled={adminBusy} className="w-full mt-5 mb-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-xl text-sm disabled:opacity-60">
           Refresh from database
         </button>
+        <label className={`w-full mt-2 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 ${adminBusy ? "opacity-60" : "cursor-pointer"}`}>
+          <Upload size={16} /> Import products (CSV)
+          <input type="file" accept=".csv,text/csv" className="hidden" disabled={adminBusy}
+            onChange={(e) => { const file = e.target.files && e.target.files[0]; e.target.value = ""; if (file) { const reader = new FileReader(); reader.onload = () => importProductsCsv(String(reader.result || "")); reader.readAsText(file); } }} />
+        </label>
+        <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+          CSV columns: name, category, shape, price, original_price, colors, sizes, images, trending, tag, description. Separate multiple colours / sizes / image URLs with <b>|</b>.
+        </p>
       </div>
     </div>
   );

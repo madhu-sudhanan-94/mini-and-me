@@ -6,6 +6,7 @@ import {
 } from "./lib/supabase.js";
 import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
+import { parseCsv } from "./lib/csv.js";
 
 // Temporary demo phone login. Real SMS OTP needs a paid provider (roadmap).
 const DEMO_OTP = "1234";
@@ -472,6 +473,7 @@ export function StoreProvider({ children }) {
     if (!form.name.trim() || !form.price) return;
     if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin to save"); return; }
     const sizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
+    const images = form.image.split(/\n+/).map((s) => s.trim()).filter(Boolean);
     const body = {
       name: form.name.trim(),
       category: form.cat,
@@ -481,7 +483,8 @@ export function StoreProvider({ children }) {
       colors: form.id ? [form.color, ...((form._colors || []).slice(1))] : [form.color],
       sizes,
       trending: !!form.trending,
-      image_url: form.image.trim() || null,
+      images,
+      image_url: images[0] || null,
     };
     setAdminBusy(true);
     try {
@@ -573,7 +576,7 @@ export function StoreProvider({ children }) {
   const editProduct = (p) => setForm({
     id: p.id, name: p.name, cat: p.cat, shape: p.shape,
     price: String(p.price), original: p.original ? String(p.original) : "",
-    color: p.colors[0], _colors: p.colors, image: (p.images && p.images[0]) || "", trending: !!p.trending,
+    color: p.colors[0], _colors: p.colors, image: (p.images || []).join("\n"), trending: !!p.trending,
   });
 
   const deleteProduct = async (id) => {
@@ -600,6 +603,75 @@ export function StoreProvider({ children }) {
     await loadProducts({ allowEmpty: true });
     setAdminBusy(false);
     showToast("Refreshed from database");
+  };
+
+  // Admin: upload a product image to the 'products' bucket, return its public URL.
+  const uploadProductImage = async (file) => {
+    if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin"); return null; }
+    if (!file || !file.type.startsWith("image/")) { showToast("Choose an image file"); return null; }
+    if (file.size > 5 * 1024 * 1024) { showToast("Image must be under 5 MB"); return null; }
+    setAdminBusy(true);
+    try {
+      const path = "p-" + Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+      const up = await fetch(SUPABASE_URL + "/storage/v1/object/products/" + path, {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token, "content-type": file.type, "cache-control": "3600" },
+        body: file,
+      });
+      if (!up.ok) { showToast(up.status === 401 || up.status === 403 ? "Session expired — log in again" : "Upload failed — is the 'products' bucket set up?"); return null; }
+      return SUPABASE_URL + "/storage/v1/object/public/products/" + path;
+    } catch (e) {
+      showToast("Network error — not uploaded");
+      return null;
+    } finally {
+      setAdminBusy(false);
+    }
+  };
+
+  // Admin: bulk-import products from CSV text.
+  // Headers: name, category, shape, price, original_price, colors, sizes, images, trending, tag, description
+  // (colors/sizes separated by | or ; ; images separated by | ; trending = true/yes/1)
+  const importProductsCsv = async (text) => {
+    if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin"); return; }
+    const rows = parseCsv(text);
+    if (rows.length < 2) { showToast("CSV looks empty or has no rows"); return; }
+    const header = rows[0].map((h) => h.trim().toLowerCase());
+    const col = (r, k) => { const i = header.indexOf(k); return i >= 0 ? (r[i] || "").trim() : ""; };
+    const items = rows.slice(1).map((r) => {
+      const name = col(r, "name");
+      if (!name) return null;
+      const cat = (col(r, "category") || "women").toLowerCase();
+      const shape = col(r, "shape") || "tee";
+      const sizesRaw = col(r, "sizes");
+      const sizes = sizesRaw ? sizesRaw.split(/[|;]/).map((s) => s.trim()).filter(Boolean) : (cat === "kids" ? K : ["pants", "shorts"].includes(shape) ? W : L);
+      const colors = (col(r, "colors") || "#2563EB").split(/[|;]/).map((s) => s.trim()).filter(Boolean);
+      const images = (col(r, "images") || col(r, "image_url")).split("|").map((s) => s.trim()).filter(Boolean);
+      return {
+        name, category: cat, shape,
+        price: Number(col(r, "price")) || 0,
+        original_price: col(r, "original_price") ? Number(col(r, "original_price")) : null,
+        colors, sizes, images, image_url: images[0] || null,
+        trending: /^(true|yes|1)$/i.test(col(r, "trending")),
+        tag: col(r, "tag") || null,
+        description: col(r, "description") || "",
+      };
+    }).filter(Boolean);
+    if (!items.length) { showToast("No valid rows (each needs a name)"); return; }
+    setAdminBusy(true);
+    try {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/products", {
+        method: "POST",
+        headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify(items),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.message || "Import failed"); return; }
+      await loadProducts({ allowEmpty: true });
+      showToast("Imported " + items.length + " product" + (items.length !== 1 ? "s" : ""));
+    } catch (e) {
+      showToast("Network error — import failed");
+    } finally {
+      setAdminBusy(false);
+    }
   };
 
   // ----- Delivery addresses (add / edit / delete / set default) -----
@@ -707,6 +779,7 @@ export function StoreProvider({ children }) {
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
     toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
+    uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
     loadMyOrders, loadAdminOrders, updateOrderStatus,

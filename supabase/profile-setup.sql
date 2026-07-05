@@ -131,3 +131,22 @@ create policy "orders_insert_guest" on public.orders
 drop policy if exists "order_items_insert_guest" on public.order_items;
 create policy "order_items_insert_guest" on public.order_items
   for insert to anon with check (true);
+
+-- ---------- Products: multiple images + admin image-upload bucket ----------
+alter table public.products add column if not exists images text[];
+
+insert into storage.buckets (id, name, public)
+  values ('products', 'products', true)
+  on conflict (id) do nothing;
+
+drop policy if exists "products_public_read" on storage.objects;
+create policy "products_public_read" on storage.objects
+  for select using (bucket_id = 'products');
+
+drop policy if exists "products_admin_write" on storage.objects;
+create policy "products_admin_write" on storage.objects
+  for insert with check (bucket_id = 'products' and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+drop policy if exists "products_admin_update" on storage.objects;
+create policy "products_admin_update" on storage.objects
+  for update using (bucket_id = 'products' and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));

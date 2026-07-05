@@ -28,8 +28,12 @@ export function mapDbProduct(r) {
 }
 
 /* ---------- Auth (real email + password login) ---------- */
+// Where confirmation / reset email links should return to (the current origin).
+// The origin must be in Supabase → Auth → URL Configuration → Redirect URLs.
+const redirectQS = () => (typeof window !== "undefined" && window.location ? "?redirect_to=" + encodeURIComponent(window.location.origin) : "");
+
 export async function authSignUp(email, password) {
-  const res = await fetch(SUPA_AUTH + "/signup", { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ email, password }) });
+  const res = await fetch(SUPA_AUTH + "/signup" + redirectQS(), { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ email, password }) });
   return { ok: res.ok, data: await res.json().catch(() => ({})) };
 }
 export async function authSignIn(email, password) {
@@ -51,7 +55,7 @@ export function authErrText(data) {
 
 // Send a password-reset email (GoTrue /recover). Redirects back to the app.
 export async function authRecover(email) {
-  const res = await fetch(SUPA_AUTH + "/recover", { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ email }) });
+  const res = await fetch(SUPA_AUTH + "/recover" + redirectQS(), { method: "POST", headers: ANON_HEADERS, body: JSON.stringify({ email }) });
   return { ok: res.ok, data: await res.json().catch(() => ({})) };
 }
 // Read the user for a given access token (used for email-confirm / recovery callbacks).

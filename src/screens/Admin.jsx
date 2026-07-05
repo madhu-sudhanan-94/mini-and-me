@@ -60,10 +60,10 @@ export default function Admin() {
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" className="flex-1 border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500" />
           </div>
           <div className="grid grid-cols-2 gap-2 mb-2">
-            <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 px-2 text-sm outline-hidden">
+            <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 pl-2 pr-8 text-sm outline-hidden bg-white select-chevron">
               <option value="women">Women</option><option value="men">Men</option><option value="kids">Kids</option>
             </select>
-            <select value={form.shape} onChange={(e) => setForm({ ...form, shape: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 px-2 text-sm outline-hidden">
+            <select value={form.shape} onChange={(e) => setForm({ ...form, shape: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 pl-2 pr-8 text-sm outline-hidden bg-white select-chevron">
               {["dress", "tee", "shirt", "tunic", "jacket", "pants", "shorts", "overall"].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>

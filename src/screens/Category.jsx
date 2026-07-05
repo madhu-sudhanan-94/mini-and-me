@@ -57,7 +57,7 @@ export default function Category() {
             </button>
           ))}
         </div>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className="shrink-0 border border-slate-200 rounded-full py-1.5 px-3 text-xs font-semibold text-slate-600 outline-hidden bg-white">
+        <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className="shrink-0 border border-slate-200 rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-600 outline-hidden bg-white select-chevron">
           {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
         </select>
       </div>

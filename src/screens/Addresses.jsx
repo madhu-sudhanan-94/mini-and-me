@@ -85,7 +85,7 @@ export default function Addresses() {
               <div>
                 <label className="block text-xs text-slate-500 mb-1">State</label>
                 {editing.country === "India" ? (
-                  <select value={editing.state} onChange={(e) => set("state", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-2.5 outline-hidden text-sm focus:border-brand-500 bg-white">
+                  <select value={editing.state} onChange={(e) => set("state", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-9 outline-hidden text-sm focus:border-brand-500 bg-white select-chevron">
                     <option value="">Select</option>
                     {(editing.state && !INDIAN_STATES.includes(editing.state) ? [editing.state, ...INDIAN_STATES] : INDIAN_STATES).map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -99,7 +99,7 @@ export default function Addresses() {
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Country/region</label>
-                <select value={editing.country} onChange={(e) => set("country", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 bg-white">
+                <select value={editing.country} onChange={(e) => set("country", e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 pl-3 pr-9 outline-hidden text-sm focus:border-brand-500 bg-white select-chevron">
                   {COUNTRY_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </div>

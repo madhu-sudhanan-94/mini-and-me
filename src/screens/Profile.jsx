@@ -94,7 +94,7 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-slate-500 mb-1">Gender</label>
-              <select value={f.gender} onChange={(e) => setF({ ...f, gender: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 px-2.5 outline-hidden text-sm focus:border-brand-500 bg-white">
+              <select value={f.gender} onChange={(e) => setF({ ...f, gender: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-9 outline-hidden text-sm focus:border-brand-500 bg-white select-chevron">
                 {GENDERS.map((g) => <option key={g.label} value={g.value}>{g.label}</option>)}
               </select>
             </div>

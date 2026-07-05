@@ -75,7 +75,7 @@ export default function Security() {
         {/* Delete account */}
         <div className="bg-white rounded-2xl shadow-xs p-4">
           <CardHead icon={Trash2} tint="bg-red-50 text-red-500" title="Delete account" subtitle="Permanently remove your account and data. This sends a request to our team and signs you out." />
-          <button onClick={deleteAccount} className="w-full border border-red-200 text-red-500 font-semibold py-2.5 rounded-xl text-sm hover:bg-red-50 active:scale-[0.99] transition">Request account deletion</button>
+          <button onClick={deleteAccount} className="w-full border border-red-200 text-red-500 font-semibold py-2.5 rounded-xl text-base hover:bg-red-50 active:scale-[0.99] transition">Request account deletion</button>
         </div>
       </div>
     </div>

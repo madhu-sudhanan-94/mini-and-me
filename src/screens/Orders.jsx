@@ -45,7 +45,7 @@ export default function Orders() {
       ) : (
         <div className="px-5 mt-4 space-y-3">
           {list.map((o) => (
-            <div key={o.key} className="bg-white rounded-2xl border border border-slate-200 p-4">
+            <div key={o.key} className="bg-white rounded-2xl shadow-xs p-4">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-bold text-slate-800">#{o.ref}</p>

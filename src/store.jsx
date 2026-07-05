@@ -8,6 +8,7 @@ import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
 import { parseCsv } from "./lib/csv.js";
 import { gstBreakdown } from "./lib/format.js";
+import { outOfStock, isTracked } from "./lib/catalog.js";
 import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
 
 // Temporary demo phone login. Real SMS OTP needs a paid provider (roadmap).
@@ -85,9 +86,10 @@ export function StoreProvider({ children }) {
   const [billingSame, setBillingSame] = useState(true);  // billing address == delivery?
   const [billingAddrId, setBillingAddrId] = useState(null);
   const [lastOrder, setLastOrder] = useState(null);
+  const [placingOrder, setPlacingOrder] = useState(false);
 
   // admin form
-  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", color: "#2563EB", image: "", trending: false };
+  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", color: "#2563EB", image: "", trending: false, stock: "" };
   const [form, setForm] = useState(blankForm);
 
   const defaultAddress = addresses.find((a) => a.is_default) || addresses[0] || null;
@@ -509,6 +511,10 @@ export function StoreProvider({ children }) {
   const isFav = (id) => favorites.includes(id);
 
   const addToCart = (p, size, color) => {
+    if (outOfStock(p)) { showToast("Sorry, that's out of stock"); return; }
+    const existing = cart.find((x) => x.id === p.id && x.size === size && x.color === color);
+    const nextQty = (existing?.qty || 0) + 1;
+    if (isTracked(p) && nextQty > p.stock) { showToast(`Only ${p.stock} in stock`); return; }
     setCart((prev) => {
       const i = prev.findIndex((x) => x.id === p.id && x.size === size && x.color === color);
       if (i >= 0) {
@@ -522,8 +528,14 @@ export function StoreProvider({ children }) {
   };
 
   const changeQty = (idx, d) => {
+    if (d > 0) {
+      const line = cart[idx];
+      const p = line && products.find((x) => x.id === line.id);
+      if (p && isTracked(p) && line.qty + d > p.stock) { showToast(`Only ${p.stock} in stock`); return; }
+    }
     setCart((prev) => {
       const copy = [...prev];
+      if (!copy[idx]) return prev;
       copy[idx] = { ...copy[idx], qty: copy[idx].qty + d };
       if (copy[idx].qty <= 0) copy.splice(idx, 1);
       return copy;
@@ -531,6 +543,10 @@ export function StoreProvider({ children }) {
   };
   const removeItem = (idx) => setCart((prev) => prev.filter((_, i) => i !== idx));
 
+  // Persist an order + its line items. Returns { ok, dbId } / { ok:false, offline? }.
+  // If the line-items insert fails, we roll back the just-created order. This
+  // works for signed-in users (orders_delete_own RLS); for guests the delete may
+  // be blocked by RLS, leaving a rare item-less order for admin cleanup.
   const saveOrderToDb = async (order, items, phone, email, extra = {}) => {
     try {
       const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders", {
@@ -544,30 +560,55 @@ export function StoreProvider({ children }) {
           shipping_address: extra.shipping || null,
         }),
       });
-      if (!res.ok) { showToast("Order saved on this device — couldn't sync to the server"); return; }
-      const rows = await res.json();
+      if (!res.ok) return { ok: false };
+      const rows = await res.json().catch(() => []);
       const dbId = rows && rows[0] && rows[0].id;
-      if (!dbId || !items.length) return;
-      await authedFetch(SUPABASE_URL + "/rest/v1/order_items", {
-        method: "POST",
-        headers: writeHeaders(),
-        body: JSON.stringify(items.map((it) => ({ ...it, order_id: dbId }))),
-      });
+      if (!dbId) return { ok: false };
+      if (items.length) {
+        const ir = await authedFetch(SUPABASE_URL + "/rest/v1/order_items", {
+          method: "POST",
+          headers: writeHeaders(),
+          body: JSON.stringify(items.map((it) => ({ ...it, order_id: dbId }))),
+        });
+        if (!ir.ok) {
+          // roll back the orphaned order (best effort — RLS may block guests)
+          authedFetch(SUPABASE_URL + "/rest/v1/orders?id=eq." + dbId, { method: "DELETE", headers: writeHeaders() }).catch(() => {});
+          return { ok: false };
+        }
+      }
       if (extra.userId) loadMyOrders();
-    } catch (e) { showToast("Order saved on this device — couldn't sync to the server"); }
+      return { ok: true, dbId };
+    } catch (e) {
+      return { ok: false, offline: true };
+    }
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
+    if (placingOrder) return;
     if (!coName.trim() || (!coPhone.trim() && !coEmail.trim())) return;
+    // Don't let an out-of-stock / over-quantity item through checkout.
+    const badLine = cart.find((it) => {
+      const p = products.find((x) => x.id === it.id);
+      return p && (outOfStock(p) || (isTracked(p) && it.qty > p.stock));
+    });
+    if (badLine) { showToast("Some items are out of stock — please review your cart"); setScreen("cart"); return; }
+
     const order = {
       id: "PP" + Math.floor(100000 + Math.random() * 900000),
       total: bill.total,
       count: cartCount,
       name: coName.trim(),
       contact: coPhone.trim() || coEmail.trim(),
+      phone: coPhone.trim() || null,
+      email: coEmail.trim().toLowerCase() || null,
       ts: Date.now(),
       coupon: bill.coupon ? { code: bill.coupon.code, discount: bill.discount } : null,
+      discount: bill.discount,
       delivery_fee: bill.deliveryFee,
+      subtotal: bill.subtotal,
+      gst: bill.gst,
+      ratePct: bill.ratePct,
+      itemsTotal: bill.itemsTotal,
       saved: bill.totalSaved,
     };
     const itemsSnapshot = cart.map((it) => {
@@ -582,9 +623,19 @@ export function StoreProvider({ children }) {
     } : null;
     const shipping = snap(defaultAddress);
     const billing = billingSame ? null : snap(billingAddress);
-    saveOrderToDb(order, itemsSnapshot, coPhone.trim() || null, coEmail.trim().toLowerCase() || null, { userId: session?.user?.id || null, shipping });
+
+    // Wait for the order to be safely recorded before showing success. If it
+    // can't be saved, keep the cart + details so the customer can retry.
+    setPlacingOrder(true);
+    const result = await saveOrderToDb(order, itemsSnapshot, order.phone, order.email, { userId: session?.user?.id || null, shipping });
+    setPlacingOrder(false);
+    if (!result.ok) {
+      showToast(result.offline ? "You appear to be offline — order not placed. Please try again." : "Couldn't place your order. Please try again.");
+      return;
+    }
+
     setOrders((o) => [{ ...order, status: "placed", shipping, billing, items: itemsSnapshot }, ...o]);
-    setLastOrder(order);
+    setLastOrder({ ...order, shipping, items: itemsSnapshot });
     setCart([]);
     setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
     setCoName(""); setCoPhone(""); setCoEmail("");
@@ -629,6 +680,9 @@ export function StoreProvider({ children }) {
       images,
       image_url: images[0] || null,
     };
+    // Only send stock when the admin set it, so this keeps working on a DB
+    // that hasn't added the `stock` column yet.
+    if (form.stock !== "" && form.stock != null) body.stock = Number(form.stock);
     setAdminBusy(true);
     try {
       let res;
@@ -720,6 +774,7 @@ export function StoreProvider({ children }) {
     id: p.id, name: p.name, cat: p.cat, shape: p.shape,
     price: String(p.price), original: p.original ? String(p.original) : "",
     color: p.colors[0], _colors: p.colors, image: (p.images || []).join("\n"), trending: !!p.trending,
+    stock: p.stock != null ? String(p.stock) : "",
   });
 
   const deleteProduct = async (id) => {
@@ -789,6 +844,7 @@ export function StoreProvider({ children }) {
       const sizes = sizesRaw ? sizesRaw.split(/[|;]/).map((s) => s.trim()).filter(Boolean) : (cat === "kids" ? K : ["pants", "shorts"].includes(shape) ? W : L);
       const colors = (col(r, "colors") || "#2563EB").split(/[|;]/).map((s) => s.trim()).filter(Boolean);
       const images = (col(r, "images") || col(r, "image_url")).split("|").map((s) => s.trim()).filter(Boolean);
+      const stockRaw = col(r, "stock");
       return {
         name, category: cat, shape,
         price: Number(col(r, "price")) || 0,
@@ -797,6 +853,9 @@ export function StoreProvider({ children }) {
         trending: /^(true|yes|1)$/i.test(col(r, "trending")),
         tag: col(r, "tag") || null,
         description: col(r, "description") || "",
+        // only include stock when the column is present, so import still works
+        // on a DB without the `stock` column
+        ...(stockRaw !== "" ? { stock: Number(stockRaw) } : {}),
       };
     }).filter(Boolean);
     if (!items.length) { showToast("No valid rows (each needs a name)"); return; }
@@ -915,7 +974,7 @@ export function StoreProvider({ children }) {
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
     coupon, couponMsg, setCouponMsg, billingSame, setBillingSame, billingAddrId, setBillingAddrId,
-    lastOrder, form, setForm, blankForm,
+    lastOrder, placingOrder, form, setForm, blankForm,
     // derived
     cartCount, cartTotal, cartSavings, bill, billingAddress,
     // actions

@@ -9,6 +9,7 @@ import ProductImage from "../components/ProductImage.jsx";
 import Garment from "../components/Garment.jsx";
 import { useSwipe } from "../lib/useSwipe.js";
 import Pagination from "../components/Pagination.jsx";
+import { searchProducts } from "../lib/catalog.js";
 import { useStore } from "../store.jsx";
 
 const ALL_PAGE = 12;
@@ -33,13 +34,13 @@ export default function Home() {
     const withImg = products.find((p) => p.cat === c && p.images && p.images[0]);
     if (withImg) catImg[c] = withImg.images[0];
   }
-  const results = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+  const results = searchProducts(products, query);
   const heroLen = featured.length;
   const goHero = (dir) => { if (heroLen) setHeroIndex((((heroIndex % heroLen) + dir) % heroLen + heroLen) % heroLen); };
   const heroSwipe = useSwipe({ onLeft: () => goHero(1), onRight: () => goHero(-1) });
   return (
     <div className="pb-4">
-      <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
+      <div className="min-h-[66px] lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
         <div>
           {firstName && <p className="text-slate-400 text-xs mb-0.5">Hi, {firstName} 👋</p>}
           <BrandLogo imgClass="h-6" />
@@ -60,12 +61,12 @@ export default function Home() {
       </div>
 
       <div className="lg:hidden px-5 mt-4">
-        <div className="flex items-center bg-white rounded-2xl px-4 py-3 shadow-xs">
+        <div className="flex items-center bg-white rounded-2xl pl-4 pr-3 py-3 shadow-xs">
           <Search size={18} className="text-slate-400" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-3 outline-hidden text-sm bg-transparent" />
           {query && (
-            <button onClick={() => setQuery("")} aria-label="Clear search" className="ml-2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-90 flex items-center justify-center shrink-0 transition">
-              <X size={14} className="text-slate-500" />
+            <button onClick={() => setQuery("")} aria-label="Clear search" className="ml-2 w-5 h-5 rounded-full active:scale-90 flex items-center justify-center shrink-0 transition">
+              <X size={16} className="text-slate-500" />
             </button>
           )}
         </div>
@@ -128,14 +129,14 @@ export default function Home() {
 
           {/* Offers */}
           <div className="px-5 mt-6 grid grid-cols-2 gap-3">
-            <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-fuchsia-500 to-pink-500 shadow-md active:scale-95 transition">
+            <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="offer-fade offer-shine relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-fuchsia-500 to-pink-500 shadow-md active:scale-95 transition">
               <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Festive Edit</span>
               <div>
                 <p className="text-white font-extrabold text-lg leading-tight">Up to 40% off</p>
                 <p className="text-white/85 text-[11px] flex items-center gap-1">Shop the sale <ArrowRight size={12} /></p>
               </div>
             </button>
-            <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-brand-600 to-accent-500 shadow-md active:scale-95 transition">
+            <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} style={{ animationDelay: "0.09s" }} className="offer-fade offer-shine relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-brand-600 to-accent-500 shadow-md active:scale-95 transition">
               <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Just In</span>
               <div>
                 <p className="text-white font-extrabold text-lg leading-tight">New Arrivals</p>
@@ -167,10 +168,13 @@ export default function Home() {
           </div>
 
           {/* New in */}
-          <div className="mt-6 px-5">
-            <h3 className="font-bold text-slate-900 text-lg mb-3">New in</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {newIn.map((p) => <ProductCard key={p.id} p={p} />)}
+          <div className="mt-6">
+            <div className="px-5 flex items-center justify-between">
+              <h3 className="font-bold text-slate-900 text-lg">New in</h3>
+              <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
+            </div>
+            <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
+              {newIn.map((p) => <ProductCard key={p.id} p={p} wide />)}
             </div>
           </div>
 

@@ -9,7 +9,7 @@ import { useStore } from "../store.jsx";
 export default function Checkout() {
   const {
     cartCount, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
-    auth, goToLogin, placeOrder, setScreen, goBack, defaultAddress, addresses, session, bill, coupon,
+    auth, goToLogin, placeOrder, placingOrder, setScreen, goBack, defaultAddress, addresses, session, bill, coupon,
     billingSame, setBillingSame, billingAddrId, setBillingAddrId, billingAddress,
   } = useStore();
   const emailInvalid = coEmail.trim() && !isEmail(coEmail);
@@ -120,8 +120,8 @@ export default function Checkout() {
             <p className="text-[11px] text-slate-400 text-center mt-2">Please log in or create an account to complete your order.</p>
           </>
         ) : (
-          <PrimaryButton onClick={placeOrder} disabled={!coName.trim() || !hasContact} size="xl">
-            Place order · {formatINR(bill.total)}
+          <PrimaryButton onClick={placeOrder} disabled={!coName.trim() || !hasContact || placingOrder} size="xl">
+            {placingOrder ? "Placing your order…" : `Place order · ${formatINR(bill.total)}`}
           </PrimaryButton>
         )}
       </div>

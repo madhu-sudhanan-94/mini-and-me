@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, Heart, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
+import { outOfStock, lowStock } from "../lib/catalog.js";
 import { SIZE_GUIDE } from "../lib/sizeguide.js";
 import ProductImage from "../components/ProductImage.jsx";
 import PriceTag from "../components/PriceTag.jsx";
@@ -24,6 +25,8 @@ export default function ProductModal() {
 
   const p = selProduct;
   if (!p) return null;
+  const oos = outOfStock(p);
+  const low = lowStock(p);
   const imgs = p.images || [];
   const chart = SIZE_GUIDE[p.cat] || SIZE_GUIDE.women;
   const related = products.filter((x) => x.cat === p.cat && x.id !== p.id).slice(0, 8);
@@ -56,6 +59,8 @@ export default function ProductModal() {
           <p className="text-xs font-semibold text-brand-600 uppercase tracking-wide">{CAT_LABEL[p.cat]}</p>
           <h2 className="text-2xl font-extrabold text-slate-900 mt-1">{p.name}</h2>
           <div className="mt-2"><PriceTag p={p} size="lg" /></div>
+          {oos ? <p className="text-xs font-semibold text-red-500 mt-2">Currently out of stock</p>
+            : low ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {p.stock} left</p> : null}
           <p className="text-slate-500 text-sm mt-3 leading-relaxed">{p.desc}</p>
 
           <p className="text-sm font-semibold text-slate-800 mt-5 mb-2">Colour</p>
@@ -107,9 +112,13 @@ export default function ProductModal() {
 
         {/* Add to cart */}
         <div className="p-4 border-t border-slate-100 bg-white shrink-0">
-          <PrimaryButton variant="gradient" size="xl" onClick={() => addToCart(p, selSize, selColor)}>
-            <ShoppingCart size={19} /> Add to cart · {formatINR(p.price)}
-          </PrimaryButton>
+          {oos ? (
+            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-2xl cursor-not-allowed">Out of stock</button>
+          ) : (
+            <PrimaryButton variant="gradient" size="xl" onClick={() => addToCart(p, selSize, selColor)}>
+              <ShoppingCart size={19} /> Add to cart · {formatINR(p.price)}
+            </PrimaryButton>
+          )}
         </div>
       </div>
     </div>

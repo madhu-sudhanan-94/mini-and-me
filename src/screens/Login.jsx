@@ -134,7 +134,7 @@ export default function Login() {
         </p>
         {/* <button onClick={() => { setReturnTo(null); setAuth({ role: "guest", id: null }); setScreen("home"); }} className="w-full text-slate-400 text-sm font-medium py-2 mt-1">Skip for now →</button> */}
 
-        <p className="text-center text-xs text-slate-400 mt-3 px-1">Admin? Log in with your admin email to manage products.</p>
+        <p className="text-center text-xs text-slate-500 mt-3 px-1">Admin? Log in with your admin email to manage products.</p>
       </div>
     </div>
   );

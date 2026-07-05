@@ -1,6 +1,8 @@
 import React from "react";
-import { Check, Package } from "lucide-react";
+import { Check, Download } from "lucide-react";
 import { formatINR } from "../lib/format.js";
+import { SUPPORT } from "../content/legal.js";
+import { printInvoice } from "../lib/invoice.js";
 import { useStore } from "../store.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import Confetti from "../components/Confetti.jsx";
@@ -40,6 +42,24 @@ export default function Success() {
             <p className="mt-3 text-xs font-semibold text-green-600 bg-green-50 rounded-lg py-1.5">You saved {formatINR(lastOrder.saved)} on this order 🎉</p>
           )}
         </div>
+
+        {/* Tax invoice */}
+        {lastOrder?.items?.length > 0 && (
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-xs p-4 mt-4 w-full max-w-xs text-left">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-sm font-bold text-slate-800">Tax invoice</p>
+              <button onClick={() => printInvoice(lastOrder)} className="text-xs font-semibold text-brand-600 flex items-center gap-1 active:scale-95 transition"><Download size={13} /> Download</button>
+            </div>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between text-slate-500"><span>Taxable value</span><span>{formatINR(lastOrder.subtotal)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>GST ({lastOrder.ratePct}%)</span><span>{formatINR(lastOrder.gst)}</span></div>
+              {lastOrder.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>−{formatINR(lastOrder.discount)}</span></div>}
+              <div className="flex justify-between text-slate-500"><span>Delivery</span><span>{lastOrder.delivery_fee ? formatINR(lastOrder.delivery_fee) : "Free"}</span></div>
+              <div className="flex justify-between pt-1.5 mt-1.5 border-t border-slate-100 font-bold text-slate-800"><span>Total</span><span>{formatINR(lastOrder.total)}</span></div>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-2">{SUPPORT.gstin ? `GSTIN ${SUPPORT.gstin} · ` : ""}Prices inclusive of GST.</p>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="w-full max-w-xs mt-6 space-y-4">

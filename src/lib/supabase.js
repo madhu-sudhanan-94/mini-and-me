@@ -23,6 +23,7 @@ export function mapDbProduct(r) {
     desc: r.description || "",
     trending: !!r.trending,
     tag: r.tag || undefined,
+    stock: typeof r.stock === "number" ? r.stock : null,  // null = not tracked
     images: (r.images && r.images.length) ? r.images : (r.image_url ? [r.image_url] : []),
   };
 }

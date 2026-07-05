@@ -99,7 +99,7 @@ export default function Profile() {
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Date of birth</label>
-              <input type="date" value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 px-2.5 outline-hidden text-sm focus:border-brand-500" />
+              <input type="date" value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-3.5 outline-hidden text-sm focus:border-brand-500" />
             </div>
           </div>
 

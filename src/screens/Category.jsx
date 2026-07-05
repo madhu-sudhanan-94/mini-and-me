@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect, useEffect, useMemo } from "react";
-import { ChevronLeft, PackageOpen, SlidersHorizontal, X } from "lucide-react";
+import { ChevronLeft, PackageOpen, SlidersHorizontal, ArrowUpDown, X } from "lucide-react";
 import { CAT_LABEL } from "../lib/format.js";
 import { SORTS, sortProducts, COLOR_FAMILIES, productFamilies } from "../lib/catalog.js";
 import ProductCard from "../components/ProductCard.jsx";
@@ -57,9 +57,12 @@ export default function Category() {
 
   const panelProps = { shapes, shape, setShape, bounds, price, setPrice, families, colors, toggleColor, onReset: resetFilters };
   const sortSelect = (extra = "") => (
-    <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className={`shrink-0 border border-slate-200 rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold text-slate-600 outline-hidden bg-white select-chevron ${extra}`}>
-      {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-    </select>
+    <div className={`relative shrink-0 ${extra}`}>
+      <ArrowUpDown size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className="border border-slate-200 rounded-full py-1.5 pl-8 pr-8 text-xs font-semibold text-slate-600 outline-hidden bg-white select-chevron">
+        {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+      </select>
+    </div>
   );
 
   return (

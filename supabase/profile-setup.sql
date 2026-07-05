@@ -1,8 +1,10 @@
 -- ============================================================
--- Mini & Me — Profile feature schema
--- Run once in the Supabase SQL editor:
+-- Mini & Me — RLS policies, grants & storage buckets  (LEGACY)
+-- SUPERSEDED BY schema.sql — for a fresh project just run schema.sql, which is
+-- complete and self-contained. This file is kept for existing projects; it is
+-- still safe to re-run (uses IF NOT EXISTS / drop-then-create) and assumes the
+-- core tables (profiles, orders, order_items, products) already exist.
 --   https://supabase.com/dashboard/project/sakzhdoxybxmeepzplkr/sql/new
--- Safe to re-run (uses IF NOT EXISTS / drop-then-create).
 -- ============================================================
 
 -- ---------- Phase 1: extra profile fields ----------
@@ -102,6 +104,12 @@ drop policy if exists "orders_insert_self" on public.orders;
 create policy "orders_insert_self" on public.orders
   for insert with check (auth.uid() = user_id);
 
+-- signed-in customers can delete their own orders (used to roll back an order
+-- whose line-items insert failed, so the DB doesn't keep an item-less order)
+drop policy if exists "orders_delete_own" on public.orders;
+create policy "orders_delete_own" on public.orders
+  for delete using (auth.uid() = user_id);
+
 -- admins can read & manage ALL orders + items
 drop policy if exists "orders_admin_all" on public.orders;
 create policy "orders_admin_all" on public.orders
@@ -132,8 +140,9 @@ drop policy if exists "order_items_insert_guest" on public.order_items;
 create policy "order_items_insert_guest" on public.order_items
   for insert to anon with check (true);
 
--- ---------- Products: multiple images + admin image-upload bucket ----------
+-- ---------- Products: multiple images + stock + admin image-upload bucket ----------
 alter table public.products add column if not exists images text[];
+alter table public.products add column if not exists stock  integer;  -- null = not tracked; 0 = out of stock
 
 insert into storage.buckets (id, name, public)
   values ('products', 'products', true)

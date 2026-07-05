@@ -72,6 +72,7 @@ export default function Admin() {
             <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500" />
           </div>
           <div className="mb-2">
+            <input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Stock qty (leave blank if not tracking)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 mb-2" />
             <textarea value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} rows={2} placeholder="Image URLs — one per line (optional)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 resize-none" />
             <label className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 cursor-pointer">
               <Upload size={14} /> Upload image
@@ -121,7 +122,7 @@ export default function Admin() {
             onChange={(e) => { const file = e.target.files && e.target.files[0]; e.target.value = ""; if (file) { const reader = new FileReader(); reader.onload = () => importProductsCsv(String(reader.result || "")); reader.readAsText(file); } }} />
         </label>
         <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
-          CSV columns: name, category, shape, price, original_price, colors, sizes, images, trending, tag, description. Separate multiple colours / sizes / image URLs with <b>|</b>.
+          CSV columns: name, category, shape, price, original_price, colors, sizes, images, trending, tag, description, stock. Separate multiple colours / sizes / image URLs with <b>|</b>.
         </p>
       </div>
     </div>

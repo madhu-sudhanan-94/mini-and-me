@@ -15,7 +15,7 @@ function fmtLines(a) {
 }
 
 export default function Addresses() {
-  const { addresses, addrBusy, saveAddress, deleteAddress, makeDefaultAddress, setScreen, profile } = useStore();
+  const { addresses, addrBusy, saveAddress, deleteAddress, makeDefaultAddress, setScreen, goBack, profile } = useStore();
   const [editing, setEditing] = useState(null); // form object (with id when editing) or null
   const [err, setErr] = useState("");
 
@@ -44,13 +44,13 @@ export default function Addresses() {
   return (
     <div className="pb-6">
       <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => (editing ? setEditing(null) : setScreen("account"))} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => (editing ? setEditing(null) : goBack("account"))} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">{editing ? (editing.id ? "Edit address" : "New address") : "Delivery addresses"}</h2>
       </div>
 
       {editing ? (
         <div className="px-5 mt-4">
-          <div className="bg-white rounded-2xl border border border-slate-200 p-4 space-y-3">
+          <div className="bg-white rounded-2xl shadow-xs p-4 space-y-3">
             <div className="flex gap-2">
               {LABELS.map((l) => (
                 <button key={l} onClick={() => set("label", l)} className={`flex-1 py-2 rounded-xl text-sm font-semibold ${editing.label === l ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{l}</button>
@@ -125,7 +125,7 @@ export default function Addresses() {
       ) : (
         <div className="px-5 mt-4 space-y-3">
           {addresses.map((a) => (
-            <div key={a.id} className="bg-white rounded-2xl border border border-slate-200 p-4">
+            <div key={a.id} className="bg-white rounded-2xl shadow-xs p-4">
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wide bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">{a.label}</span>
                 {a.is_default && <span className="text-[11px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md flex items-center gap-1"><Star size={11} fill="currentColor" /> Default</span>}
@@ -140,7 +140,7 @@ export default function Addresses() {
               </div>
             </div>
           ))}
-          <button onClick={startNew} className="w-full border border-dashed border-brand-300 text-brand-600 font-semibold py-3 rounded-2xl flex items-center justify-center gap-2"><Plus size={18} /> Add another address</button>
+          <button onClick={startNew} className="w-full border border-dashed border-brand-300 text-brand-600 font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 mt-5"><Plus size={18} /> Add another address</button>
         </div>
       )}
     </div>

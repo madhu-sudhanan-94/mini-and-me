@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Check } from "lucide-react";
 import { BRAND } from "./brand.config.js";
 import { panelBlue, profileWash } from "./theme.js";
@@ -35,6 +35,13 @@ const SCREENS = {
 
 function Shell() {
   const { hydrated, screen, toast, query } = useStore();
+  const scrollRef = useRef(null);
+  // Every screen should open at the top — reset scroll on navigation so a new
+  // screen never inherits the previous screen's scroll position.
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  }, [screen]);
 
   if (!hydrated) {
     return (
@@ -60,7 +67,7 @@ function Shell() {
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}@keyframes vkUp{from{transform:translateY(100%);opacity:.7}to{transform:translateY(0);opacity:1}}.screen-wash{background:${profileWash};background-attachment:local}@media(min-width:900px){.screen-wash{background:none}}`}</style>
       <div className="relative w-full max-w-[430px] lg:max-w-none bg-slate-50 sm:rounded-[2.5rem] lg:rounded-none sm:shadow-2xl lg:shadow-none overflow-hidden lg:overflow-visible flex flex-col h-screen sm:h-[880px] lg:h-auto lg:min-h-screen">
         {showChrome && <DesktopNav />}
-        <div className="flex-1 overflow-y-auto no-scrollbar lg:overflow-visible screen-wash">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar lg:overflow-visible screen-wash">
           <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>
           {showFooter && <Footer />}
         </div>

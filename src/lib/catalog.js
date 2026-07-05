@@ -1,4 +1,5 @@
 /* ==================== Shop listing helpers: sort + colour filter ==================== */
+import { CAT_LABEL } from "./format.js";
 
 // Sort options for the shop grid. "Best selling" uses `trending` as a proxy
 // (no real sales data yet); "Newest" uses the `new` tag then id.
@@ -64,4 +65,37 @@ export function colorFamily(hex) {
 // Set of colour-family keys a product covers.
 export function productFamilies(p) {
   return new Set((p.colors || []).map(colorFamily));
+}
+
+// ---- Stock helpers. stock null/undefined = not tracked (always available). ----
+export const isTracked = (p) => typeof p?.stock === "number";
+export const outOfStock = (p) => isTracked(p) && p.stock <= 0;
+export const lowStock = (p) => isTracked(p) && p.stock > 0 && p.stock <= 5;
+
+// Full-text-ish search across name, description, category, type/shape, tag and
+// colour names. Every whitespace-separated term must match somewhere, so
+// "blue dress" narrows to blue dresses. Results are ranked: name hits first,
+// then trending, then alphabetical.
+function searchHaystack(p) {
+  return [
+    p.name, p.desc, p.shape, p.tag, CAT_LABEL[p.cat] || p.cat, p.cat,
+    ...(p.colors || []).map((c) => familyLabel(colorFamily(c))),
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+export function searchProducts(list, query) {
+  const q = (query || "").trim().toLowerCase();
+  if (!q) return [];
+  const terms = q.split(/\s+/);
+  const matched = (list || []).filter((p) => {
+    const hay = searchHaystack(p);
+    return terms.every((t) => hay.includes(t));
+  });
+  return matched.sort((x, y) => {
+    const nx = x.name.toLowerCase().includes(q) ? 1 : 0;
+    const ny = y.name.toLowerCase().includes(q) ? 1 : 0;
+    if (nx !== ny) return ny - nx;
+    const tx = x.trending ? 1 : 0, ty = y.trending ? 1 : 0;
+    if (tx !== ty) return ty - tx;
+    return x.name.localeCompare(y.name);
+  });
 }

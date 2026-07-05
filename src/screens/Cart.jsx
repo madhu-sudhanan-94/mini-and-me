@@ -1,11 +1,12 @@
 import React from "react";
 import { ChevronLeft, ShoppingCart, Trash2, Minus, Plus } from "lucide-react";
-import { formatINR } from "../lib/format.js";
+import { formatINR, gstBreakdown } from "../lib/format.js";
 import ProductImage from "../components/ProductImage.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
   const { cart, products, cartTotal, setScreen, removeItem, changeQty } = useStore();
+  const bill = gstBreakdown(cartTotal);
   return (
     <div className="flex flex-col min-h-full">
       <div className="px-5 pt-2 flex items-center gap-3">
@@ -51,11 +52,15 @@ export default function Cart() {
             })}
           </div>
           <div className="p-5 border-t border-slate-100 bg-white">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-slate-500">Total</span>
-              <span className="text-2xl font-extrabold text-slate-900">{formatINR(cartTotal)}</span>
+            <div className="space-y-1 mb-3 text-sm">
+              <div className="flex justify-between text-slate-500"><span>Subtotal</span><span>{formatINR(bill.subtotal)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>GST ({bill.ratePct}%, incl.)</span><span>{formatINR(bill.gst)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Delivery</span><span className="text-green-600 font-medium">Free</span></div>
+              <div className="flex justify-between items-center pt-1.5 border-t border-slate-100">
+                <span className="font-semibold text-slate-800">Total</span>
+                <span className="text-2xl font-extrabold text-slate-900">{formatINR(bill.total)}</span>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-3">Inclusive of all taxes</p>
             <button onClick={() => setScreen("checkout")} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30">Check out</button>
           </div>
         </>

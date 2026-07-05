@@ -2,6 +2,18 @@
 
 export const formatINR = (n) => "₹" + Number(n).toLocaleString("en-IN");
 
+// Prices are tax-inclusive. Split an inclusive total into subtotal + GST.
+// Set GST_RATE to your effective rate (apparel is 5% under ₹1000, 12% at/above).
+export const GST_RATE = 0.05;
+export function gstBreakdown(totalIncl, rate = GST_RATE) {
+  const gst = Math.round(totalIncl - totalIncl / (1 + rate));
+  return { subtotal: totalIncl - gst, gst, total: totalIncl, ratePct: Math.round(rate * 100) };
+}
+
+export function isEmail(v) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
+}
+
 export const CAT_LABEL = { women: "Women", men: "Men", kids: "Kids" };
 
 // Lighten (p > 0) or darken (p < 0) a #rrggbb hex by fraction p (0..1)

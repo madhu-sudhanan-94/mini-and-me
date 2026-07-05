@@ -31,11 +31,11 @@ export default function DesktopNav() {
         </div>
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        <button onClick={() => setScreen("cart")} className="relative w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center">
+        <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center">
           <ShoppingCart size={20} className="text-slate-700" />
           {cartCount > 0 && <span className="absolute top-0.5 right-0.5 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[17px] h-[17px] px-1 flex items-center justify-center">{cartCount}</span>}
         </button>
-        <button onClick={() => setScreen("account")} className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center"><User size={20} className="text-slate-700" /></button>
+        <button onClick={() => setScreen("account")} aria-label="Account" className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center"><User size={20} className="text-slate-700" /></button>
       </div>
     </header>
   );

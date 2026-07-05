@@ -15,7 +15,7 @@ export default function ProductCard({ p, wide }) {
         <ProductImage p={p} color={p.colors[0]} />
         {p.original && <span className="absolute z-10 top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>}
         {p.tag === "new" && <span className="absolute z-10 top-1.5 left-1.5 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">NEW</span>}
-        <button onClick={(e) => { e.stopPropagation(); toggleFav(p.id); }} className="absolute z-10 top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center active:scale-90 transition">
+        <button onClick={(e) => { e.stopPropagation(); toggleFav(p.id); }} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="absolute z-10 top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center active:scale-90 transition">
           <Heart size={14} className={isFav(p.id) ? "text-rose-500" : "text-slate-400"} fill={isFav(p.id) ? "currentColor" : "none"} />
         </button>
       </div>

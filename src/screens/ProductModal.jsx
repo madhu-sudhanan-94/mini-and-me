@@ -27,14 +27,14 @@ export default function ProductModal() {
         {/* Image carousel */}
         <div className="relative h-72 lg:h-80 bg-linear-to-br from-accent-100 to-brand-200 shrink-0">
           <ProductImage key={imgIndex} p={p} color={selColor} index={imgIndex} />
-          <button onClick={closeProduct} className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center"><X size={18} /></button>
-          <button onClick={() => toggleFav(p.id)} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center active:scale-90 transition">
+          <button onClick={closeProduct} aria-label="Close" className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center"><X size={18} /></button>
+          <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center active:scale-90 transition">
             <Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-500"} fill={isFav(p.id) ? "currentColor" : "none"} />
           </button>
           {imgs.length > 1 && (
             <>
-              <button onClick={() => setImgIndex((i) => (i - 1 + imgs.length) % imgs.length)} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/70 flex items-center justify-center"><ChevronLeft size={18} /></button>
-              <button onClick={() => setImgIndex((i) => (i + 1) % imgs.length)} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/70 flex items-center justify-center"><ChevronRight size={18} /></button>
+              <button onClick={() => setImgIndex((i) => (i - 1 + imgs.length) % imgs.length)} aria-label="Previous image" className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/70 flex items-center justify-center"><ChevronLeft size={18} /></button>
+              <button onClick={() => setImgIndex((i) => (i + 1) % imgs.length)} aria-label="Next image" className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/70 flex items-center justify-center"><ChevronRight size={18} /></button>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
                 {imgs.map((_, i) => (
                   <span key={i} onClick={() => setImgIndex(i)} className={`h-1.5 rounded-full cursor-pointer transition-all ${i === imgIndex ? "w-5 bg-white" : "w-1.5 bg-white/60"}`} />

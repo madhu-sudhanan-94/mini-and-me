@@ -3,6 +3,7 @@ import { ChevronLeft, MapPin } from "lucide-react";
 import { formatINR } from "../lib/format.js";
 import { ALL_STATUSES, STATUS_LABEL, fmtDate, normalizeOrder, shipLines } from "../lib/orders.js";
 import { panelBlueDeep } from "../theme.js";
+import Skeleton from "../components/Skeleton.jsx";
 import { useStore } from "../store.jsx";
 
 const statusChip = {
@@ -18,7 +19,10 @@ export default function AdminOrders() {
   useEffect(() => { loadAdminOrders(); }, []);
 
   const list = adminOrders.map(normalizeOrder);
-  const revenue = adminOrders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + (o.total || 0), 0);
+  const paid = adminOrders.filter((o) => o.status !== "cancelled");
+  const revenue = paid.reduce((s, o) => s + (o.total || 0), 0);
+  const aov = paid.length ? Math.round(revenue / paid.length) : 0;
+  const statusCounts = adminOrders.reduce((m, o) => { const s = o.status || "placed"; m[s] = (m[s] || 0) + 1; return m; }, {});
 
   return (
     <div className="flex flex-col min-h-full bg-slate-50">
@@ -33,7 +37,29 @@ export default function AdminOrders() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4">
-        {ordersBusy && list.length === 0 && <p className="text-center text-slate-400 text-sm py-10">Loading orders…</p>}
+        {adminOrders.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-xs p-4 mb-4">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div><p className="text-lg font-extrabold text-slate-900">{adminOrders.length}</p><p className="text-[10px] text-slate-400">Orders</p></div>
+              <div><p className="text-lg font-extrabold text-slate-900">{formatINR(revenue)}</p><p className="text-[10px] text-slate-400">Revenue</p></div>
+              <div><p className="text-lg font-extrabold text-slate-900">{formatINR(aov)}</p><p className="text-[10px] text-slate-400">Avg order</p></div>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100">
+              {ALL_STATUSES.map((s) => statusCounts[s] ? <span key={s} className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${statusChip[s] || "bg-slate-100 text-slate-600"}`}>{STATUS_LABEL[s]} · {statusCounts[s]}</span> : null)}
+            </div>
+          </div>
+        )}
+        {ordersBusy && list.length === 0 && (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-xs p-4 space-y-2">
+                <div className="flex justify-between"><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-16" /></div>
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-8 w-full mt-2" />
+              </div>
+            ))}
+          </div>
+        )}
         {!ordersBusy && list.length === 0 && <p className="text-center text-slate-400 text-sm py-10">No orders yet.</p>}
 
         <div className="space-y-3">

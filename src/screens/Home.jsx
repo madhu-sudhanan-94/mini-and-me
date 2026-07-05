@@ -25,11 +25,11 @@ export default function Home() {
           <p className="font-extrabold text-slate-900 text-lg">{BRAND.name}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setScreen("favorites")} className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
+          <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
             <Heart size={19} className="text-slate-700" />
             {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{favorites.length}</span>}
           </button>
-          <button onClick={() => setScreen("cart")} className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
+          <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
             <ShoppingCart size={19} className="text-slate-700" />
             {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{cartCount}</span>}
           </button>

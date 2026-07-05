@@ -1,6 +1,6 @@
 import React from "react";
 import { ChevronLeft, User, MapPin } from "lucide-react";
-import { formatINR } from "../lib/format.js";
+import { formatINR, gstBreakdown, isEmail } from "../lib/format.js";
 import PhoneField from "../components/PhoneField.jsx";
 import { useStore } from "../store.jsx";
 
@@ -9,6 +9,9 @@ export default function Checkout() {
     cartCount, cartTotal, coName, setCoName, coPhone, setCoPhone,
     coEmail, setCoEmail, auth, goToLogin, placeOrder, setScreen, defaultAddress, session,
   } = useStore();
+  const bill = gstBreakdown(cartTotal);
+  const emailInvalid = coEmail.trim() && !isEmail(coEmail);
+  const hasContact = coPhone.trim() || (coEmail.trim() && isEmail(coEmail));
 
   return (
     <div className="flex flex-col min-h-full">
@@ -37,9 +40,14 @@ export default function Checkout() {
             )}
           </div>
         )}
-        <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 flex justify-between items-center mb-5">
-          <span className="text-sm text-brand-700 font-medium">{cartCount} item{cartCount !== 1 ? "s" : ""} · to pay</span>
-          <span className="font-extrabold text-brand-700 text-lg">{formatINR(cartTotal)}</span>
+        <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 mb-5 space-y-1 text-sm">
+          <div className="flex justify-between text-brand-700"><span>Subtotal</span><span>{formatINR(bill.subtotal)}</span></div>
+          <div className="flex justify-between text-brand-700"><span>GST ({bill.ratePct}%, incl.)</span><span>{formatINR(bill.gst)}</span></div>
+          <div className="flex justify-between text-brand-700"><span>Delivery</span><span className="text-green-600 font-medium">Free</span></div>
+          <div className="flex justify-between items-center pt-1.5 border-t border-brand-100">
+            <span className="font-semibold text-brand-700">{cartCount} item{cartCount !== 1 ? "s" : ""} · to pay</span>
+            <span className="font-extrabold text-brand-700 text-lg">{formatINR(bill.total)}</span>
+          </div>
         </div>
 
         <p className="text-sm font-semibold text-slate-800 mb-3">Where should we send your order updates?</p>
@@ -52,8 +60,10 @@ export default function Checkout() {
         <div className="flex items-center gap-3 my-1 text-slate-300 text-xs"><div className="flex-1 h-px bg-slate-200" />or<div className="flex-1 h-px bg-slate-200" /></div>
 
         <label className="block text-xs text-slate-500 mb-1 mt-2">Email</label>
-        <input value={coEmail} onChange={(e) => setCoEmail(e.target.value)} type="email" placeholder="you@email.com" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-        <p className="text-[11px] text-slate-400 mt-2">Add at least one — a phone number or an email.</p>
+        <input value={coEmail} onChange={(e) => setCoEmail(e.target.value)} type="email" placeholder="you@email.com" className={`w-full border rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 ${emailInvalid ? "border-red-300" : "border-slate-200"}`} />
+        {emailInvalid
+          ? <p className="text-red-500 text-[11px] mt-1">Enter a valid email address.</p>
+          : <p className="text-[11px] text-slate-400 mt-2">Add at least one — a phone number or an email.</p>}
       </div>
 
       <div className="p-5 border-t border-slate-100">
@@ -65,8 +75,8 @@ export default function Checkout() {
             <p className="text-[11px] text-slate-400 text-center mt-2">Please log in or create an account to complete your order.</p>
           </>
         ) : (
-          <button onClick={placeOrder} disabled={!coName.trim() || (!coPhone.trim() && !coEmail.trim())} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 disabled:opacity-50">
-            Place order · {formatINR(cartTotal)}
+          <button onClick={placeOrder} disabled={!coName.trim() || !hasContact} className="w-full bg-linear-to-r from-brand-600 to-accent-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 disabled:opacity-50">
+            Place order · {formatINR(bill.total)}
           </button>
         )}
       </div>

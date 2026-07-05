@@ -39,7 +39,7 @@ export default function Orders() {
       </div>
 
       {list.length === 0 ? (
-        <EmptyState icon={Package} title="No orders yet" subtitle="Your placed orders will show up here." className="mt-20">
+        <EmptyState icon={Package} title="No orders yet" subtitle="Your placed orders will show up here." className="min-h-[68vh]">
           <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Start shopping</PrimaryButton>
         </EmptyState>
       ) : (

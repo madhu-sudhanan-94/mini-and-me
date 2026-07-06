@@ -4,7 +4,7 @@ import {
   authSignUp, authSignIn, authRefresh, authSignOut, authErrText,
   authRecover, authGetUser, authUpdateUser,
 } from "./lib/supabase.js";
-import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset } from "./lib/storage.js";
+import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset, getRemember, saveSessionLocal, loadSessionLocal, clearSessionLocal } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
 import { parseCsv } from "./lib/csv.js";
 import { gstBreakdown } from "./lib/format.js";
@@ -57,6 +57,7 @@ export function StoreProvider({ children }) {
   const [authNotice, setAuthNotice] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [session, setSession] = useState(null); // { access_token, refresh_token, user }
+  const [rememberMe, setRememberMe] = useState(getRemember()); // keep me signed in after browser restart
   const [adminBusy, setAdminBusy] = useState(false);
   const [returnTo, setReturnTo] = useState(null); // screen to return to after logging in
   const [profile, setProfile] = useState(null); // profiles row for the signed-in user
@@ -363,7 +364,7 @@ export function StoreProvider({ children }) {
   // Restore a saved login session on load (refresh the token so it stays valid)
   useEffect(() => {
     (async () => {
-      const raw = await sget(AKEY, false);
+      const raw = loadSessionLocal() || await sget(AKEY, false);
       if (!raw) return;
       try {
         const saved = JSON.parse(raw);
@@ -375,6 +376,7 @@ export function StoreProvider({ children }) {
           setAuth({ role: email === ADMIN_EMAIL ? "admin" : "customer", id: fresh.user?.email || email, uid: fresh.user?.id || null });
           setScreen((s) => (s === "login" ? "home" : s));
         } else {
+          clearSessionLocal();
           await sset(AKEY, "", false);
         }
       } catch {}
@@ -385,7 +387,11 @@ export function StoreProvider({ children }) {
   useEffect(() => { if (hydrated) sset(OKEY, JSON.stringify(orders), true); }, [orders, hydrated]);
   useEffect(() => { if (hydrated) sset(CKEY, JSON.stringify(cart), false); }, [cart, hydrated]);
   useEffect(() => { if (hydrated) sset(FKEY, JSON.stringify(favorites), false); }, [favorites, hydrated]);
-  useEffect(() => { if (hydrated) sset(AKEY, session ? JSON.stringify(session) : "", false); }, [session, hydrated]);
+  useEffect(() => {
+    if (!hydrated) return;
+    saveSessionLocal(session, rememberMe); // localStorage if "remember me", else sessionStorage
+    sset(AKEY, session ? JSON.stringify(session) : "", false);
+  }, [session, rememberMe, hydrated]);
 
   // Auto-rotate the home hero
   useEffect(() => {
@@ -967,7 +973,7 @@ export function StoreProvider({ children }) {
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
     loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
-    authBusy, session, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
+    authBusy, session, rememberMe, setRememberMe, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
     addresses, addrBusy, defaultAddress,
     myOrders, adminOrders, ordersBusy,
     selProduct, setSelProduct,

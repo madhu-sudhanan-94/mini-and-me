@@ -31,6 +31,7 @@ export default function Login() {
     authMode, setAuthMode, authErr, authNotice, setAuthNotice,
     loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
     sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, requestPasswordReset, showToast,
+    rememberMe, setRememberMe,
   } = useStore();
   const [logoFailed, setLogoFailed] = useState(false);
   const isSignup = authMode === "signup";
@@ -79,6 +80,11 @@ export default function Login() {
                 )}
               </div>
               <PasswordField value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} autoComplete={isSignup ? "new-password" : "current-password"} placeholder="Enter your password" />
+
+              <label className="flex items-center gap-2 mt-3.5 text-sm text-slate-600 cursor-pointer select-none w-fit">
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 accent-brand-600" />
+                Keep me signed in for 30 days
+              </label>
 
               {authErr && <p className="text-red-500 text-xs mt-2.5">{authErr}</p>}
               {authNotice && (

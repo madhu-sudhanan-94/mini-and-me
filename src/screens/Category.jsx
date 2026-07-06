@@ -14,9 +14,9 @@ const PRICE_BOUNDS = [0, 10000]; // fixed price range for the slider
 
 export default function Category() {
   const { products, selCategory, setSelCategory, setScreen, goBack } = useStore();
-  const cats = ["kids", "women", "men"];
+  const cats = ["all", "kids", "women", "men"];
 
-  const inCat = useMemo(() => products.filter((p) => p.cat === selCategory), [products, selCategory]);
+  const inCat = useMemo(() => products.filter((p) => selCategory === "all" || p.cat === selCategory), [products, selCategory]);
   const shapes = useMemo(() => ["all", ...Array.from(new Set(inCat.map((p) => p.shape)))], [inCat]);
   const families = useMemo(
     () => COLOR_FAMILIES.map((f) => f.key).filter((k) => inCat.some((p) => productFamilies(p).has(k))),

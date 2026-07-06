@@ -45,7 +45,7 @@ function Shell() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-sans" style={panelBlue}>
+      <div className="min-h-dvh flex items-center justify-center font-sans" style={panelBlue}>
         <div className="text-center">
           <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
             <Logo size={30} className="text-white" />
@@ -63,9 +63,9 @@ function Shell() {
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-xl";
 
   return (
-    <div className="min-h-screen bg-slate-300 lg:bg-slate-50 flex justify-center sm:py-6 lg:py-0 font-sans">
+    <div className="min-h-dvh bg-slate-300 lg:bg-slate-50 flex justify-center sm:py-6 lg:py-0 font-sans">
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}@keyframes vkUp{from{transform:translateY(100%);opacity:.7}to{transform:translateY(0);opacity:1}}.screen-wash{background:${profileWash};background-attachment:local}@media(min-width:900px){.screen-wash{background:none}}`}</style>
-      <div className="relative w-full max-w-[430px] lg:max-w-none bg-slate-50 sm:rounded-[2.5rem] lg:rounded-none sm:shadow-2xl lg:shadow-none overflow-hidden lg:overflow-visible flex flex-col h-screen sm:h-[880px] lg:h-auto lg:min-h-screen">
+      <div className="relative w-full max-w-[430px] lg:max-w-none bg-slate-50 sm:rounded-[2.5rem] lg:rounded-none sm:shadow-2xl lg:shadow-none overflow-hidden lg:overflow-visible flex flex-col h-dvh sm:h-[880px] lg:h-auto lg:min-h-dvh">
         {showChrome && <DesktopNav />}
         <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar lg:overflow-visible screen-wash">
           <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>

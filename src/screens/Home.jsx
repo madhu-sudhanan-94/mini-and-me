@@ -20,8 +20,8 @@ export default function Home() {
 
   const featured = products.filter((p) => p.trending).slice(0, 5);
   const heroP = featured.length ? featured[heroIndex % featured.length] : products[0];
-  const trending = products.filter((p) => p.trending);
-  const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 6);
+  const trending = products.filter((p) => p.trending).slice(0, 20);
+  const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 20);
   const [allPage, setAllPage] = useState(1);
   const allPageCount = Math.max(1, Math.ceil(products.length / ALL_PAGE));
   const allSafe = Math.min(allPage, allPageCount);
@@ -147,10 +147,7 @@ export default function Home() {
 
           {/* Trending */}
           <div className="mt-6">
-            <div className="px-5 flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 text-lg">Trending now</h3>
-              <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
-            </div>
+            <h3 className="font-bold text-slate-900 text-lg px-5">Trending now</h3>
             <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
               {trending.map((p) => <ProductCard key={p.id} p={p} wide />)}
             </div>
@@ -181,10 +178,7 @@ export default function Home() {
 
           {/* New in */}
           <div className="mt-6">
-            <div className="px-5 flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 text-lg">New in</h3>
-              <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
-            </div>
+            <h3 className="font-bold text-slate-900 text-lg px-5">New in</h3>
             <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
               {newIn.map((p) => <ProductCard key={p.id} p={p} wide />)}
             </div>

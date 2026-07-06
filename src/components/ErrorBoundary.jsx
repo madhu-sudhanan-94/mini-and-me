@@ -19,7 +19,7 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 font-sans" style={panelBlue}>
+        <div className="min-h-dvh flex items-center justify-center p-6 font-sans" style={panelBlue}>
           <div className="bg-white rounded-3xl shadow-xl p-6 max-w-sm w-full text-center">
             <p className="text-2xl font-extrabold text-slate-900">Something went wrong</p>
             <p className="text-slate-500 text-sm mt-2">{BRAND.name} hit an unexpected error. Reloading usually fixes it.</p>

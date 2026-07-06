@@ -24,7 +24,7 @@ export default function ProductModal() {
     imgIndex, setImgIndex, selColor, setSelColor, selSize, setSelSize, addToCart,
   } = useStore();
   const [guide, setGuide] = useState(false);
-  const [zoomed, setZoomed] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -39,8 +39,15 @@ export default function ProductModal() {
 
   const p = selProduct;
   // reset transient view state when the product / image changes
-  useEffect(() => { setZoomed(false); setImgFailed(false); }, [imgIndex, p?.id]);
-  useEffect(() => { setDescExpanded(false); setShareOpen(false); }, [p?.id]);
+  useEffect(() => { setImgFailed(false); }, [imgIndex, p?.id]);
+  useEffect(() => { setDescExpanded(false); setShareOpen(false); setLightbox(false); }, [p?.id]);
+  // Esc closes the full-screen image viewer first (if open)
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); setLightbox(false); } };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [lightbox]);
   // does the (clamped) description overflow 2 lines? → show "See more"
   useLayoutEffect(() => {
     const el = descRef.current;
@@ -88,22 +95,22 @@ export default function ProductModal() {
           </button>
         </div>
 
-        {/* Image — tap to zoom (scroll to pan when zoomed) */}
+        {/* Image — tap to open the full-screen viewer */}
         <div
-          {...(!zoomed && imgs.length > 1 ? imgSwipe : {})}
-          className={`relative shrink-0 h-72 sm:h-80 bg-linear-to-br from-accent-100 to-brand-200 ${zoomed ? "overflow-auto no-scrollbar" : "overflow-hidden touch-pan-y select-none"}`}
+          {...(imgs.length > 1 ? imgSwipe : {})}
+          className="relative shrink-0 h-72 sm:h-80 bg-linear-to-br from-accent-100 to-brand-200 overflow-hidden touch-pan-y select-none"
         >
           {src && !imgFailed ? (
             <img
               src={src} alt={p.name} onError={() => setImgFailed(true)}
-              onClick={() => imgs.length && setZoomed((z) => !z)}
-              className={zoomed ? "h-auto w-[190%] max-w-none cursor-zoom-out" : "w-full h-full object-cover cursor-zoom-in"}
+              onClick={() => imgs.length && setLightbox(true)}
+              className="w-full h-full object-cover cursor-zoom-in"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center"><Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[80%]" /></div>
           )}
           {/* Dot indicators */}
-          {!zoomed && imgs.length > 1 && (
+          {imgs.length > 1 && (
             <div className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5">
               {imgs.map((_, i) => (
                 <button key={i} onClick={() => setImgIndex(i)} aria-label={`Image ${i + 1}`} className={`h-1.5 rounded-full transition-all ${i === imgIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
@@ -212,6 +219,31 @@ export default function ProductModal() {
           </div>
         )}
       </div>
+
+      {/* Full-screen image viewer — swipe to change, dots, tap backdrop / Esc to close */}
+      {lightbox && (
+        <div className="absolute inset-0 z-50 flex flex-col offer-fade bg-black/50 backdrop-blur-md">
+          {/* <button onClick={() => setLightbox(false)} aria-label="Close" className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-slate-900/10 hover:bg-slate-900/20 backdrop-blur text-slate-800 flex items-center justify-center transition active:scale-90"><X size={20} /></button> */}
+          <div
+            {...(imgs.length > 1 ? imgSwipe : {})}
+            onClick={() => setLightbox(false)}
+            className="relative z-10 flex-1 flex items-center justify-center overflow-hidden select-none touch-pan-y p-4"
+          >
+            {src && !imgFailed ? (
+              <img src={src} alt={p.name} onError={() => setImgFailed(true)} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl shadow-black/25" />
+            ) : (
+              <Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[70%]" />
+            )}
+          </div>
+          {imgs.length > 1 && (
+            <div className="absolute inset-x-0 bottom-7 z-20 flex justify-center gap-2">
+              {imgs.map((_, i) => (
+                <button key={i} onClick={() => setImgIndex(i)} aria-label={`Image ${i + 1}`} className={`h-2 rounded-full transition-all shadow-sm shadow-black/30 ${i === imgIndex ? "w-6 bg-white" : "w-2 bg-white/60"}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

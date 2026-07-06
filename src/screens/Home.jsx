@@ -135,20 +135,53 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Offers */}
+          {/* Offers — glass cards: gloss sheen + light-source glow + color bloom + AA scrim */}
           <div className="px-5 mt-6 grid grid-cols-2 gap-3">
-            <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-fuchsia-500 via-pink-500 to-fuchsia-500 shadow-md active:scale-95 transition">
-              <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Festive Edit</span>
-              <div>
-                <p className="text-white font-extrabold text-lg leading-tight promo-textshine">Up to 40% off</p>
-                <p className="text-white/85 text-[11px] flex items-center gap-1">Shop the sale <ArrowRight size={12} /></p>
+            {/* Festive Edit — warm glass */}
+            <button
+              onClick={() => { setSelCategory("women"); setScreen("category"); }}
+              className="group relative isolate flex h-[120px] flex-col justify-between overflow-hidden rounded-3xl p-4 text-left bg-linear-to-tr from-fuchsia-600 via-pink-500 to-orange-400 shadow-[0_16px_34px_-12px_rgba(219,39,119,0.6),inset_0_0_0_1px_rgba(255,255,255,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_46px_-12px_rgba(219,39,119,0.7),inset_0_0_0_1px_rgba(255,255,255,0.22)] active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
+            >
+              <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-linear-to-b from-white/30 via-white/10 to-transparent" />
+              <span aria-hidden className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/35 blur-2xl" />
+              <span aria-hidden className="pointer-events-none absolute -left-9 -bottom-10 h-28 w-28 rounded-full bg-rose-300/35 blur-3xl" />
+              <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/25 via-black/5 to-transparent" />
+              <span className="relative z-10 inline-flex items-center gap-1 self-start whitespace-nowrap rounded-full bg-white/15 px-2 py-1 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+                <Sparkles size={10} className="text-white" aria-hidden />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white">Festive Edit</span>
+              </span>
+              <div className="relative z-10">
+                <p className="promo-textshine text-[17px] font-extrabold leading-tight tracking-tight">Up to 40% off</p>
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="whitespace-nowrap text-[11px] font-medium text-white/90">Shop the sale</span>
+                  <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/20 ring-1 ring-inset ring-white/30 backdrop-blur-sm transition-transform duration-300 group-hover:translate-x-0.5">
+                    <ArrowRight size={13} className="text-white" />
+                  </span>
+                </div>
               </div>
             </button>
-            <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-brand-600 via-accent-500 to-brand-600 shadow-md active:scale-95 transition">
-              <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Just In</span>
-              <div>
-                <p className="text-white font-extrabold text-lg leading-tight promo-textshine">New Arrivals</p>
-                <p className="text-white/85 text-[11px] flex items-center gap-1">Explore now <ArrowRight size={12} /></p>
+
+            {/* Just In — brand-blue glass */}
+            <button
+              onClick={() => { setSelCategory("kids"); setScreen("category"); }}
+              className="group relative isolate flex h-[120px] flex-col justify-between overflow-hidden rounded-3xl p-4 text-left bg-linear-to-tr from-brand-700 via-brand-600 to-accent-500 shadow-[0_16px_34px_-12px_rgba(37,99,235,0.6),inset_0_0_0_1px_rgba(255,255,255,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_46px_-12px_rgba(37,99,235,0.7),inset_0_0_0_1px_rgba(255,255,255,0.22)] active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
+            >
+              <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-linear-to-b from-white/28 via-white/10 to-transparent" />
+              <span aria-hidden className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-white/30 blur-2xl" />
+              <span aria-hidden className="pointer-events-none absolute -left-9 -bottom-10 h-28 w-28 rounded-full bg-accent-400/35 blur-3xl" />
+              <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/25 via-black/5 to-transparent" />
+              <span className="relative z-10 inline-flex items-center gap-1 self-start whitespace-nowrap rounded-full bg-white/15 px-2 py-1 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+                <Sparkles size={10} className="text-white" aria-hidden />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white">Just In</span>
+              </span>
+              <div className="relative z-10">
+                <p className="promo-textshine text-[17px] font-extrabold leading-tight tracking-tight">New Arrivals</p>
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="whitespace-nowrap text-[11px] font-medium text-white/90">Explore now</span>
+                  <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/20 ring-1 ring-inset ring-white/30 backdrop-blur-sm transition-transform duration-300 group-hover:translate-x-0.5">
+                    <ArrowRight size={13} className="text-white" />
+                  </span>
+                </div>
               </div>
             </button>
           </div>
@@ -161,25 +194,33 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Promo banner — living gradient + shimmer text (clickable) */}
+          {/* Promo banner — glass style matching the offer cards above */}
           <div className="px-5 mt-5">
             <button
               type="button"
               onClick={() => { setSelCategory("women"); setScreen("category"); }}
-              className="offer-shine promo-drift relative w-full overflow-hidden rounded-2xl p-4 flex items-center gap-3 text-left text-white bg-linear-to-r from-violet-500 via-fuchsia-500 to-violet-500 shadow-md active:scale-95 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              className="group relative isolate w-full overflow-hidden rounded-3xl p-4 flex items-center gap-3 text-left text-white bg-linear-to-tr from-violet-600 via-fuchsia-500 to-pink-400 shadow-[0_16px_34px_-12px_rgba(139,92,246,0.6),inset_0_0_0_1px_rgba(255,255,255,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_46px_-12px_rgba(139,92,246,0.7),inset_0_0_0_1px_rgba(255,255,255,0.22)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
             >
-              <div className="relative z-10 w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <Sparkles size={22} className="text-white es-twinkle" />
+              {/* glossy top sheen */}
+              <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-white/25 via-white/10 to-transparent" />
+              {/* top-right light source */}
+              <span aria-hidden className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/30 blur-2xl" />
+              {/* opposite-corner color bloom for depth */}
+              <span aria-hidden className="pointer-events-none absolute -left-10 -bottom-12 h-32 w-32 rounded-full bg-fuchsia-300/35 blur-3xl" />
+
+              <div className="relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+                <Sparkles size={22} className="text-white" aria-hidden />
               </div>
               <div className="relative z-10 min-w-0 flex-1">
-                <p className="font-bold text-white promo-textshine">Festive Sale is live</p>
+                <p className="promo-textshine font-bold tracking-tight">Festive Sale is live</p>
                 <p className="text-white/85 text-xs mt-0.5">
-                  Up to <span className="inline-block font-semibold text-white promo-pop">40%</span> off across the store
+                  Up to <span className="font-semibold text-white">40%</span> off across the store
                 </p>
               </div>
-              <span className="relative z-10 shrink-0 inline-flex items-center gap-1 text-white text-sm font-semibold">
-                Shop now
-                <span className="promo-nudge inline-block" aria-hidden="true">&rarr;</span>
+              <span className="relative z-10 shrink-0 inline-flex items-center gap-2 text-white text-sm font-semibold">
+                <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20 ring-1 ring-inset ring-white/30 backdrop-blur-sm transition-transform duration-300 group-hover:translate-x-0.5">
+                  <ArrowRight size={16} className="text-white" />
+                </span>
               </span>
             </button>
           </div>

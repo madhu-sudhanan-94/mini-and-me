@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, SearchX, X } from "lucide-react";
 import EmptyState from "../components/EmptyState.jsx";
 import { heroBlue } from "../theme.js";
@@ -20,8 +20,16 @@ export default function Home() {
 
   const featured = products.filter((p) => p.trending).slice(0, 5);
   const heroP = featured.length ? featured[heroIndex % featured.length] : products[0];
-  const trending = products.filter((p) => p.trending).slice(0, 20);
-  const newIn = [...products.filter((p) => p.tag === "new"), ...products.filter((p) => p.tag !== "new")].slice(0, 20);
+  // Trending: the trending-tagged products first (shuffled for freshness),
+  // then any other products to fill up to a max of 20.
+  const trending = useMemo(() => {
+    const t = products.filter((p) => p.trending);
+    for (let i = t.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [t[i], t[j]] = [t[j], t[i]]; }
+    const rest = products.filter((p) => !p.trending);
+    return [...t, ...rest].slice(0, 20);
+  }, [products]);
+  // New in: ONLY products tagged "new" (max 20).
+  const newIn = products.filter((p) => p.tag === "new").slice(0, 20);
   const [allPage, setAllPage] = useState(1);
   const allPageCount = Math.max(1, Math.ceil(products.length / ALL_PAGE));
   const allSafe = Math.min(allPage, allPageCount);
@@ -176,13 +184,15 @@ export default function Home() {
             </button>
           </div>
 
-          {/* New in */}
-          <div className="mt-6">
-            <h3 className="font-bold text-slate-900 text-lg px-5">New in</h3>
-            <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
-              {newIn.map((p) => <ProductCard key={p.id} p={p} wide />)}
+          {/* New in — only products tagged "new" */}
+          {newIn.length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-bold text-slate-900 text-lg px-5">New in</h3>
+              <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
+                {newIn.map((p) => <ProductCard key={p.id} p={p} wide />)}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* All items */}
           <div className="mt-8 px-5">

@@ -140,6 +140,12 @@ select.select-chevron {
   background-size: 15px;
 }
 
+/* Native date input: keep only the calendar picker icon — drop the browser's
+   stray spinner / clear arrows that show up in some states. */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button { display: none; -webkit-appearance: none; }
+input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.55; }
+
 /* Dual-handle price range slider (two stacked range inputs, transparent tracks,
    only the thumbs are interactive). Used by components/PriceRangeSlider.jsx. */
 .range-thumb {

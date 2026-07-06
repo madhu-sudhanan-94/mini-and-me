@@ -13,7 +13,7 @@ const PAGE = 20;
 const PRICE_BOUNDS = [0, 10000]; // fixed price range for the slider
 
 export default function Category() {
-  const { products, selCategory, setSelCategory, setScreen } = useStore();
+  const { products, selCategory, setSelCategory, setScreen, goBack } = useStore();
   const cats = ["kids", "women", "men"];
 
   const inCat = useMemo(() => products.filter((p) => p.cat === selCategory), [products, selCategory]);
@@ -68,7 +68,7 @@ export default function Category() {
   return (
     <div className="pb-4 lg:pb-10">
       <div className="px-5 lg:px-6 pt-[18px] flex items-center gap-3">
-        <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => goBack("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">Shop</h2>
       </div>
 

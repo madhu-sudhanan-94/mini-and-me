@@ -16,7 +16,7 @@ const statusChip = {
 };
 
 export default function AdminOrders() {
-  const { adminOrders, ordersBusy, loadAdminOrders, updateOrderStatus, setScreen } = useStore();
+  const { adminOrders, ordersBusy, loadAdminOrders, updateOrderStatus, setScreen, goBack } = useStore();
   useEffect(() => { loadAdminOrders(); }, []);
 
   const list = adminOrders.map(normalizeOrder);
@@ -29,7 +29,7 @@ export default function AdminOrders() {
     <div className="flex flex-col min-h-full bg-slate-50">
       <div className="rounded-b-3xl" style={panelBlueDeep}>
         <div className="px-5 pt-[18px] pb-4 flex items-center gap-3">
-          <button onClick={() => setScreen("admin")} aria-label="Back" className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center"><ChevronLeft size={18} className="text-white" /></button>
+          <button onClick={() => goBack("admin")} aria-label="Back" className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center"><ChevronLeft size={18} className="text-white" /></button>
           <div>
             <p className="text-white font-bold text-lg">Orders</p>
             <p className="text-brand-100 text-[11px]">{adminOrders.length} order{adminOrders.length !== 1 ? "s" : ""} · {formatINR(revenue)}</p>

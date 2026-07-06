@@ -121,7 +121,7 @@ function ThumbRow({ items, products }) {
 }
 
 export default function Orders() {
-  const { myOrders, orders, session, setScreen, loadMyOrders, products } = useStore();
+  const { myOrders, orders, session, setScreen, goBack, loadMyOrders, products } = useStore();
   useEffect(() => { if (session) loadMyOrders(); }, [session]);
 
   // Signed-in users: DB history plus any local order not yet synced (deduped by ref).
@@ -130,7 +130,7 @@ export default function Orders() {
   return (
     <div className="pb-6">
       <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => setScreen("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => goBack("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">My orders</h2>
       </div>
 

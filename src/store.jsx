@@ -25,18 +25,22 @@ export const useStore = () => useContext(StoreContext);
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [screen, setScreenRaw] = useState("home"); // open on the store; login only when needed
-  // Navigation history so a screen's Back button returns to where the user actually
-  // came from (e.g. Account → My cart → Back → Account, not always Home).
-  const navStack = useRef([]);
-  const setScreen = (next) => setScreenRaw((cur) => {
+  // Navigation is mirrored into the browser history so the device/browser Back
+  // (and Forward) buttons walk through the app's screens (Address → Profile → Home),
+  // instead of leaving the app. See the popstate effect below.
+  const screenRef = useRef("home");
+  const setScreen = (next) => {
+    const cur = screenRef.current;
     const target = typeof next === "function" ? next(cur) : next;
-    if (target !== cur) { navStack.current.push(cur); if (navStack.current.length > 40) navStack.current.shift(); }
-    return target;
-  });
-  const goBack = (fallback = "home") => setScreenRaw((cur) => {
-    const prev = navStack.current.pop();
-    return prev && prev !== cur ? prev : fallback;
-  });
+    if (target === cur) return;
+    screenRef.current = target;
+    if (typeof window !== "undefined") { try { window.history.pushState({ screen: target }, ""); } catch {} }
+    setScreenRaw(target);
+  };
+  const goBack = (fallback = "home") => {
+    if (typeof window !== "undefined") { window.history.back(); return; }
+    screenRef.current = fallback; setScreenRaw(fallback);
+  };
   const [auth, setAuth] = useState({ role: "guest", id: null });
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -189,6 +193,32 @@ export function StoreProvider({ children }) {
     } catch (e) { /* offline / not hosted yet — keep local sample data */ }
   };
   useEffect(() => { loadProducts(); }, []);
+
+  // ---- Browser Back / Forward buttons ↔ screen + product modal ----
+  // setScreen()/openProduct() push history entries; this listener syncs the app
+  // state when the user presses the browser (or Android) Back/Forward button.
+  const productsRef = useRef(products);
+  const selProductRef = useRef(null);
+  useEffect(() => { productsRef.current = products; }, [products]);
+  useEffect(() => { selProductRef.current = selProduct; }, [selProduct]);
+  useEffect(() => { screenRef.current = screen; }, [screen]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try { window.history.replaceState({ screen: "home" }, ""); } catch {}
+    const onPop = (e) => {
+      const st = (e && e.state) || { screen: "home" };
+      if (st.product != null) {
+        const p = (productsRef.current || []).find((x) => x.id === st.product);
+        if (p) { setSelProduct(p); setSelColor(p.colors[0]); setSelSize(p.sizes[0]); setImgIndex(0); }
+      } else if (selProductRef.current) {
+        setSelProduct(null);
+      }
+      const target = st.screen || "home";
+      if (target !== screenRef.current) { screenRef.current = target; setScreenRaw(target); }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   // Handle auth callbacks from email links: signup confirmation and password recovery.
   // Supabase redirects back with #access_token=...&type=signup|recovery in the URL.
@@ -505,13 +535,21 @@ export function StoreProvider({ children }) {
     }
   };
 
-  const openProduct = (p) => {
+  const showProduct = (p) => {
     setSelProduct(p);
     setSelColor(p.colors[0]);
     setSelSize(p.sizes[0]);
     setImgIndex(0);
   };
-  const closeProduct = () => setSelProduct(null);
+  const openProduct = (p) => {
+    showProduct(p);
+    // push a history entry so browser Back closes the product instead of navigating
+    if (typeof window !== "undefined") { try { window.history.pushState({ screen: screenRef.current, product: p.id }, ""); } catch {} }
+  };
+  const closeProduct = () => {
+    if (typeof window !== "undefined" && window.history.state && window.history.state.product != null) { window.history.back(); return; }
+    setSelProduct(null);
+  };
   const toggleFav = (id) =>
     setFavorites((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
   const isFav = (id) => favorites.includes(id);

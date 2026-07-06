@@ -14,7 +14,7 @@ const TINT = {
 };
 
 export default function Account() {
-  const { auth, orders, cartCount, setScreen, goToLogin, logout, profile, addresses, session, myOrders } = useStore();
+  const { auth, orders, cartCount, setScreen, goBack, goToLogin, logout, profile, addresses, session, myOrders } = useStore();
   const orderCount = session ? mergeOrders(myOrders, orders).length : orders.length;
   const isGuest = auth.role === "guest";
   const name = isGuest ? "Guest user" : (profile?.full_name || (auth.role === "admin" ? "Administrator" : "Customer"));
@@ -47,7 +47,7 @@ export default function Account() {
   return (
     <div className="pb-6">
       <div className="px-5 pt-[18px]">
-        <button onClick={() => setScreen("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-slate-700" /></button>
+        <button onClick={() => goBack("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-slate-700" /></button>
 
         {/* Profile card */}
         {session ? (

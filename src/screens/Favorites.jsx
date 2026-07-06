@@ -6,12 +6,12 @@ import EmptyState from "../components/EmptyState.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Favorites() {
-  const { products, favorites, setScreen } = useStore();
+  const { products, favorites, setScreen, goBack } = useStore();
   const favs = products.filter((p) => favorites.includes(p.id));
   return (
     <div className="pb-4">
       <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => setScreen("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
+        <button onClick={() => goBack("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
         <h2 className="text-2xl font-semibold text-slate-900">Favourites</h2>
       </div>
       {favs.length === 0 ? (

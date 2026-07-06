@@ -12,7 +12,7 @@ const GENDERS = [
 ];
 
 export default function Profile() {
-  const { profile, saveProfile, profileBusy, auth, setScreen, uploadAvatar, avatarBusy } = useStore();
+  const { profile, saveProfile, profileBusy, auth, setScreen, goBack, uploadAvatar, avatarBusy } = useStore();
   const email = profile?.email || auth.id || "";
 
   const [f, setF] = useState({ full_name: "", phone: "", gender: "", dob: "" });
@@ -46,7 +46,7 @@ export default function Profile() {
     <div className="pb-6">
       <div className="px-5 pt-[18px]">
         <div className="flex items-center gap-3">
-          <button onClick={() => setScreen("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} className="text-slate-700" /></button>
+          <button onClick={() => goBack("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} className="text-slate-700" /></button>
           <h2 className="text-2xl font-semibold text-slate-900">Edit profile</h2>
         </div>
         <div className="flex flex-col items-center mt-4">

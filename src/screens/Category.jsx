@@ -58,7 +58,7 @@ export default function Category() {
   const panelProps = { shapes, shape, setShape, bounds, price, setPrice, families, colors, toggleColor, onReset: resetFilters };
   const sortSelect = (extra = "") => (
     <div className={`relative shrink-0 ${extra}`}>
-      <ArrowUpDown size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+      <ArrowUpDown size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
       <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className="border border-slate-200 rounded-full py-1.5 pl-8 pr-8 text-xs font-semibold text-slate-600 outline-hidden bg-white select-chevron">
         {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
       </select>
@@ -82,9 +82,9 @@ export default function Category() {
       </div>
 
       {/* mobile: filters + count + sort */}
-      <div className="lg:hidden flex items-center gap-2 px-5 mt-3">
-        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-600 active:scale-95 transition shrink-0">
-          <SlidersHorizontal size={15} /> Filters
+      <div className="lg:hidden flex items-center gap-2 px-5 mt-3 mb-1">
+        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-600 active:scale-95 transition shrink-0">
+          <SlidersHorizontal size={14} /> Filters
           {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
         </button>
         {sortSelect()}

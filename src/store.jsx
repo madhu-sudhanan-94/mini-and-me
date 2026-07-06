@@ -7,7 +7,7 @@ import {
 import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset, getRemember, saveSessionLocal, loadSessionLocal, clearSessionLocal } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
 import { parseCsv } from "./lib/csv.js";
-import { gstBreakdown } from "./lib/format.js";
+import { gstBreakdown, formatINR } from "./lib/format.js";
 import { outOfStock, isTracked } from "./lib/catalog.js";
 import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
 
@@ -550,6 +550,33 @@ export function StoreProvider({ children }) {
     if (typeof window !== "undefined" && window.history.state && window.history.state.product != null) { window.history.back(); return; }
     setSelProduct(null);
   };
+
+  // Share a product via the native share sheet, falling back to copying the link.
+  // The link carries ?p=<id> which the app opens on load (deep-link, below).
+  const shareProduct = async (p) => {
+    const target = p || selProduct;
+    if (!target || typeof window === "undefined") return;
+    const url = window.location.origin + window.location.pathname + "?p=" + target.id;
+    const data = { title: target.name, text: `Check out ${target.name} — ${formatINR(target.price)}`, url };
+    try {
+      if (navigator.share) { await navigator.share(data); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; /* user dismissed the share sheet */ }
+    try { await navigator.clipboard.writeText(url); showToast("Product link copied"); }
+    catch { showToast("Couldn't copy the link"); }
+  };
+
+  // Deep-link: a shared ?p=<id> URL opens that product once products are loaded.
+  const deepLinkedRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkedRef.current || typeof window === "undefined") return;
+    const pid = new URLSearchParams(window.location.search).get("p");
+    if (!pid) { deepLinkedRef.current = true; return; }
+    const p = products.find((x) => String(x.id) === String(pid));
+    if (!p) return; // products may still be loading — retry when they change
+    deepLinkedRef.current = true;
+    openProduct(p);
+    try { const u = new URL(window.location.href); u.searchParams.delete("p"); window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash); } catch {}
+  }, [products]);
   const toggleFav = (id) =>
     setFavorites((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
   const isFav = (id) => favorites.includes(id);
@@ -1025,7 +1052,7 @@ export function StoreProvider({ children }) {
     showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth,
     applyCoupon, removeCoupon,
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
-    toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout,
+    toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout, shareProduct,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,

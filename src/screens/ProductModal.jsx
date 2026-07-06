@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Heart, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { X, Heart, ChevronLeft, ChevronRight, ShoppingCart, Share2 } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { outOfStock, lowStock } from "../lib/catalog.js";
 import { SIZE_GUIDE } from "../lib/sizeguide.js";
@@ -14,7 +14,7 @@ import { useStore } from "../store.jsx";
 export default function ProductModal() {
   const {
     products, selProduct, closeProduct, toggleFav, isFav,
-    imgIndex, setImgIndex, selColor, setSelColor, selSize, setSelSize, addToCart,
+    imgIndex, setImgIndex, selColor, setSelColor, selSize, setSelSize, addToCart, shareProduct,
   } = useStore();
   const [guide, setGuide] = useState(false);
   // Swipe between product images (declared before the early-return to satisfy rules of hooks).
@@ -110,12 +110,15 @@ export default function ProductModal() {
           )}
         </div>
 
-        {/* Add to cart */}
-        <div className="p-4 border-t border-slate-100 bg-white shrink-0">
+        {/* Share + Add to cart */}
+        <div className="p-4 border-t border-slate-100 bg-white shrink-0 flex items-center gap-3">
+          <button onClick={() => shareProduct(p)} aria-label="Share" className="w-14 h-14 shrink-0 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95 transition">
+            <Share2 size={20} />
+          </button>
           {oos ? (
-            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-2xl cursor-not-allowed">Out of stock</button>
+            <button disabled className="flex-1 bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
           ) : (
-            <PrimaryButton variant="gradient" size="xl" onClick={() => addToCart(p, selSize, selColor)}>
+            <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => addToCart(p, selSize, selColor)} className="flex-1">
               <ShoppingCart size={19} /> Add to cart · {formatINR(p.price)}
             </PrimaryButton>
           )}

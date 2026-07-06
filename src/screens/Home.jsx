@@ -137,14 +137,14 @@ export default function Home() {
 
           {/* Offers */}
           <div className="px-5 mt-6 grid grid-cols-2 gap-3">
-            <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="offer-shine promo-drift relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-fuchsia-500 via-pink-500 to-fuchsia-500 shadow-md active:scale-95 transition">
+            <button onClick={() => { setSelCategory("women"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-fuchsia-500 via-pink-500 to-fuchsia-500 shadow-md active:scale-95 transition">
               <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Festive Edit</span>
               <div>
                 <p className="text-white font-extrabold text-lg leading-tight promo-textshine">Up to 40% off</p>
                 <p className="text-white/85 text-[11px] flex items-center gap-1">Shop the sale <ArrowRight size={12} /></p>
               </div>
             </button>
-            <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="offer-shine promo-drift relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-brand-600 via-accent-500 to-brand-600 shadow-md active:scale-95 transition">
+            <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="relative overflow-hidden rounded-2xl p-4 h-28 flex flex-col justify-between text-left bg-linear-to-br from-brand-600 via-accent-500 to-brand-600 shadow-md active:scale-95 transition">
               <span className="text-white/90 text-[11px] font-semibold uppercase tracking-wide">Just In</span>
               <div>
                 <p className="text-white font-extrabold text-lg leading-tight promo-textshine">New Arrivals</p>

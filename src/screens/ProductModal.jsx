@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
-import { X, Heart, ChevronLeft, ChevronRight, ShoppingCart, Share2, Link as LinkIcon } from "lucide-react";
-import { formatINR, CAT_LABEL } from "../lib/format.js";
+import { X, Heart, ShoppingCart, Share2, Link as LinkIcon } from "lucide-react";
+import { formatINR } from "../lib/format.js";
 import { outOfStock, lowStock } from "../lib/catalog.js";
 import { SIZE_GUIDE } from "../lib/sizeguide.js";
 import { BRAND } from "../brand.config.js";
@@ -79,9 +79,14 @@ export default function ProductModal() {
       <div className="relative h-full w-full lg:h-auto lg:w-[460px] lg:max-w-[92vw] bg-slate-50 lg:rounded-4xl max-h-full lg:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
         {/* Floating controls (stay put even when the image is zoom-scrolled) */}
         <button onClick={closeProduct} aria-label="Close" className="absolute top-3 left-3 z-20 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs"><X size={18} /></button>
-        <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
-          <Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-500"} fill={isFav(p.id) ? "currentColor" : "none"} />
-        </button>
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+          <button onClick={openShare} aria-label="Share" className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
+            <Share2 size={18} className="text-slate-600" />
+          </button>
+          <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
+            <Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-500"} fill={isFav(p.id) ? "currentColor" : "none"} />
+          </button>
+        </div>
 
         {/* Image — tap to zoom (scroll to pan when zoomed) */}
         <div
@@ -97,39 +102,25 @@ export default function ProductModal() {
           ) : (
             <div className="absolute inset-0 flex items-center justify-center"><Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[80%]" /></div>
           )}
+          {/* Dot indicators */}
           {!zoomed && imgs.length > 1 && (
-            <>
-              <button onClick={() => setImgIndex((i) => (i - 1 + imgs.length) % imgs.length)} aria-label="Previous image" className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/70 flex items-center justify-center"><ChevronLeft size={18} /></button>
-              <button onClick={() => setImgIndex((i) => (i + 1) % imgs.length)} aria-label="Next image" className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/70 flex items-center justify-center"><ChevronRight size={18} /></button>
-            </>
+            <div className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5">
+              {imgs.map((_, i) => (
+                <button key={i} onClick={() => setImgIndex(i)} aria-label={`Image ${i + 1}`} className={`h-1.5 rounded-full transition-all ${i === imgIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Thumbnail strip */}
-        {imgs.length > 1 && (
-          <div className="shrink-0 bg-white border-b border-slate-100 flex gap-2 overflow-x-auto no-scrollbar px-4 py-2.5">
-            {imgs.map((thumb, i) => (
-              <button key={i} onClick={() => setImgIndex(i)} aria-label={`Image ${i + 1}`} className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 ring-2 transition ${i === imgIndex ? "ring-brand-500" : "ring-slate-200"}`}>
-                <img src={thumb} alt="" className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Details (scrollable) */}
         <div className="flex-1 overflow-y-auto px-6 pt-4 pb-2 no-scrollbar">
-          <p className="text-xs font-semibold text-brand-600 uppercase tracking-wide">{CAT_LABEL[p.cat]}</p>
-          {/* name left · price right */}
-          <div className="flex items-start justify-between gap-3 mt-1">
-            <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">{p.name}</h2>
-            <div className="shrink-0 text-right"><PriceTag p={p} size="lg" /></div>
-          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">{p.name}</h2>
           {oos ? <p className="text-xs font-semibold text-red-500 mt-2">Currently out of stock</p>
             : low ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {p.stock} left</p> : null}
 
           {/* description — 2 lines + See more */}
           {p.desc && (
-            <div className="mt-3">
+            <div className="mt-2">
               <p ref={descRef} className={`text-slate-500 text-sm leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}>{p.desc}</p>
               {(descOverflows || descExpanded) && (
                 <button onClick={() => setDescExpanded((v) => !v)} className="text-xs font-semibold text-brand-600 mt-1">{descExpanded ? "See less" : "See more"}</button>
@@ -137,14 +128,18 @@ export default function ProductModal() {
             </div>
           )}
 
-          <p className="text-sm font-semibold text-slate-800 mt-5 mb-2">Colour</p>
-          <div className="flex gap-3">
-            {p.colors.map((c) => (
-              <button key={c} onClick={() => setSelColor(c)} className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${selColor === c ? "border-brand-500" : "border-transparent"}`} style={{ outline: "1px solid #e2e8f0" }}>
-                <span className="w-7 h-7 rounded-full" style={{ background: c }} />
-              </button>
-            ))}
-          </div>
+          {p.colors.length > 1 && (
+            <>
+              <p className="text-sm font-semibold text-slate-800 mt-5 mb-2">Colour</p>
+              <div className="flex gap-3">
+                {p.colors.map((c) => (
+                  <button key={c} onClick={() => setSelColor(c)} className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${selColor === c ? "border-brand-500" : "border-transparent"}`} style={{ outline: "1px solid #e2e8f0" }}>
+                    <span className="w-7 h-7 rounded-full" style={{ background: c }} />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className="flex items-center justify-between mt-5 mb-2">
             <p className="text-sm font-semibold text-slate-800">Size</p>
@@ -184,16 +179,14 @@ export default function ProductModal() {
           )}
         </div>
 
-        {/* Share + Add to cart */}
-        <div className="p-4 border-t border-slate-100 bg-white shrink-0 flex items-center gap-3">
-          <button onClick={openShare} aria-label="Share" className="w-14 h-14 shrink-0 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95 transition">
-            <Share2 size={20} />
-          </button>
+        {/* Price + Add to cart */}
+        <div className="p-4 border-t border-slate-100 bg-white shrink-0 flex items-center gap-4">
+          <div className="shrink-0"><PriceTag p={p} size="lg" /></div>
           {oos ? (
             <button disabled className="flex-1 bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
           ) : (
             <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => addToCart(p, selSize, selColor)} className="flex-1">
-              <ShoppingCart size={19} /> Add to cart · {formatINR(p.price)}
+              <ShoppingCart size={19} /> Add to cart
             </PrimaryButton>
           )}
         </div>

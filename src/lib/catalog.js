@@ -68,9 +68,38 @@ export function productFamilies(p) {
 }
 
 // ---- Stock helpers. stock null/undefined = not tracked (always available). ----
-export const isTracked = (p) => typeof p?.stock === "number";
-export const outOfStock = (p) => isTracked(p) && p.stock <= 0;
-export const lowStock = (p) => isTracked(p) && p.stock > 0 && p.stock <= 5;
+// Per-size stock: p.sizeStock = { S: 3, M: 0, ... } (optional). When present it's
+// authoritative per size; a size not listed falls back to product-level p.stock.
+export const hasSizeStock = (p) => !!(p && p.sizeStock && typeof p.sizeStock === "object" && Object.keys(p.sizeStock).length);
+
+// Units available for a specific size. null = not tracked (treat as unlimited).
+export function stockFor(p, size) {
+  if (hasSizeStock(p)) {
+    if (typeof p.sizeStock[size] === "number") return p.sizeStock[size];
+    if (typeof p?.stock === "number") return p.stock;   // Total stock is the fallback
+    if ((p.sizes || []).includes(size)) return 0;        // per-size list is authoritative → an unlisted offered size is sold out
+    return null;
+  }
+  return typeof p?.stock === "number" ? p.stock : null;
+}
+export const sizeOutOfStock = (p, size) => { const s = stockFor(p, size); return typeof s === "number" && s <= 0; };
+export const sizeLowStock = (p, size) => { const s = stockFor(p, size); return typeof s === "number" && s > 0 && s <= 5; };
+// First size that isn't sold out (used to pre-select a buyable size on open).
+export const firstInStockSize = (p) => (p?.sizes || []).find((s) => !sizeOutOfStock(p, s)) || (p?.sizes || [])[0] || null;
+
+export const isTracked = (p) => typeof p?.stock === "number" || hasSizeStock(p);
+export const outOfStock = (p) => {
+  if (hasSizeStock(p)) {
+    const sizes = (p.sizes && p.sizes.length) ? p.sizes : Object.keys(p.sizeStock);
+    return sizes.every((s) => sizeOutOfStock(p, s));
+  }
+  return typeof p?.stock === "number" && p.stock <= 0;
+};
+// Product-level low-stock nudge; per-size low stock is surfaced per selected size.
+export const lowStock = (p) => {
+  if (hasSizeStock(p)) return false;
+  return typeof p?.stock === "number" && p.stock > 0 && p.stock <= 5;
+};
 
 // Full-text-ish search across name, description, category, type/shape, tag and
 // colour names. Every whitespace-separated term must match somewhere, so

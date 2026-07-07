@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { X, Heart, ShoppingCart, Share2, Link as LinkIcon, Maximize2 } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
-import { outOfStock, lowStock } from "../lib/catalog.js";
+import { outOfStock, colorFamily, familyLabel, stockFor, sizeOutOfStock, sizeLowStock, hasSizeStock } from "../lib/catalog.js";
 import { SIZE_GUIDE } from "../lib/sizeguide.js";
 import { BRAND } from "../brand.config.js";
 import Garment from "../components/Garment.jsx";
 import PriceTag from "../components/PriceTag.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
+import ReviewsSection from "../components/ReviewsSection.jsx";
 import { useSwipe } from "../lib/useSwipe.js";
 import { useStore } from "../store.jsx";
 
@@ -56,7 +57,7 @@ export default function ProductModal() {
 
   if (!p) return null;
   const oos = outOfStock(p);
-  const low = lowStock(p);
+  const selSoldOut = sizeOutOfStock(p, selSize);
   const imgs = p.images || [];
   const src = imgs[imgIndex];
   const chart = SIZE_GUIDE[p.cat] || SIZE_GUIDE.women;
@@ -69,6 +70,12 @@ export default function ProductModal() {
   const related = (usingFallback ? [...sameCat, ...fillers] : sameCat).slice(0, 8);
   const rawDesc = (p.desc || "").trim();
   const hasDesc = rawDesc.length > 0 && rawDesc.toLowerCase() !== "added by admin.";
+  const detailRows = [
+    ["Category", CAT_LABEL[p.cat] || p.cat],
+    ["Type", p.shape ? p.shape.charAt(0).toUpperCase() + p.shape.slice(1) : "—"],
+    ["Colours", Array.from(new Set((p.colors || []).map((c) => familyLabel(colorFamily(c))))).join(", ") || "—"],
+    ["Sizes", (p.sizes || []).join(" · ") || "—"],
+  ];
 
   const shareUrl = (typeof window !== "undefined") ? (window.location.origin + window.location.pathname + "?p=" + p.id) : "";
   const shareText = `Check out ${p.name} — ${formatINR(p.price)} on ${BRAND.name}`;
@@ -112,7 +119,7 @@ export default function ProductModal() {
             <img
               src={src} alt={p.name} onError={() => setImgFailed(true)}
               onClick={() => imgs.length && setLightbox(true)}
-              className="w-full h-full object-cover cursor-zoom-in"
+              className="w-full h-full object-contain cursor-zoom-in"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center"><Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[80%]" /></div>
@@ -137,11 +144,12 @@ export default function ProductModal() {
         <div className="flex-1 overflow-y-auto px-6 pt-4 pb-2 no-scrollbar">
           <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">{p.name}</h2>
           {oos ? <p className="text-xs font-semibold text-red-500 mt-2">Currently out of stock</p>
-            : low ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {p.stock} left</p> : null}
+            : selSoldOut ? <p className="text-xs font-semibold text-red-500 mt-2">Size {selSize} is out of stock</p>
+            : sizeLowStock(p, selSize) ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {stockFor(p, selSize)} left{hasSizeStock(p) ? ` in size ${selSize}` : ""}</p> : null}
 
           {/* description — 2 lines + See more (hidden when empty / placeholder) */}
           {hasDesc && (
-            <div className="mt-2">
+            <div className="mt-1">
               <p ref={descRef} className={`text-slate-500 text-sm leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}>{p.desc}</p>
               {(descOverflows || descExpanded) && (
                 <button onClick={() => setDescExpanded((v) => !v)} className="text-xs font-semibold text-brand-600 mt-1">{descExpanded ? "See less" : "See more"}</button>
@@ -188,9 +196,12 @@ export default function ProductModal() {
             </div>
           )}
           <div className="flex gap-2 flex-wrap">
-            {p.sizes.map((s) => (
-              <button key={s} onClick={() => setSelSize(s)} className={`min-w-[48px] px-3 py-2.5 rounded-xl text-sm font-semibold ${selSize === s ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{s}</button>
-            ))}
+            {p.sizes.map((s) => {
+              const soldOut = sizeOutOfStock(p, s);
+              return (
+                <button key={s} onClick={() => !soldOut && setSelSize(s)} disabled={soldOut} aria-label={soldOut ? `Size ${s} — out of stock` : `Size ${s}`} className={`min-w-[48px] px-3 py-2.5 rounded-xl text-sm font-semibold transition ${soldOut ? "bg-slate-100 text-slate-300 line-through cursor-not-allowed" : selSize === s ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{s}</button>
+              );
+            })}
           </div>
 
           {related.length > 0 && (
@@ -201,12 +212,30 @@ export default function ProductModal() {
               </div>
             </div>
           )}
+
+          {/* Product details */}
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-slate-800 mb-2">Product details</p>
+            <dl className="bg-white rounded-xl border border-slate-100 overflow-hidden text-sm">
+              {detailRows.map(([k, v], i) => (
+                <div key={k} className={`flex justify-between gap-4 px-3 py-2.5 ${i > 0 ? "border-t border-slate-100" : ""}`}>
+                  <dt className="text-slate-500 shrink-0">{k}</dt>
+                  <dd className="text-slate-800 font-medium text-right">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          {/* Ratings & reviews */}
+          <ReviewsSection productId={p.id} />
         </div>
 
         {/* Actions */}
         <div className="p-4 border-t border-slate-100 bg-white shrink-0">
           {oos ? (
             <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
+          ) : selSoldOut ? (
+            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Size {selSize} out of stock</button>
           ) : (
             <div className="flex items-center gap-3">
               <button onClick={() => addToCart(p, selSize, selColor)} className="flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-brand-700 bg-brand-50 border border-brand-200 active:scale-[0.97] transition">

@@ -24,6 +24,7 @@ export function mapDbProduct(r) {
     trending: !!r.trending,
     tag: r.tag || undefined,
     stock: typeof r.stock === "number" ? r.stock : null,  // null = not tracked
+    sizeStock: (r.size_stock && typeof r.size_stock === "object") ? r.size_stock : null, // { S: 3, ... }
     images: (r.images && r.images.length) ? r.images : (r.image_url ? [r.image_url] : []),
   };
 }

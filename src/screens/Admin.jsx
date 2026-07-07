@@ -6,6 +6,7 @@ import {
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { panelBlueDeep } from "../theme.js";
 import { outOfStock, lowStock } from "../lib/catalog.js";
+import { L, W, K } from "../data/products.js";
 import Garment from "../components/Garment.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
@@ -49,6 +50,8 @@ export default function Admin() {
   const [draftColor, setDraftColor] = useState("#2563EB");
   const formRef = useRef(null);
   const editing = !!form.id;
+  // The size set a product uses depends on its category/shape (mirrors store.saveProduct).
+  const formSizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
 
   useEffect(() => { loadAdminOrders(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -182,7 +185,20 @@ export default function Admin() {
               <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
             </div>
 
-            <input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Stock qty (leave blank if not tracking)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 bg-white mb-2" />
+            <input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Total stock qty (leave blank if not tracking)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 bg-white mb-2" />
+
+            {/* Per-size stock (optional — overrides total stock when any are set) */}
+            <div className="mb-2">
+              <p className="text-xs font-semibold text-slate-500 mb-1.5">Stock per size <span className="font-normal text-slate-400">(optional)</span></p>
+              <div className="flex flex-wrap gap-1.5">
+                {formSizes.map((s) => (
+                  <div key={s} className="flex items-center gap-1 border border-slate-200 rounded-lg pl-2 pr-1 py-1 bg-white">
+                    <span className="text-[11px] font-semibold text-slate-500 min-w-[28px]">{s}</span>
+                    <input value={(form.sizeStock && form.sizeStock[s]) || ""} onChange={(e) => setForm({ ...form, sizeStock: { ...(form.sizeStock || {}), [s]: e.target.value.replace(/\D/g, "") } })} inputMode="numeric" placeholder="—" className="w-12 border border-slate-200 rounded py-1 px-1.5 text-sm text-center outline-hidden focus:border-brand-500" />
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <textarea value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} rows={2} placeholder="Image URLs — one per line (optional)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 resize-none bg-white" />
             <label className="mt-1 mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 cursor-pointer">

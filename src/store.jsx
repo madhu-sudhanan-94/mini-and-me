@@ -8,7 +8,7 @@ import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset, getRemember, saveSessionLocal
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
 import { parseCsv } from "./lib/csv.js";
 import { gstBreakdown, formatINR } from "./lib/format.js";
-import { outOfStock, isTracked } from "./lib/catalog.js";
+import { outOfStock, stockFor, sizeOutOfStock, firstInStockSize } from "./lib/catalog.js";
 import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
 
 // Temporary demo phone login. Real SMS OTP needs a paid provider (roadmap).
@@ -96,7 +96,7 @@ export function StoreProvider({ children }) {
   const [buyNowItem, setBuyNowItem] = useState(null); // express "Buy now" single item (bypasses the cart)
 
   // admin form
-  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, stock: "" };
+  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, stock: "", sizeStock: {} };
   const [form, setForm] = useState(blankForm);
 
   const defaultAddress = addresses.find((a) => a.is_default) || addresses[0] || null;
@@ -227,7 +227,7 @@ export function StoreProvider({ children }) {
       const st = (e && e.state) || { screen: "home" };
       if (st.product != null) {
         const p = (productsRef.current || []).find((x) => x.id === st.product);
-        if (p) { setSelProduct(p); setSelColor(p.colors[0]); setSelSize(p.sizes[0]); setImgIndex(0); }
+        if (p) { setSelProduct(p); setSelColor(p.colors[0]); setSelSize(firstInStockSize(p) || p.sizes[0]); setImgIndex(0); }
       } else if (selProductRef.current) {
         setSelProduct(null);
       }
@@ -563,7 +563,7 @@ export function StoreProvider({ children }) {
   const showProduct = (p) => {
     setSelProduct(p);
     setSelColor(p.colors[0]);
-    setSelSize(p.sizes[0]);
+    setSelSize(firstInStockSize(p) || p.sizes[0]); // land on a buyable size
     setImgIndex(0);
   };
   const openProduct = (p) => {
@@ -607,10 +607,11 @@ export function StoreProvider({ children }) {
   const isFav = (id) => favorites.includes(id);
 
   const addToCart = (p, size, color) => {
-    if (outOfStock(p)) { showToast("Sorry, that's out of stock"); return; }
-    const existing = cart.find((x) => x.id === p.id && x.size === size && x.color === color);
-    const nextQty = (existing?.qty || 0) + 1;
-    if (isTracked(p) && nextQty > p.stock) { showToast(`Only ${p.stock} in stock`); return; }
+    if (outOfStock(p) || sizeOutOfStock(p, size)) { showToast(sizeOutOfStock(p, size) && !outOfStock(p) ? `Size ${size} is out of stock` : "Sorry, that's out of stock"); return; }
+    // Cap against the size's stock summed across every colour of this product+size.
+    const avail = stockFor(p, size);
+    const sameSizeQty = cart.filter((x) => x.id === p.id && x.size === size).reduce((s, x) => s + x.qty, 0);
+    if (avail != null && sameSizeQty + 1 > avail) { showToast(`Only ${avail} left in size ${size}`); return; }
     setCart((prev) => {
       const i = prev.findIndex((x) => x.id === p.id && x.size === size && x.color === color);
       if (i >= 0) {
@@ -627,7 +628,9 @@ export function StoreProvider({ children }) {
     if (d > 0) {
       const line = cart[idx];
       const p = line && products.find((x) => x.id === line.id);
-      if (p && isTracked(p) && line.qty + d > p.stock) { showToast(`Only ${p.stock} in stock`); return; }
+      const avail = p && stockFor(p, line.size);
+      const sameSizeQty = line ? cart.filter((x) => x.id === line.id && x.size === line.size).reduce((s, x) => s + x.qty, 0) : 0;
+      if (avail != null && sameSizeQty + d > avail) { showToast(`Only ${avail} left in size ${line.size}`); return; }
     }
     setCart((prev) => {
       const copy = [...prev];
@@ -642,7 +645,7 @@ export function StoreProvider({ children }) {
   // Buy now: add the item then jump straight to checkout. Guests reach checkout
   // (it shows a "Log in to place order" branch), so no login gate. Respects stock.
   const buyNow = (p, size, color) => {
-    if (outOfStock(p)) { showToast("Sorry, that's out of stock"); return; }
+    if (outOfStock(p) || sizeOutOfStock(p, size)) { showToast(sizeOutOfStock(p, size) && !outOfStock(p) ? `Size ${size} is out of stock` : "Sorry, that's out of stock"); return; }
     setBuyNowItem({ id: p.id, size, color, qty: 1 }); // express checkout — does NOT touch the cart
     setCoupon(null); setCouponMsg("");                 // express checkout starts with a clean coupon
     setSelProduct(null);                               // close the product modal
@@ -658,7 +661,8 @@ export function StoreProvider({ children }) {
     const next = buyNowItem.qty + d;
     if (next < 1) return;
     const p = products.find((x) => x.id === buyNowItem.id);
-    if (d > 0 && p && isTracked(p) && next > p.stock) { showToast(`Only ${p.stock} in stock`); return; }
+    const avail = p && stockFor(p, buyNowItem.size);
+    if (d > 0 && avail != null && next > avail) { showToast(`Only ${avail} left in size ${buyNowItem.size}`); return; }
     setBuyNowItem({ ...buyNowItem, qty: next });
   };
 
@@ -714,7 +718,10 @@ export function StoreProvider({ children }) {
     // Don't let an out-of-stock / over-quantity item through checkout.
     const badLine = checkoutItems.find((it) => {
       const p = products.find((x) => x.id === it.id);
-      return p && (outOfStock(p) || (isTracked(p) && it.qty > p.stock));
+      if (!p) return false;
+      const avail = stockFor(p, it.size);
+      const sameSizeQty = checkoutItems.filter((x) => x.id === it.id && x.size === it.size).reduce((s, x) => s + x.qty, 0);
+      return outOfStock(p) || sizeOutOfStock(p, it.size) || (avail != null && sameSizeQty > avail);
     });
     if (badLine) { showToast("Sorry, that item is out of stock"); if (!buyNowItem) setScreen("cart"); return; }
 
@@ -809,6 +816,15 @@ export function StoreProvider({ children }) {
     // Only send stock when the admin set it, so this keeps working on a DB
     // that hasn't added the `stock` column yet.
     if (form.stock !== "" && form.stock != null) body.stock = Number(form.stock);
+    // Per-size stock (jsonb `size_stock`). Only filled numeric entries; only sent
+    // when non-empty, so inserts keep working before the column exists.
+    const sizeStock = {};
+    if (form.sizeStock) for (const s of sizes) { const v = form.sizeStock[s]; if (v !== "" && v != null) sizeStock[s] = Number(v); }
+    // On edit, always send size_stock (null when cleared) so per-size tracking can
+    // be turned off — but only when the row already had it, to stay compatible with
+    // a DB that predates the column. On insert, omit when empty.
+    if (form.id && (Object.keys(sizeStock).length || form._hadSizeStock)) body.size_stock = Object.keys(sizeStock).length ? sizeStock : null;
+    else if (Object.keys(sizeStock).length) body.size_stock = sizeStock;
     setAdminBusy(true);
     try {
       let res;
@@ -901,6 +917,8 @@ export function StoreProvider({ children }) {
     price: String(p.price), original: p.original ? String(p.original) : "",
     colors: (p.colors && p.colors.length) ? p.colors : ["#2563EB"], image: (p.images || []).join("\n"), trending: !!p.trending,
     stock: p.stock != null ? String(p.stock) : "",
+    sizeStock: p.sizeStock ? Object.fromEntries(Object.entries(p.sizeStock).map(([k, v]) => [k, String(v)])) : {},
+    _hadSizeStock: !!p.sizeStock,
   });
 
   const deleteProduct = async (id) => {

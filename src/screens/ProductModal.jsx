@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
-import { X, Heart, ShoppingCart, Share2, Link as LinkIcon } from "lucide-react";
-import { formatINR } from "../lib/format.js";
+import { X, Heart, ShoppingCart, Share2, Link as LinkIcon, Maximize2 } from "lucide-react";
+import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { outOfStock, lowStock } from "../lib/catalog.js";
 import { SIZE_GUIDE } from "../lib/sizeguide.js";
 import { BRAND } from "../brand.config.js";
@@ -21,7 +21,7 @@ const XIcon = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"
 export default function ProductModal() {
   const {
     products, selProduct, closeProduct, toggleFav, isFav, showToast,
-    imgIndex, setImgIndex, selColor, setSelColor, selSize, setSelSize, addToCart,
+    imgIndex, setImgIndex, selColor, setSelColor, selSize, setSelSize, addToCart, buyNow,
   } = useStore();
   const [guide, setGuide] = useState(false);
   const [lightbox, setLightbox] = useState(false);
@@ -60,7 +60,15 @@ export default function ProductModal() {
   const imgs = p.images || [];
   const src = imgs[imgIndex];
   const chart = SIZE_GUIDE[p.cat] || SIZE_GUIDE.women;
-  const related = products.filter((x) => x.cat === p.cat && x.id !== p.id).slice(0, 8);
+  // Similar items — same category first; only fall back to trending if the
+  // category is too thin. hasDesc hides the block for empty / placeholder text.
+  const catLabel = CAT_LABEL[p.cat] || p.cat;
+  const sameCat = products.filter((x) => x.cat === p.cat && x.id !== p.id);
+  const fillers = products.filter((x) => x.id !== p.id && x.cat !== p.cat && x.trending);
+  const usingFallback = sameCat.length < 4;
+  const related = (usingFallback ? [...sameCat, ...fillers] : sameCat).slice(0, 8);
+  const rawDesc = (p.desc || "").trim();
+  const hasDesc = rawDesc.length > 0 && rawDesc.toLowerCase() !== "added by admin.";
 
   const shareUrl = (typeof window !== "undefined") ? (window.location.origin + window.location.pathname + "?p=" + p.id) : "";
   const shareText = `Check out ${p.name} — ${formatINR(p.price)} on ${BRAND.name}`;
@@ -85,20 +93,20 @@ export default function ProductModal() {
       <div className="absolute inset-0 bg-black/40" onClick={closeProduct} />
       <div className="relative h-full w-full lg:h-auto lg:w-[460px] lg:max-w-[92vw] bg-slate-50 lg:rounded-4xl max-h-full lg:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
         {/* Floating controls (stay put even when the image is zoom-scrolled) */}
-        <button onClick={closeProduct} aria-label="Close" className="absolute top-3 left-3 z-20 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs"><X size={18} /></button>
+        <button onClick={closeProduct} aria-label="Close" className="absolute top-3 left-3 z-20 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition"><X size={18} className="text-slate-600" /></button>
         <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
           <button onClick={openShare} aria-label="Share" className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
             <Share2 size={18} className="text-slate-600" />
           </button>
           <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
-            <Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-500"} fill={isFav(p.id) ? "currentColor" : "none"} />
+            <Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-600"} fill={isFav(p.id) ? "currentColor" : "none"} />
           </button>
         </div>
 
         {/* Image — tap to open the full-screen viewer */}
         <div
           {...(imgs.length > 1 ? imgSwipe : {})}
-          className="relative shrink-0 h-72 sm:h-80 bg-linear-to-br from-accent-100 to-brand-200 overflow-hidden touch-pan-y select-none"
+          className="relative shrink-0 h-72 sm:h-80 bg-linear-to-br from-accent-100 to-brand-200 overflow-hidden touch-pan-y"
         >
           {src && !imgFailed ? (
             <img
@@ -117,6 +125,12 @@ export default function ProductModal() {
               ))}
             </div>
           )}
+          {/* Full-screen button */}
+          {src && !imgFailed && (
+            <button onClick={() => setLightbox(true)} aria-label="View full screen" className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
+              <Maximize2 size={15} className="text-slate-600" />
+            </button>
+          )}
         </div>
 
         {/* Details (scrollable) */}
@@ -125,8 +139,8 @@ export default function ProductModal() {
           {oos ? <p className="text-xs font-semibold text-red-500 mt-2">Currently out of stock</p>
             : low ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {p.stock} left</p> : null}
 
-          {/* description — 2 lines + See more */}
-          {p.desc && (
+          {/* description — 2 lines + See more (hidden when empty / placeholder) */}
+          {hasDesc && (
             <div className="mt-2">
               <p ref={descRef} className={`text-slate-500 text-sm leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}>{p.desc}</p>
               {(descOverflows || descExpanded) && (
@@ -134,6 +148,9 @@ export default function ProductModal() {
               )}
             </div>
           )}
+
+          {/* Price (below the description) */}
+          <div className="mt-3"><PriceTag p={p} size="lg" /></div>
 
           {p.colors.length > 1 && (
             <>
@@ -178,7 +195,7 @@ export default function ProductModal() {
 
           {related.length > 0 && (
             <div className="mt-6">
-              <p className="text-sm font-semibold text-slate-800 mb-2">You may also like</p>
+              <p className="text-sm font-semibold text-slate-800 mb-2">{usingFallback ? "You may also like" : `Similar in ${catLabel}`}</p>
               <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
                 {related.map((rp) => <ProductCard key={rp.id} p={rp} wide />)}
               </div>
@@ -186,15 +203,19 @@ export default function ProductModal() {
           )}
         </div>
 
-        {/* Price + Add to cart */}
-        <div className="p-4 border-t border-slate-100 bg-white shrink-0 flex items-center gap-4">
-          <div className="shrink-0"><PriceTag p={p} size="lg" /></div>
+        {/* Actions */}
+        <div className="p-4 border-t border-slate-100 bg-white shrink-0">
           {oos ? (
-            <button disabled className="flex-1 bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
+            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
           ) : (
-            <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => addToCart(p, selSize, selColor)} className="flex-1">
-              <ShoppingCart size={19} /> Add to cart
-            </PrimaryButton>
+            <div className="flex items-center gap-3">
+              <button onClick={() => addToCart(p, selSize, selColor)} className="flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-brand-700 bg-brand-50 border border-brand-200 active:scale-[0.97] transition">
+                <ShoppingCart size={19} /> Add to cart
+              </button>
+              <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => buyNow(p, selSize, selColor)} className="flex-1 border border-transparent">
+                Buy now
+              </PrimaryButton>
+            </div>
           )}
         </div>
 
@@ -227,7 +248,7 @@ export default function ProductModal() {
           <div
             {...(imgs.length > 1 ? imgSwipe : {})}
             onClick={() => setLightbox(false)}
-            className="relative z-10 flex-1 flex items-center justify-center overflow-hidden select-none touch-pan-y p-4"
+            className="relative z-10 flex-1 flex items-center justify-center overflow-hidden touch-pan-y p-4"
           >
             {src && !imgFailed ? (
               <img src={src} alt={p.name} onError={() => setImgFailed(true)} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl shadow-black/25" />

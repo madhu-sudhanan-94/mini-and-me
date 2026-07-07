@@ -8,8 +8,9 @@ import { useStore } from "../store.jsx";
   and checkout. Reads/writes coupon state from the store (applyCoupon,
   removeCoupon, bill.discount). Preset codes live in src/shop.config.js.
 */
-export default function CouponBox() {
-  const { coupon, bill, couponMsg, setCouponMsg, applyCoupon, removeCoupon } = useStore();
+export default function CouponBox({ bill: billOverride }) {
+  const { coupon, bill: storeBill, couponMsg, setCouponMsg, applyCoupon, removeCoupon } = useStore();
+  const bill = billOverride || storeBill; // checkout passes the express/buy-now bill
   const [code, setCode] = useState("");
 
   if (coupon) {

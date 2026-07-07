@@ -15,8 +15,17 @@ const PRICE_BOUNDS = [0, 10000]; // fixed price range for the slider
 export default function Category() {
   const { products, selCategory, setSelCategory, setScreen, goBack } = useStore();
   const cats = ["all", "kids", "women", "men"];
+  // selCategory can also be a "collection" — "new" or "trending" — opened from
+  // the Home "See all" links. Those hide the category tabs and set the title.
+  const isCollection = selCategory === "new" || selCategory === "trending";
+  const title = selCategory === "new" ? "New in" : selCategory === "trending" ? "Trending" : "Shop by category";
 
-  const inCat = useMemo(() => products.filter((p) => selCategory === "all" || p.cat === selCategory), [products, selCategory]);
+  const inCat = useMemo(() => products.filter((p) =>
+    selCategory === "all" ? true
+      : selCategory === "new" ? p.tag === "new"
+      : selCategory === "trending" ? !!p.trending
+      : p.cat === selCategory
+  ), [products, selCategory]);
   const shapes = useMemo(() => ["all", ...Array.from(new Set(inCat.map((p) => p.shape)))], [inCat]);
   const families = useMemo(
     () => COLOR_FAMILIES.map((f) => f.key).filter((k) => inCat.some((p) => productFamilies(p).has(k))),
@@ -69,17 +78,19 @@ export default function Category() {
     <div className="pb-4 lg:pb-10">
       <div className="px-5 lg:px-6 pt-[18px] flex items-center gap-3">
         <button onClick={() => goBack("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">Shop</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>
       </div>
 
-      {/* category tabs */}
-      <div className="flex gap-2 px-5 lg:px-6 mt-4 overflow-x-auto no-scrollbar">
-        {cats.map((c) => (
-          <button key={c} onClick={() => setSelCategory(c)} className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${selCategory === c ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-white text-slate-500 shadow-xs"}`}>
-            {CAT_LABEL[c]}
-          </button>
-        ))}
-      </div>
+      {/* category tabs (hidden for the New in / Trending collections) */}
+      {!isCollection && (
+        <div className="flex gap-2 px-5 lg:px-6 mt-4 overflow-x-auto no-scrollbar">
+          {cats.map((c) => (
+            <button key={c} onClick={() => setSelCategory(c)} className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${selCategory === c ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-white text-slate-500 shadow-xs"}`}>
+              {CAT_LABEL[c]}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* mobile: filters + count + sort */}
       <div className="lg:hidden flex items-center gap-2 px-5 mt-3 mb-1">
@@ -114,7 +125,7 @@ export default function Category() {
             {shown.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
 
-          {list.length === 0 && <EmptyState icon={PackageOpen} title="No items match" subtitle="Try clearing a filter or picking another category." className="py-16" />}
+          {list.length === 0 && <EmptyState icon={PackageOpen} title="No items match" subtitle={isCollection ? "Try clearing a filter." : "Try clearing a filter or picking another category."} className="py-16" />}
 
           <div className="px-5 lg:px-0"><Pagination page={safePage} pageCount={pageCount} onChange={(p) => { setPage(p); if (typeof window !== "undefined") window.scrollTo({ top: 0 }); }} /></div>
         </div>

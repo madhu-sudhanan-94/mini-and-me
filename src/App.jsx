@@ -75,8 +75,8 @@ function Shell() {
 
         {/* Toast */}
         {toast && (
-          <div className="absolute lg:fixed left-1/2 -translate-x-1/2 bottom-24 lg:bottom-8 bg-slate-900 text-white text-sm px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 z-50">
-            <Check size={15} className="text-accent-400" /> {toast}
+          <div className="absolute lg:fixed left-1/2 -translate-x-1/2 bottom-24 lg:bottom-8 min-w-[260px] max-w-[92%] justify-center text-center bg-slate-900 text-white text-sm px-6 py-2.5 rounded-full shadow-lg flex items-center gap-2 z-50">
+            <Check size={15} className="text-accent-400 shrink-0" /> {toast}
           </div>
         )}
       </div>

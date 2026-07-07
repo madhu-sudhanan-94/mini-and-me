@@ -25,8 +25,7 @@ export default function Home() {
   const trending = useMemo(() => {
     const t = products.filter((p) => p.trending);
     for (let i = t.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [t[i], t[j]] = [t[j], t[i]]; }
-    const rest = products.filter((p) => !p.trending);
-    return [...t, ...rest].slice(0, 20);
+    return t.slice(0, 20);
   }, [products]);
   // New in: ONLY products tagged "new" (max 20).
   const newIn = products.filter((p) => p.tag === "new").slice(0, 20);
@@ -92,7 +91,7 @@ export default function Home() {
         <>
           {/* Hero carousel */}
           <div className="px-5 mt-5">
-            <button {...heroSwipe} onClick={() => openProduct(heroP)} className="w-full text-left relative rounded-3xl overflow-hidden p-5 h-52 lg:h-80 flex flex-col justify-end touch-pan-y select-none" style={heroBlue}>
+            <button {...heroSwipe} onClick={() => openProduct(heroP)} className="w-full text-left relative rounded-3xl overflow-hidden p-5 h-52 lg:h-80 flex flex-col justify-end touch-pan-y" style={heroBlue}>
               <ProductImage p={heroP} color="#ffffff" />
               <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/15 to-transparent" />
               <span className="absolute top-4 left-4 z-10 bg-white/25 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">✨ Featured</span>
@@ -115,7 +114,7 @@ export default function Home() {
           <div className="mt-6 px-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-900 text-lg">Shop by category</h3>
-              <button onClick={() => { setSelCategory("kids"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
+              <button onClick={() => { setSelCategory("all"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
             </div>
             <div className="flex justify-around lg:justify-start lg:gap-12">
               {cats.map((c) => (
@@ -187,12 +186,17 @@ export default function Home() {
           </div>
 
           {/* Trending */}
-          <div className="mt-6">
-            <h3 className="font-bold text-slate-900 text-lg px-5">Trending now</h3>
-            <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
-              {trending.map((p) => <ProductCard key={p.id} p={p} wide />)}
+          {trending.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between px-5">
+                <h3 className="font-bold text-slate-900 text-lg">Trending now</h3>
+                <button onClick={() => { setSelCategory("trending"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
+              </div>
+              <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
+                {trending.map((p) => <ProductCard key={p.id} p={p} wide />)}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Promo banner — glass style matching the offer cards above */}
           <div className="px-5 mt-5">
@@ -228,7 +232,10 @@ export default function Home() {
           {/* New in — only products tagged "new" */}
           {newIn.length > 0 && (
             <div className="mt-6">
-              <h3 className="font-bold text-slate-900 text-lg px-5">New in</h3>
+              <div className="flex items-center justify-between px-5">
+                <h3 className="font-bold text-slate-900 text-lg">New in</h3>
+                <button onClick={() => { setSelCategory("new"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
+              </div>
               <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
                 {newIn.map((p) => <ProductCard key={p.id} p={p} wide />)}
               </div>

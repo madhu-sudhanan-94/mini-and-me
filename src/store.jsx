@@ -86,12 +86,14 @@ export function StoreProvider({ children }) {
   const [coName, setCoName] = useState("");
   const [coPhone, setCoPhone] = useState("");
   const [coEmail, setCoEmail] = useState("");
+  const [coNote, setCoNote] = useState("");       // optional order note / delivery instructions
   const [coupon, setCoupon] = useState(null);       // applied coupon object (or null)
   const [couponMsg, setCouponMsg] = useState("");   // coupon error / hint text
   const [billingSame, setBillingSame] = useState(true);  // billing address == delivery?
   const [billingAddrId, setBillingAddrId] = useState(null);
   const [lastOrder, setLastOrder] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [buyNowItem, setBuyNowItem] = useState(null); // express "Buy now" single item (bypasses the cart)
 
   // admin form
   const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, stock: "" };
@@ -99,24 +101,23 @@ export function StoreProvider({ children }) {
 
   const defaultAddress = addresses.find((a) => a.is_default) || addresses[0] || null;
 
-  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
-  const cartTotal = cart.reduce((s, i) => {
-    const p = products.find((x) => x.id === i.id);
-    return s + (p ? p.price * i.qty : 0);
-  }, 0);
-
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2200);
   };
 
-  // ----- cart bill: MRP savings, coupon discount, delivery threshold -----
-  const cartSavings = cart.reduce((s, i) => {
+  // ----- bill maths, computed for any set of order lines (cart OR express buy-now) -----
+  const linesTotal = (lines) => lines.reduce((s, i) => {
+    const p = products.find((x) => x.id === i.id);
+    return s + (p ? p.price * i.qty : 0);
+  }, 0);
+  const linesSavings = (lines) => lines.reduce((s, i) => {
     const p = products.find((x) => x.id === i.id);
     return s + (p && p.original && p.original > p.price ? (p.original - p.price) * i.qty : 0);
   }, 0);
-  const bill = useMemo(() => {
-    const itemsTotal = cartTotal;
+  const computeBill = (lines) => {
+    const itemsTotal = linesTotal(lines);
+    const savings = linesSavings(lines);
     const g = gstBreakdown(itemsTotal);
     const discount = couponDiscount(coupon, itemsTotal);
     const qualifiesFree = itemsTotal >= SHOP.freeDeliveryThreshold;
@@ -124,19 +125,36 @@ export function StoreProvider({ children }) {
     const toFreeDelivery = qualifiesFree ? 0 : Math.max(0, SHOP.freeDeliveryThreshold - itemsTotal);
     const total = Math.max(0, itemsTotal - discount + deliveryFee);
     return {
-      ...g, itemsTotal, savings: cartSavings, coupon, discount, deliveryFee,
+      ...g, itemsTotal, savings, coupon, discount, deliveryFee,
       freeThreshold: SHOP.freeDeliveryThreshold, toFreeDelivery, qualifiesFree,
-      totalSaved: cartSavings + discount, total,
+      totalSaved: savings + discount, total,
     };
-  }, [cartTotal, cartSavings, coupon]);
+  };
+
+  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+  const cartTotal = linesTotal(cart);
+  const cartSavings = linesSavings(cart);
+  const bill = useMemo(() => computeBill(cart), [cart, products, coupon]);
+
+  // Express "Buy now": checkout uses this single item instead of the cart.
+  const checkoutItems = useMemo(() => (buyNowItem ? [buyNowItem] : cart), [buyNowItem, cart]);
+  const checkoutCount = checkoutItems.reduce((s, i) => s + i.qty, 0);
+  const checkoutBill = useMemo(() => computeBill(checkoutItems), [checkoutItems, products, coupon]);
+
   const applyCoupon = (code) => {
     const c = findCoupon(code);
     if (!c) { setCouponMsg("That code isn't valid."); return; }
-    if (cartTotal < (c.minSubtotal || 0)) { setCouponMsg(`Spend ₹${c.minSubtotal.toLocaleString("en-IN")}+ to use ${c.code}.`); return; }
+    if (checkoutBill.itemsTotal < (c.minSubtotal || 0)) { setCouponMsg(`Spend ₹${c.minSubtotal.toLocaleString("en-IN")}+ to use ${c.code}.`); return; }
     setCoupon(c); setCouponMsg(""); showToast(`Coupon ${c.code} applied 🎉`);
   };
   const removeCoupon = () => { setCoupon(null); setCouponMsg(""); };
   const billingAddress = billingSame ? defaultAddress : (addresses.find((a) => a.id === billingAddrId) || defaultAddress);
+
+  // Drop the express "Buy now" item once the user leaves the checkout flow, so a
+  // later normal checkout falls back to the cart.
+  useEffect(() => {
+    if (buyNowItem && !["checkout", "addresses", "login"].includes(screen)) { setBuyNowItem(null); setCoupon(null); setCouponMsg(""); }
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prefill the checkout contact fields from the signed-in profile (only fills blanks).
   useEffect(() => {
@@ -433,6 +451,13 @@ export function StoreProvider({ children }) {
   /* ---------- actions ---------- */
   // Send a guest to the login screen, remembering where to bring them back
   const goToLogin = (target) => {
+    // A guest can't complete express checkout instantly (sign-up may need an
+    // email-confirm reload that would lose the in-memory item), so fold the
+    // buy-now item into the persisted cart before sending them to login.
+    if (buyNowItem) {
+      setCart((prev) => mergeCart(prev, [{ id: buyNowItem.id, size: buyNowItem.size, color: buyNowItem.color, qty: buyNowItem.qty }]));
+      setBuyNowItem(null);
+    }
     setReturnTo(target || null);
     setAuthErr(""); setAuthNotice(""); setAuthMode("login");
     setLoginTab("email"); setOtp(""); setOtpSent(false); setOtpErr("");
@@ -614,23 +639,52 @@ export function StoreProvider({ children }) {
   };
   const removeItem = (idx) => setCart((prev) => prev.filter((_, i) => i !== idx));
 
+  // Buy now: add the item then jump straight to checkout. Guests reach checkout
+  // (it shows a "Log in to place order" branch), so no login gate. Respects stock.
+  const buyNow = (p, size, color) => {
+    if (outOfStock(p)) { showToast("Sorry, that's out of stock"); return; }
+    setBuyNowItem({ id: p.id, size, color, qty: 1 }); // express checkout — does NOT touch the cart
+    setCoupon(null); setCouponMsg("");                 // express checkout starts with a clean coupon
+    setSelProduct(null);                               // close the product modal
+    // Replace the product's history entry with checkout (instead of pushing on top of it),
+    // so a single Back returns to the store rather than re-opening the product modal.
+    if (typeof window !== "undefined") { try { window.history.replaceState({ screen: "checkout" }, ""); } catch {} }
+    screenRef.current = "checkout";
+    setScreenRaw("checkout");
+  };
+  // Change the express buy-now item's quantity (clamped to >= 1, respects stock).
+  const changeBuyNowQty = (d) => {
+    if (!buyNowItem) return;
+    const next = buyNowItem.qty + d;
+    if (next < 1) return;
+    const p = products.find((x) => x.id === buyNowItem.id);
+    if (d > 0 && p && isTracked(p) && next > p.stock) { showToast(`Only ${p.stock} in stock`); return; }
+    setBuyNowItem({ ...buyNowItem, qty: next });
+  };
+
   // Persist an order + its line items. Returns { ok, dbId } / { ok:false, offline? }.
   // If the line-items insert fails, we roll back the just-created order. This
   // works for signed-in users (orders_delete_own RLS); for guests the delete may
   // be blocked by RLS, leaving a rare item-less order for admin cleanup.
   const saveOrderToDb = async (order, items, phone, email, extra = {}) => {
     try {
-      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders", {
+      const baseBody = {
+        customer_name: order.name, customer_phone: phone, customer_email: email,
+        total: order.total, status: "placed",
+        ref: order.id,
+        user_id: extra.userId || null,
+        shipping_address: extra.shipping || null,
+      };
+      const postOrder = (body) => authedFetch(SUPABASE_URL + "/rest/v1/orders", {
         method: "POST",
         headers: { ...writeHeaders(), Prefer: "return=representation" },
-        body: JSON.stringify({
-          customer_name: order.name, customer_phone: phone, customer_email: email,
-          total: order.total, status: "placed",
-          ref: order.id,
-          user_id: extra.userId || null,
-          shipping_address: extra.shipping || null,
-        }),
+        body: JSON.stringify(body),
       });
+      // Send the order note when there is one, but if the DB has no `note`
+      // column yet the insert 400s — so retry once WITHOUT the note rather than
+      // failing the whole order. (Add `note text` to the orders table to persist it.)
+      let res = await postOrder(order.note ? { ...baseBody, note: order.note } : baseBody);
+      if (!res.ok && order.note) res = await postOrder(baseBody);
       if (!res.ok) return { ok: false };
       const rows = await res.json().catch(() => []);
       const dbId = rows && rows[0] && rows[0].id;
@@ -658,31 +712,32 @@ export function StoreProvider({ children }) {
     if (placingOrder) return;
     if (!coName.trim() || (!coPhone.trim() && !coEmail.trim())) return;
     // Don't let an out-of-stock / over-quantity item through checkout.
-    const badLine = cart.find((it) => {
+    const badLine = checkoutItems.find((it) => {
       const p = products.find((x) => x.id === it.id);
       return p && (outOfStock(p) || (isTracked(p) && it.qty > p.stock));
     });
-    if (badLine) { showToast("Some items are out of stock — please review your cart"); setScreen("cart"); return; }
+    if (badLine) { showToast("Sorry, that item is out of stock"); if (!buyNowItem) setScreen("cart"); return; }
 
     const order = {
       id: "PP" + Math.floor(100000 + Math.random() * 900000),
-      total: bill.total,
-      count: cartCount,
+      total: checkoutBill.total,
+      count: checkoutCount,
       name: coName.trim(),
       contact: coPhone.trim() || coEmail.trim(),
       phone: coPhone.trim() || null,
       email: coEmail.trim().toLowerCase() || null,
+      note: coNote.trim() || null,
       ts: Date.now(),
-      coupon: bill.coupon ? { code: bill.coupon.code, discount: bill.discount } : null,
-      discount: bill.discount,
-      delivery_fee: bill.deliveryFee,
-      subtotal: bill.subtotal,
-      gst: bill.gst,
-      ratePct: bill.ratePct,
-      itemsTotal: bill.itemsTotal,
-      saved: bill.totalSaved,
+      coupon: checkoutBill.coupon ? { code: checkoutBill.coupon.code, discount: checkoutBill.discount } : null,
+      discount: checkoutBill.discount,
+      delivery_fee: checkoutBill.deliveryFee,
+      subtotal: checkoutBill.subtotal,
+      gst: checkoutBill.gst,
+      ratePct: checkoutBill.ratePct,
+      itemsTotal: checkoutBill.itemsTotal,
+      saved: checkoutBill.totalSaved,
     };
-    const itemsSnapshot = cart.map((it) => {
+    const itemsSnapshot = checkoutItems.map((it) => {
       const p = products.find((x) => x.id === it.id);
       return { product_id: it.id, product_name: p ? p.name : "Item", size: it.size, color: it.color, unit_price: p ? p.price : 0, qty: it.qty };
     });
@@ -707,9 +762,9 @@ export function StoreProvider({ children }) {
 
     setOrders((o) => [{ ...order, status: "placed", shipping, billing, items: itemsSnapshot }, ...o]);
     setLastOrder({ ...order, shipping, items: itemsSnapshot });
-    setCart([]);
+    if (buyNowItem) setBuyNowItem(null); else setCart([]); // buy-now leaves the cart intact
     setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
-    setCoName(""); setCoPhone(""); setCoEmail("");
+    setCoName(""); setCoPhone(""); setCoEmail(""); setCoNote("");
     setScreen("success");
   };
 
@@ -1043,16 +1098,17 @@ export function StoreProvider({ children }) {
     myOrders, adminOrders, ordersBusy,
     selProduct, setSelProduct,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
-    query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail,
+    query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote,
     coupon, couponMsg, setCouponMsg, billingSame, setBillingSame, billingAddrId, setBillingAddrId,
     lastOrder, placingOrder, form, setForm, blankForm,
     // derived
     cartCount, cartTotal, cartSavings, bill, billingAddress,
+    buyNowItem, setBuyNowItem, checkoutItems, checkoutCount, checkoutBill,
     // actions
     showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth,
     applyCoupon, removeCoupon,
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
-    toggleFav, isFav, addToCart, changeQty, removeItem, placeOrder, logout, shareProduct,
+    toggleFav, isFav, addToCart, buyNow, changeBuyNowQty, changeQty, removeItem, placeOrder, logout, shareProduct,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,

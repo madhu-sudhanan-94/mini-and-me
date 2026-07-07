@@ -1,17 +1,14 @@
 import React from "react";
-import { ChevronLeft } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { LEGAL_PAGES, LEGAL_ORDER, LAST_UPDATED } from "../content/legal.js";
 import { useStore } from "../store.jsx";
 
 export default function LegalPage() {
-  const { legalPage, openLegal, goBack } = useStore();
+  const { legalPage, openLegal } = useStore();
   const page = LEGAL_PAGES[legalPage] || LEGAL_PAGES.privacy;
   return (
     <div className="pb-10">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">{page.title}</h2>
-      </div>
+      <ScreenHeader title={page.title} back="home" />
 
       <div className="px-5 mt-3 flex gap-2 overflow-x-auto no-scrollbar">
         {LEGAL_ORDER.map((k) => (

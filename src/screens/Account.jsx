@@ -1,5 +1,6 @@
 import React from "react";
-import { User, Shield, ChevronRight, ChevronLeft, Package, ShoppingCart, LogOut, MapPin, LifeBuoy, KeyRound } from "lucide-react";
+import { User, Shield, ChevronRight, Package, ShoppingCart, LogOut, MapPin, LifeBuoy, KeyRound } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -14,7 +15,7 @@ const TINT = {
 };
 
 export default function Account() {
-  const { auth, orders, cartCount, setScreen, goBack, goToLogin, logout, profile, addresses, session, myOrders } = useStore();
+  const { auth, orders, cartCount, setScreen, goToLogin, logout, profile, addresses, session, myOrders } = useStore();
   const orderCount = session ? mergeOrders(myOrders, orders).length : orders.length;
   const isGuest = auth.role === "guest";
   const name = isGuest ? "Guest user" : (profile?.full_name || (auth.role === "admin" ? "Administrator" : "Customer"));
@@ -47,7 +48,7 @@ export default function Account() {
   return (
     <div className="pb-6">
       <div className="px-5 pt-[18px]">
-        <button onClick={() => goBack("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-slate-700" /></button>
+        <ScreenHeader title="My account" back="home" padded={false} />
 
         {/* Profile card */}
         {session ? (

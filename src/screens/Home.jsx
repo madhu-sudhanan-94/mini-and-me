@@ -49,8 +49,8 @@ export default function Home() {
     <div className="pb-4">
       <div className="min-h-[66px] lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
         <div>
-          {firstName && <p className="text-slate-400 text-xs mb-0.5">Hi, {firstName} 👋</p>}
-          <BrandLogo imgClass="h-6" />
+          {firstName && <p className="-mt-1 text-slate-400 text-xs mb-0.5">Hi, {firstName} 👋</p>}
+          <BrandLogo imgClass={`${firstName ? "h-8" : "h-9"} ml-[-5px]`} />
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">

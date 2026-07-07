@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ChevronLeft, Mail, Phone, Clock, MapPin, ChevronDown, ArrowRight, MessageCircle, HelpCircle } from "lucide-react";
+import { Mail, Phone, Clock, MapPin, ChevronDown, ArrowRight, MessageCircle, HelpCircle } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { SUPPORT, FAQS, LEGAL_ORDER, LEGAL_PAGES } from "../content/legal.js";
 import { useStore } from "../store.jsx";
 
@@ -11,7 +12,7 @@ const TINT = {
 };
 
 export default function Contact() {
-  const { goBack, openLegal } = useStore();
+  const { openLegal } = useStore();
   const [open, setOpen] = useState(null);
   const [msg, setMsg] = useState("");
   const mailto = `mailto:${SUPPORT.email}?subject=${encodeURIComponent("Support request")}&body=${encodeURIComponent(msg)}`;
@@ -25,10 +26,7 @@ export default function Contact() {
 
   return (
     <div className="pb-10">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("home")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">Help &amp; support</h2>
-      </div>
+      <ScreenHeader title="Help & support" back="home" />
 
       <div className="px-5 mt-4 space-y-5">
         {/* Contact details */}

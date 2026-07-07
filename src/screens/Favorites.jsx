@@ -1,19 +1,17 @@
 import React from "react";
-import { ChevronLeft, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Favorites() {
-  const { products, favorites, setScreen, goBack } = useStore();
+  const { products, favorites, setScreen } = useStore();
   const favs = products.filter((p) => favorites.includes(p.id));
   return (
     <div className="pb-4">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">Favourites</h2>
-      </div>
+      <ScreenHeader title="Favourites" back="home" />
       {favs.length === 0 ? (
         <EmptyState icon={Heart} tone="rose" title="No favourites yet" subtitle="Tap the heart on any item to save it here." className="min-h-[55vh]">
           <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Browse items</PrimaryButton>

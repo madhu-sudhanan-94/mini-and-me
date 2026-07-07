@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { ChevronLeft, Package, Truck, CheckCircle2, MapPin, Clock } from "lucide-react";
+import { Package, Truck, CheckCircle2, MapPin, Clock } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR } from "../lib/format.js";
 import { ORDER_STEPS, STATUS_LABEL, fmtDate, normalizeOrder, shipLines, mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
@@ -121,7 +122,7 @@ function ThumbRow({ items, products }) {
 }
 
 export default function Orders() {
-  const { myOrders, orders, session, setScreen, goBack, loadMyOrders, products } = useStore();
+  const { myOrders, orders, session, setScreen, loadMyOrders, products } = useStore();
   useEffect(() => { if (session) loadMyOrders(); }, [session]);
 
   // Signed-in users: DB history plus any local order not yet synced (deduped by ref).
@@ -129,10 +130,7 @@ export default function Orders() {
 
   return (
     <div className="pb-6">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">My orders</h2>
-      </div>
+      <ScreenHeader title="My orders" back="account" />
 
       {list.length === 0 ? (
         <EmptyState icon={Package} title="No orders yet" subtitle="Your placed orders will show up here." className="min-h-[55vh]">

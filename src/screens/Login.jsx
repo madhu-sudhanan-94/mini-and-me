@@ -51,8 +51,8 @@ export default function Login() {
         {/* Header */}
         <div className="text-center mt-2 mb-6">
           {BRAND.icon && !logoFailed ? (
-            <div className="w-16 h-16 rounded-2xl bg-white shadow-md ring-1 ring-slate-100 mx-auto mb-4 flex items-center justify-center overflow-hidden">
-              <img src={BRAND.icon} alt={BRAND.name} onError={() => setLogoFailed(true)} className="w-full h-full object-contain p-1.5" />
+            <div className="w-20 h-20 rounded-2xl bg-white shadow-md ring-1 ring-slate-100 mx-auto mb-4 flex items-center justify-center overflow-hidden">
+              <img src={BRAND.icon} alt={BRAND.name} onError={() => setLogoFailed(true)} className="w-full h-full object-contain p-1" />
             </div>
           ) : (
             <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-500 to-accent-400 shadow-lg mx-auto mb-4 flex items-center justify-center"><Logo size={28} className="text-white" /></div>
@@ -83,7 +83,7 @@ export default function Login() {
 
               <label className="flex items-center gap-2 mt-3.5 text-sm text-slate-600 cursor-pointer select-none w-fit">
                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 accent-brand-600" />
-                Keep me signed in for 30 days
+                Keep your account signed in on this device.
               </label>
 
               {authErr && <p className="text-red-500 text-xs mt-2.5">{authErr}</p>}

@@ -1,5 +1,6 @@
 import React, { useState, useLayoutEffect, useEffect, useMemo } from "react";
-import { ChevronLeft, PackageOpen, SlidersHorizontal, ArrowUpDown, X } from "lucide-react";
+import { PackageOpen, SlidersHorizontal, ArrowUpDown, X } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { CAT_LABEL } from "../lib/format.js";
 import { SORTS, sortProducts, COLOR_FAMILIES, productFamilies } from "../lib/catalog.js";
 import ProductCard from "../components/ProductCard.jsx";
@@ -13,7 +14,7 @@ const PAGE = 20;
 const PRICE_BOUNDS = [0, 10000]; // fixed price range for the slider
 
 export default function Category() {
-  const { products, selCategory, setSelCategory, setScreen, goBack } = useStore();
+  const { products, selCategory, setSelCategory, setScreen } = useStore();
   const cats = ["all", "kids", "women", "men"];
   // selCategory can also be a "collection" — "new" or "trending" — opened from
   // the Home "See all" links. Those hide the category tabs and set the title.
@@ -76,10 +77,7 @@ export default function Category() {
 
   return (
     <div className="pb-4 lg:pb-10">
-      <div className="px-5 lg:px-6 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>
-      </div>
+      <ScreenHeader title={title} back="home" className="lg:px-6" />
 
       {/* category tabs (hidden for the New in / Trending collections) */}
       {!isCollection && (

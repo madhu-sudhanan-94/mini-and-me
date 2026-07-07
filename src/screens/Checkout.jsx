@@ -1,5 +1,6 @@
-import React from "react";
-import { ChevronLeft, User, MapPin, Truck, Check, Minus, Plus, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import { ChevronDown, User, MapPin, Truck, Minus, Plus, Trash2 } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR, isEmail } from "../lib/format.js";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -10,11 +11,13 @@ import { useStore } from "../store.jsx";
 export default function Checkout() {
   const {
     coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote,
-    auth, goToLogin, placeOrder, placingOrder, setScreen, goBack, defaultAddress, addresses, session, coupon,
+    auth, goToLogin, placeOrder, placingOrder, setScreen, defaultAddress, addresses, session, coupon,
     billingSame, setBillingSame, billingAddrId, setBillingAddrId, billingAddress,
     products, buyNowItem, setBuyNowItem, checkoutItems, checkoutCount, checkoutBill,
     changeQty, removeItem, changeBuyNowQty,
   } = useStore();
+  // Buy-now shows the single item; from the cart the order is collapsed by default.
+  const [itemsOpen, setItemsOpen] = useState(!!buyNowItem);
   const emailInvalid = coEmail.trim() && !isEmail(coEmail);
   const hasContact = coPhone.trim() || (coEmail.trim() && isEmail(coEmail));
   const fmtAddr = (a) => (a ? [a.line1, a.line2, a.area, a.city, a.state, a.pincode].filter(Boolean).join(", ") : "");
@@ -31,16 +34,22 @@ export default function Checkout() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("cart")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">Checkout</h2>
-      </div>
+      <ScreenHeader title="Checkout" back="cart" />
 
       <div className="flex-1 px-5 lg:px-6 pt-5 space-y-5">
-        {/* Items in this order */}
+        {/* Items in this order — collapsed by default when arriving from the cart */}
         <section>
-          <p className="text-sm font-semibold text-slate-800 mb-2">{buyNowItem ? "Your item" : "Your order"}</p>
-          <div className="space-y-3">
+          {buyNowItem ? (
+            <p className="text-sm font-semibold text-slate-800 mb-2">Your item</p>
+          ) : (
+            <button type="button" onClick={() => setItemsOpen((v) => !v)} aria-expanded={itemsOpen} className="w-full flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-slate-800">Your order <span className="font-normal text-slate-400">({checkoutCount} item{checkoutCount !== 1 ? "s" : ""})</span></span>
+              <ChevronDown size={18} className={`text-slate-400 transition-transform ${itemsOpen ? "rotate-180" : ""}`} />
+            </button>
+          )}
+          <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${(buyNowItem || itemsOpen) ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+            <div className="overflow-hidden min-h-0">
+              <div className="space-y-3">
             {checkoutItems.map((item, idx) => {
               const p = products.find((x) => x.id === item.id);
               if (!p) return null;
@@ -77,6 +86,8 @@ export default function Checkout() {
                 </div>
               );
             })}
+              </div>
+            </div>
           </div>
         </section>
 

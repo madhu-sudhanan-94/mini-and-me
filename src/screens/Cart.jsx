@@ -1,5 +1,6 @@
 import React from "react";
-import { ChevronLeft, ShoppingCart, Trash2, Minus, Plus, Truck } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, Truck } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR } from "../lib/format.js";
 import ProductImage from "../components/ProductImage.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -8,14 +9,11 @@ import CouponBox from "../components/CouponBox.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
-  const { cart, products, setScreen, goBack, removeItem, changeQty, bill, coupon, cartCount } = useStore();
+  const { cart, products, setScreen, removeItem, changeQty, bill, coupon, cartCount } = useStore();
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("home")} className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">My cart</h2>
-      </div>
+      <ScreenHeader title="My cart" back="home" />
 
       {cart.length === 0 ? (
         <EmptyState icon={ShoppingCart} title="Your cart is empty" subtitle="Find something you'll love." className="flex-1 min-h-[55vh]">

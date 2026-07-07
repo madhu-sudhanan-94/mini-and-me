@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ChevronLeft, Plus, Edit3, Trash2, MapPin, Star } from "lucide-react";
+import { Plus, Edit3, Trash2, MapPin, Star } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import EmptyState from "../components/EmptyState.jsx";
@@ -43,10 +44,7 @@ export default function Addresses() {
 
   return (
     <div className="pb-6">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => (editing ? setEditing(null) : goBack("account"))} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">{editing ? (editing.id ? "Edit address" : "New address") : "Delivery addresses"}</h2>
-      </div>
+      <ScreenHeader title={editing ? (editing.id ? "Edit address" : "New address") : "Delivery addresses"} onBack={() => (editing ? setEditing(null) : goBack("account"))} />
 
       {editing ? (
         <div className="px-5 mt-4">

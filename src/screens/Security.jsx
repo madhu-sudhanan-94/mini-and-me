@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ChevronLeft, KeyRound, Mail, Trash2 } from "lucide-react";
+import { KeyRound, Mail, Trash2 } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import { SUPPORT } from "../content/legal.js";
 import PasswordField from "../components/PasswordField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -18,7 +19,7 @@ function CardHead({ icon: Icon, tint, title, subtitle }) {
 }
 
 export default function Security() {
-  const { goBack, updateAccount, profile, auth, logout, showToast } = useStore();
+  const { updateAccount, profile, auth, logout, showToast } = useStore();
   const email = profile?.email || auth.id || "";
   const [newEmail, setNewEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -51,10 +52,7 @@ export default function Security() {
 
   return (
     <div className="pb-10">
-      <div className="px-5 pt-[18px] flex items-center gap-3">
-        <button onClick={() => goBack("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <h2 className="text-2xl font-semibold text-slate-900">Login &amp; security</h2>
-      </div>
+      <ScreenHeader title="Login & security" back="account" />
 
       <div className="px-5 mt-4 space-y-4">
         {/* Change password */}

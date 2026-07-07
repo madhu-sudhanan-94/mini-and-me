@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, Camera } from "lucide-react";
+import { Camera } from "lucide-react";
+import ScreenHeader from "../components/ScreenHeader.jsx";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
@@ -12,7 +13,7 @@ const GENDERS = [
 ];
 
 export default function Profile() {
-  const { profile, saveProfile, profileBusy, auth, setScreen, goBack, uploadAvatar, avatarBusy } = useStore();
+  const { profile, saveProfile, profileBusy, auth, setScreen, uploadAvatar, avatarBusy } = useStore();
   const email = profile?.email || auth.id || "";
 
   const [f, setF] = useState({ full_name: "", phone: "", gender: "", dob: "" });
@@ -45,10 +46,7 @@ export default function Profile() {
   return (
     <div className="pb-6">
       <div className="px-5 pt-[18px]">
-        <div className="flex items-center gap-3">
-          <button onClick={() => goBack("account")} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center"><ChevronLeft size={20} className="text-slate-700" /></button>
-          <h2 className="text-2xl font-semibold text-slate-900">Edit profile</h2>
-        </div>
+        <ScreenHeader title="Edit profile" back="account" padded={false} />
         <div className="flex flex-col items-center mt-4">
           <label className={`group relative flex flex-col items-center justify-center w-28 h-28 rounded-full transition ${avatarBusy ? "cursor-wait" : "cursor-pointer"} ${avatarSrc ? "overflow-hidden ring-4 ring-white shadow-lg" : "border-2 border-dashed border-brand-300 bg-linear-to-br from-brand-50 to-accent-50 hover:from-brand-100 hover:to-accent-100"}`}>
             {avatarSrc ? (
@@ -99,7 +97,7 @@ export default function Profile() {
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Date of birth</label>
-              <input type="date" value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-3.5 outline-hidden text-sm focus:border-brand-500" />
+              <input type="date" value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-2.5 outline-hidden text-sm focus:border-brand-500" />
             </div>
           </div>
 

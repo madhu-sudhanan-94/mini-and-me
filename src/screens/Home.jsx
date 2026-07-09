@@ -47,33 +47,35 @@ export default function Home() {
   const heroSwipe = useSwipe({ onLeft: () => goHero(1), onRight: () => goHero(-1) });
   return (
     <div className="pb-4">
-      {/* greeting — scrolls away as you scroll (the pinned bar below stays) */}
-      {firstName && <p className="lg:hidden px-5 pt-3 -mb-1 text-slate-400 text-xs">Hi, {firstName} 👋</p>}
-
-      {/* pinned menu bar: logo + quick icons + search stays put while scrolling */}
-      <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-2 pb-3">
-        <div className="flex items-center justify-between">
+      {/* pinned menu bar: greeting + logo + quick icons stay put while scrolling */}
+      <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-3">
+        {firstName && <p className="text-slate-400 text-xs mb-1">Hi, <span className="font-semibold text-slate-600">{firstName}</span> 👋</p>}
+        <div className="flex items-center justify-between gap-3">
           <BrandLogo imgClass="h-8 ml-[-5px]" />
-          <div className="flex items-center gap-2">
-            <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
-              <Heart size={19} className="text-slate-700" />
-              {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{favorites.length}</span>}
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center active:scale-90 transition">
+              <Heart size={18} className="text-slate-600" />
+              {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ring-2 ring-slate-50">{favorites.length}</span>}
             </button>
-            <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
-              <ShoppingCart size={19} className="text-slate-700" />
-              {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{cartCount}</span>}
+            <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center active:scale-90 transition">
+              <ShoppingCart size={18} className="text-slate-600" />
+              {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ring-2 ring-slate-50">{cartCount}</span>}
             </button>
-            <button onClick={() => setScreen("account")} aria-label="Account" className="w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center overflow-hidden">
-              {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <User size={19} className="text-slate-700" />}
+            <button onClick={() => setScreen("account")} aria-label="Account" className="w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center overflow-hidden active:scale-90 transition">
+              {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <User size={18} className="text-slate-600" />}
             </button>
           </div>
         </div>
-        <div className="flex items-center bg-white rounded-2xl pl-4 pr-3 py-3 shadow-xs mt-3">
-          <Search size={18} className="text-slate-400" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-3 outline-hidden text-sm bg-transparent" />
+      </div>
+
+      {/* Search — scrolls away with the content (not pinned) */}
+      <div className="lg:hidden px-5 mt-4">
+        <div className="flex items-center gap-2.5 bg-white rounded-2xl px-4 py-3.5 ring-1 ring-slate-100 shadow-xs">
+          <Search size={18} className="text-slate-400 shrink-0" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 outline-hidden text-sm bg-transparent placeholder:text-slate-400" />
           {query && (
-            <button onClick={() => setQuery("")} aria-label="Clear search" className="ml-2 w-5 h-5 rounded-full active:scale-90 flex items-center justify-center shrink-0 transition">
-              <X size={16} className="text-slate-500" />
+            <button onClick={() => setQuery("")} aria-label="Clear search" className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 active:scale-90 transition">
+              <X size={14} className="text-slate-500" />
             </button>
           )}
         </div>

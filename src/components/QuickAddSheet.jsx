@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, ShoppingCart } from "lucide-react";
+import { X, ShoppingCart, Minus, Plus } from "lucide-react";
 import ProductImage from "./ProductImage.jsx";
 import PriceTag from "./PriceTag.jsx";
 import PrimaryButton from "./PrimaryButton.jsx";
@@ -17,7 +17,8 @@ export default function QuickAddSheet() {
   const { quickAdd, closeQuickAdd, setQuickAdd, addToCart, buyNow } = useStore();
   const p = quickAdd;
   const [size, setSize] = useState(null);            // user's pick; null → first in-stock
-  useEffect(() => { setSize(null); }, [p?.id]);       // reset when a different product opens
+  const [qty, setQty] = useState(1);
+  useEffect(() => { setSize(null); setQty(1); }, [p?.id]); // reset when a different product opens
 
   if (!p) return null;
 
@@ -27,8 +28,9 @@ export default function QuickAddSheet() {
   const rawDesc = (p.desc || "").trim();
   const hasDesc = rawDesc.length > 0 && rawDesc.toLowerCase() !== "added by admin.";
 
-  const add = () => { addToCart(p, sel, p.colors[0]); closeQuickAdd(); };
-  const buy = () => { buyNow(p, sel, p.colors[0]); setQuickAdd(null); }; // buyNow rewrites history → just hide
+  const maxQty = (() => { const s = stockFor(p, sel); return typeof s === "number" ? Math.max(1, s) : 99; })();
+  const add = () => { addToCart(p, sel, p.colors[0], qty); closeQuickAdd(); };
+  const buy = () => { buyNow(p, sel, p.colors[0], qty); setQuickAdd(null); }; // buyNow rewrites history → just hide
 
   return (
     <div className="fixed sm:max-lg:absolute inset-0 z-[60] flex flex-col justify-end lg:items-center lg:justify-center">
@@ -65,7 +67,7 @@ export default function QuickAddSheet() {
               return (
                 <button
                   key={s}
-                  onClick={() => !soldOut && setSize(s)}
+                  onClick={() => { if (!soldOut) { setSize(s); setQty(1); } }}
                   disabled={soldOut}
                   aria-label={soldOut ? `Size ${s} — out of stock` : `Size ${s}`}
                   className={`min-w-[46px] px-3 py-2 rounded-xl text-sm font-semibold transition ${soldOut ? "bg-slate-100 text-slate-300 line-through cursor-not-allowed" : sel === s ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}
@@ -74,6 +76,18 @@ export default function QuickAddSheet() {
             })}
           </div>
         </div>
+
+        {/* quantity */}
+        {!oos && !selSoldOut && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-800">Quantity</p>
+            <div className="flex items-center bg-slate-100 rounded-full">
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease quantity" className="w-8 h-8 flex items-center justify-center active:scale-90 transition"><Minus size={15} /></button>
+              <span className="w-9 text-center text-sm font-semibold">{qty}</span>
+              <button onClick={() => setQty((q) => Math.min(q + 1, maxQty))} aria-label="Increase quantity" className="w-8 h-8 flex items-center justify-center active:scale-90 transition"><Plus size={15} /></button>
+            </div>
+          </div>
+        )}
 
         {/* actions */}
         <div className="mt-5">

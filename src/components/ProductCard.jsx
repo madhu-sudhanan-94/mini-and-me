@@ -53,7 +53,7 @@ export default function ProductCard({ p, wide }) {
 
         {/* add-to-cart quick action */}
         {!oos && !quick && (
-          <button onClick={(e) => { stop(e); setQuick(true); }} aria-label="Add to cart" className="absolute bottom-1.5 right-1.5 z-10 w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-500/30 active:scale-90 transition"><ShoppingCart size={15} /></button>
+          <button onClick={(e) => { stop(e); setQuick(true); }} aria-label="Add to cart" className="absolute bottom-1.5 right-1.5 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm text-brand-600 flex items-center justify-center shadow-sm active:scale-90 transition"><ShoppingCart size={15} /></button>
         )}
 
         {/* quick-add size picker */}

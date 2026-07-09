@@ -633,22 +633,23 @@ export function StoreProvider({ children }) {
     setFavorites((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
   const isFav = (id) => favorites.includes(id);
 
-  const addToCart = (p, size, color) => {
+  const addToCart = (p, size, color, qty = 1) => {
+    const n = Math.max(1, Math.floor(qty) || 1);
     if (outOfStock(p) || sizeOutOfStock(p, size)) { showToast(sizeOutOfStock(p, size) && !outOfStock(p) ? `Size ${size} is out of stock` : "Sorry, that's out of stock"); return; }
     // Cap against the size's stock summed across every colour of this product+size.
     const avail = stockFor(p, size);
     const sameSizeQty = cart.filter((x) => x.id === p.id && x.size === size).reduce((s, x) => s + x.qty, 0);
-    if (avail != null && sameSizeQty + 1 > avail) { showToast(`Only ${avail} left in size ${size}`); return; }
+    if (avail != null && sameSizeQty + n > avail) { showToast(`Only ${avail} left in size ${size}`); return; }
     setCart((prev) => {
       const i = prev.findIndex((x) => x.id === p.id && x.size === size && x.color === color);
       if (i >= 0) {
         const copy = [...prev];
-        copy[i] = { ...copy[i], qty: copy[i].qty + 1 };
+        copy[i] = { ...copy[i], qty: copy[i].qty + n };
         return copy;
       }
-      return [...prev, { id: p.id, size, color, qty: 1 }];
+      return [...prev, { id: p.id, size, color, qty: n }];
     });
-    showToast(`Added ${p.name} (${size})`);
+    showToast(n > 1 ? `Added ${n} × ${p.name} (${size})` : `Added ${p.name} (${size})`);
   };
 
   const changeQty = (idx, d) => {
@@ -671,9 +672,11 @@ export function StoreProvider({ children }) {
 
   // Buy now: add the item then jump straight to checkout. Guests reach checkout
   // (it shows a "Log in to place order" branch), so no login gate. Respects stock.
-  const buyNow = (p, size, color) => {
+  const buyNow = (p, size, color, qty = 1) => {
     if (outOfStock(p) || sizeOutOfStock(p, size)) { showToast(sizeOutOfStock(p, size) && !outOfStock(p) ? `Size ${size} is out of stock` : "Sorry, that's out of stock"); return; }
-    setBuyNowItem({ id: p.id, size, color, qty: 1 }); // express checkout — does NOT touch the cart
+    const avail = stockFor(p, size);
+    const n = Math.min(Math.max(1, Math.floor(qty) || 1), avail != null ? avail : Infinity);
+    setBuyNowItem({ id: p.id, size, color, qty: n }); // express checkout — does NOT touch the cart
     setCoupon(null); setCouponMsg("");                 // express checkout starts with a clean coupon
     setSelProduct(null);                               // close the product modal
     // Replace the product's history entry with checkout (instead of pushing on top of it),

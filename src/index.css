@@ -7,6 +7,13 @@
 */
 @config "../tailwind.config.js";
 
+/* Desktop breakpoint — the whole app uses `lg:` as the mobile-frame → desktop
+   switch, lowered from 1024px so laptops with OS display scaling still get the
+   full desktop layout. Set the v4-native way so it's reliable in production. */
+@theme {
+  --breakpoint-lg: 900px;
+}
+
 /*
   The default border color changed to `currentcolor` in Tailwind CSS v4,
   so these compatibility styles keep the v3 look (gray-200 default border).

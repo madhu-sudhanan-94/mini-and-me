@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, ShoppingCart, X } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import ProductImage from "./ProductImage.jsx";
 import PriceTag from "./PriceTag.jsx";
 import { outOfStock, lowStock } from "../lib/catalog.js";
@@ -7,21 +7,16 @@ import { useSwipe } from "../lib/useSwipe.js";
 import { useStore } from "../store.jsx";
 
 export default function ProductCard({ p, wide }) {
-  const { openProduct, toggleFav, isFav, addToCart, setScreen } = useStore();
+  const { openProduct, toggleFav, isFav, openQuickAdd } = useStore();
   const oos = outOfStock(p);
   const imgs = p.images || [];
   const [imgIdx, setImgIdx] = useState(0);
-  const [quick, setQuick] = useState(false);            // quick-add size picker
-  const [size, setSize] = useState(p.sizes?.[0] || null);
   const stop = (e) => e.stopPropagation();
 
   const swipe = useSwipe({
     onLeft: () => setImgIdx((i) => (imgs.length ? (i + 1) % imgs.length : i)),
     onRight: () => setImgIdx((i) => (imgs.length ? (i - 1 + imgs.length) % imgs.length : i)),
   });
-
-  const add = (e) => { stop(e); addToCart(p, size || p.sizes?.[0], p.colors[0]); setQuick(false); };
-  const buy = (e) => { stop(e); addToCart(p, size || p.sizes?.[0], p.colors[0]); setQuick(false); setScreen("checkout"); };
 
   return (
     <div
@@ -43,7 +38,7 @@ export default function ProductCard({ p, wide }) {
         </button>
 
         {/* image dots (centered) */}
-        {imgs.length > 1 && !quick && (
+        {imgs.length > 1 && (
           <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1 z-10">
             {imgs.map((_, i) => (
               <span key={i} onClick={(e) => { stop(e); setImgIdx(i); }} className={`h-1.5 rounded-full cursor-pointer transition-all ${i === imgIdx ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
@@ -51,30 +46,9 @@ export default function ProductCard({ p, wide }) {
           </div>
         )}
 
-        {/* add-to-cart quick action */}
-        {!oos && !quick && (
-          <button onClick={(e) => { stop(e); setQuick(true); }} aria-label="Add to cart" className="absolute bottom-1.5 right-1.5 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm text-brand-600 flex items-center justify-center shadow-sm active:scale-90 transition"><ShoppingCart size={15} /></button>
-        )}
-
-        {/* quick-add size picker */}
-        {quick && (
-          <div className="absolute inset-0 z-20 bg-black/55 flex flex-col justify-end p-2" onClick={(e) => { stop(e); setQuick(false); }}>
-            <div className="bg-white rounded-xl p-2.5" onClick={stop}>
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[11px] font-bold text-slate-700">Select size</p>
-                <button onClick={(e) => { stop(e); setQuick(false); }} aria-label="Close" className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center"><X size={12} className="text-slate-500" /></button>
-              </div>
-              <div className="flex gap-1 flex-wrap mb-2">
-                {p.sizes.map((s) => (
-                  <button key={s} onClick={(e) => { stop(e); setSize(s); }} className={`min-w-[28px] px-2 py-1 rounded-md text-[11px] font-semibold ${size === s ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`}>{s}</button>
-                ))}
-              </div>
-              <div className="flex gap-1.5">
-                <button onClick={add} className="flex-1 bg-brand-600 text-white text-[11px] font-bold py-1.5 rounded-lg active:scale-95 transition">Add to cart</button>
-                <button onClick={buy} className="flex-1 border border-brand-500 text-brand-600 text-[11px] font-bold py-1.5 rounded-lg active:scale-95 transition">Buy now</button>
-              </div>
-            </div>
-          </div>
+        {/* add-to-cart quick action → opens the size bottom sheet */}
+        {!oos && (
+          <button onClick={(e) => { stop(e); openQuickAdd(p); }} aria-label="Add to cart" className="absolute bottom-1.5 right-1.5 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm text-brand-600 flex items-center justify-center shadow-sm active:scale-90 transition"><ShoppingCart size={15} /></button>
         )}
       </div>
 

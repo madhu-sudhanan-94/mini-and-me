@@ -23,6 +23,7 @@ import Contact from "./screens/Contact.jsx";
 import ResetPassword from "./screens/ResetPassword.jsx";
 import Security from "./screens/Security.jsx";
 import ProductModal from "./screens/ProductModal.jsx";
+import QuickAddSheet from "./components/QuickAddSheet.jsx";
 
 const Logo = BRAND.logo;
 
@@ -72,6 +73,7 @@ function Shell() {
           {showFooter && <Footer />}
         </div>
         <ProductModal />
+        <QuickAddSheet />
 
         {/* Toast */}
         {toast && (

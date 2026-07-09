@@ -76,6 +76,7 @@ export function StoreProvider({ children }) {
   const [selProduct, setSelProduct] = useState(null);
   const [selColor, setSelColor] = useState(null);
   const [selSize, setSelSize] = useState(null);
+  const [quickAdd, setQuickAdd] = useState(null); // product shown in the quick-add bottom sheet
 
   const [selCategory, setSelCategory] = useState("women");
   const [query, setQuery] = useState("");
@@ -217,8 +218,10 @@ export function StoreProvider({ children }) {
   // state when the user presses the browser (or Android) Back/Forward button.
   const productsRef = useRef(products);
   const selProductRef = useRef(null);
+  const quickAddRef = useRef(null);
   useEffect(() => { productsRef.current = products; }, [products]);
   useEffect(() => { selProductRef.current = selProduct; }, [selProduct]);
+  useEffect(() => { quickAddRef.current = quickAdd; }, [quickAdd]);
   useEffect(() => { screenRef.current = screen; }, [screen]);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -226,10 +229,21 @@ export function StoreProvider({ children }) {
     const onPop = (e) => {
       const st = (e && e.state) || { screen: "home" };
       if (st.product != null) {
-        const p = (productsRef.current || []).find((x) => x.id === st.product);
-        if (p) { setSelProduct(p); setSelColor(p.colors[0]); setSelSize(firstInStockSize(p) || p.sizes[0]); setImgIndex(0); }
+        // only (re)load the product when it actually changed, so closing an
+        // overlay above the modal doesn't reset the modal's image/size.
+        if (!selProductRef.current || selProductRef.current.id !== st.product) {
+          const p = (productsRef.current || []).find((x) => x.id === st.product);
+          if (p) { setSelProduct(p); setSelColor(p.colors[0]); setSelSize(firstInStockSize(p) || p.sizes[0]); setImgIndex(0); }
+        }
       } else if (selProductRef.current) {
         setSelProduct(null);
+      }
+      // quick-add bottom sheet
+      if (st.quick != null) {
+        const p = (productsRef.current || []).find((x) => x.id === st.quick);
+        if (p) setQuickAdd(p);
+      } else if (quickAddRef.current) {
+        setQuickAdd(null);
       }
       const target = st.screen || "home";
       if (target !== screenRef.current) { screenRef.current = target; setScreenRaw(target); }
@@ -574,6 +588,19 @@ export function StoreProvider({ children }) {
   const closeProduct = () => {
     if (typeof window !== "undefined" && window.history.state && window.history.state.product != null) { window.history.back(); return; }
     setSelProduct(null);
+  };
+
+  // Quick-add bottom sheet (tap the cart icon on a product card → pick a size →
+  // add to cart / buy now, without leaving the current screen). History-backed so
+  // the device Back button just closes the sheet.
+  const openQuickAdd = (p) => {
+    if (!p) return;
+    setQuickAdd(p);
+    if (typeof window !== "undefined") { try { window.history.pushState({ screen: screenRef.current, quick: p.id }, ""); } catch {} }
+  };
+  const closeQuickAdd = () => {
+    if (typeof window !== "undefined" && window.history.state && window.history.state.quick != null) { window.history.back(); return; }
+    setQuickAdd(null);
   };
 
   // Share a product via the native share sheet, falling back to copying the link.
@@ -1114,7 +1141,7 @@ export function StoreProvider({ children }) {
     authBusy, session, rememberMe, setRememberMe, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
     addresses, addrBusy, defaultAddress,
     myOrders, adminOrders, ordersBusy,
-    selProduct, setSelProduct,
+    selProduct, setSelProduct, quickAdd, setQuickAdd,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote,
     coupon, couponMsg, setCouponMsg, billingSame, setBillingSame, billingAddrId, setBillingAddrId,
@@ -1126,6 +1153,7 @@ export function StoreProvider({ children }) {
     showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth,
     applyCoupon, removeCoupon,
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
+    openQuickAdd, closeQuickAdd,
     toggleFav, isFav, addToCart, buyNow, changeBuyNowQty, changeQty, removeItem, placeOrder, logout, shareProduct,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     uploadProductImage, importProductsCsv,

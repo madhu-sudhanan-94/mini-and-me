@@ -31,7 +31,7 @@ export default function QuickAddSheet() {
   const buy = () => { buyNow(p, sel, p.colors[0]); setQuickAdd(null); }; // buyNow rewrites history → just hide
 
   return (
-    <div className="absolute lg:fixed inset-0 z-[60] flex flex-col justify-end lg:items-center lg:justify-center">
+    <div className="fixed sm:max-lg:absolute inset-0 z-[60] flex flex-col justify-end lg:items-center lg:justify-center">
       <div className="absolute inset-0 bg-black/45" onClick={closeQuickAdd} />
 
       <div className="relative w-full lg:w-[420px] lg:max-w-[92vw] bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl px-5 pt-3 pb-6" style={{ animation: "vkUp .28s ease" }}>

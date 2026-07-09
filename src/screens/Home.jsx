@@ -47,28 +47,28 @@ export default function Home() {
   const heroSwipe = useSwipe({ onLeft: () => goHero(1), onRight: () => goHero(-1) });
   return (
     <div className="pb-4">
-      <div className="min-h-[66px] lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-2 flex items-center justify-between">
-        <div>
-          {firstName && <p className="-mt-1 text-slate-400 text-xs mb-0.5">Hi, {firstName} 👋</p>}
-          <BrandLogo imgClass={`${firstName ? "h-8" : "h-9"} ml-[-5px]`} />
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
-            <Heart size={19} className="text-slate-700" />
-            {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{favorites.length}</span>}
-          </button>
-          <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
-            <ShoppingCart size={19} className="text-slate-700" />
-            {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{cartCount}</span>}
-          </button>
-          <button onClick={() => setScreen("account")} aria-label="Account" className="w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center overflow-hidden">
-            {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <User size={19} className="text-slate-700" />}
-          </button>
-        </div>
-      </div>
+      {/* greeting — scrolls away as you scroll (the pinned bar below stays) */}
+      {firstName && <p className="lg:hidden px-5 pt-3 -mb-1 text-slate-400 text-xs">Hi, {firstName} 👋</p>}
 
-      <div className="lg:hidden px-5 mt-4">
-        <div className="flex items-center bg-white rounded-2xl pl-4 pr-3 py-3 shadow-xs">
+      {/* pinned menu bar: logo + quick icons + search stays put while scrolling */}
+      <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-2 pb-3">
+        <div className="flex items-center justify-between">
+          <BrandLogo imgClass="h-8 ml-[-5px]" />
+          <div className="flex items-center gap-2">
+            <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
+              <Heart size={19} className="text-slate-700" />
+              {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{favorites.length}</span>}
+            </button>
+            <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center">
+              <ShoppingCart size={19} className="text-slate-700" />
+              {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{cartCount}</span>}
+            </button>
+            <button onClick={() => setScreen("account")} aria-label="Account" className="w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center overflow-hidden">
+              {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <User size={19} className="text-slate-700" />}
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center bg-white rounded-2xl pl-4 pr-3 py-3 shadow-xs mt-3">
           <Search size={18} className="text-slate-400" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 ml-3 outline-hidden text-sm bg-transparent" />
           {query && (

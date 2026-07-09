@@ -66,9 +66,11 @@ function Shell() {
   return (
     <div className="min-h-dvh bg-slate-300 lg:bg-slate-50 flex justify-center sm:max-lg:py-6 font-sans">
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}@keyframes vkUp{from{transform:translateY(100%);opacity:.7}to{transform:translateY(0);opacity:1}}.screen-wash{background:${profileWash};background-attachment:local}@media(min-width:900px){.screen-wash{background:none}}`}</style>
-      <div className="relative w-full max-w-[430px] lg:max-w-none bg-slate-50 sm:max-lg:rounded-[2.5rem] sm:max-lg:shadow-2xl overflow-hidden lg:overflow-visible flex flex-col h-dvh sm:max-lg:h-[880px] lg:h-auto lg:min-h-dvh">
+      <div className="relative w-full max-w-[430px] lg:max-w-none bg-slate-50 sm:max-lg:rounded-[2.5rem] sm:max-lg:shadow-2xl overflow-visible sm:max-lg:overflow-hidden flex flex-col min-h-dvh sm:max-lg:min-h-0 sm:max-lg:h-[880px] lg:h-auto lg:min-h-dvh">
         {showChrome && <DesktopNav />}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar lg:overflow-visible screen-wash">
+        {/* True mobile lets the PAGE scroll (so the browser's address bar can collapse);
+            the sm→lg phone-mockup keeps its own inner scroll. */}
+        <div ref={scrollRef} className="flex-1 overflow-visible sm:max-lg:overflow-y-auto no-scrollbar screen-wash">
           <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>
           {showFooter && <Footer />}
         </div>
@@ -77,7 +79,7 @@ function Shell() {
 
         {/* Toast */}
         {toast && (
-          <div className="absolute lg:fixed left-1/2 -translate-x-1/2 bottom-24 lg:bottom-8 min-w-[260px] max-w-[92%] justify-center text-center bg-slate-900 text-white text-sm px-6 py-2.5 rounded-full shadow-lg flex items-center gap-2 z-50">
+          <div className="fixed sm:max-lg:absolute left-1/2 -translate-x-1/2 bottom-24 lg:bottom-8 min-w-[260px] max-w-[92%] justify-center text-center bg-slate-900 text-white text-sm px-6 py-2.5 rounded-full shadow-lg flex items-center gap-2 z-50">
             <Check size={15} className="text-accent-400 shrink-0" /> {toast}
           </div>
         )}

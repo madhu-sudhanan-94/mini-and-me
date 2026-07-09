@@ -79,25 +79,28 @@ export default function Category() {
     <div className="pb-4 lg:pb-10">
       <ScreenHeader title={title} back="home" className="lg:px-6" />
 
-      {/* category tabs (hidden for the New in / Trending collections) */}
-      {!isCollection && (
-        <div className="flex gap-2 px-5 lg:px-6 mt-4 overflow-x-auto no-scrollbar">
-          {cats.map((c) => (
-            <button key={c} onClick={() => setSelCategory(c)} className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${selCategory === c ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-white text-slate-500 shadow-xs"}`}>
-              {CAT_LABEL[c]}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* shopping controls — pinned on mobile so filters/tabs stay reachable while scrolling */}
+      <div className="sticky lg:static top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none pb-1 lg:pb-0">
+        {/* category tabs (hidden for the New in / Trending collections) */}
+        {!isCollection && (
+          <div className="flex gap-2 px-5 lg:px-6 pt-4 overflow-x-auto no-scrollbar">
+            {cats.map((c) => (
+              <button key={c} onClick={() => setSelCategory(c)} className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${selCategory === c ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-white text-slate-500 shadow-xs"}`}>
+                {CAT_LABEL[c]}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* mobile: filters + count + sort */}
-      <div className="lg:hidden flex items-center gap-2 px-5 mt-3 mb-1">
-        <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-600 active:scale-95 transition shrink-0">
-          <SlidersHorizontal size={14} /> Filters
-          {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
-        </button>
-        {sortSelect()}
-        <p className="flex-1 text-sm text-slate-500 text-right pr-1">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+        {/* mobile: filters + count + sort */}
+        <div className="lg:hidden flex items-center gap-2 px-5 mt-3">
+          <button onClick={() => setSheet(true)} className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-600 active:scale-95 transition shrink-0">
+            <SlidersHorizontal size={14} /> Filters
+            {activeFilters > 0 && <span className="ml-0.5 bg-brand-600 text-white rounded-full text-[10px] font-bold px-1.5 py-px">{activeFilters}</span>}
+          </button>
+          {sortSelect()}
+          <p className="flex-1 text-sm text-slate-500 text-right pr-1">{list.length} item{list.length !== 1 ? "s" : ""}</p>
+        </div>
       </div>
 
       <div className="lg:flex lg:gap-6 lg:px-6 lg:mt-5">
@@ -131,7 +134,7 @@ export default function Category() {
 
       {/* mobile filters bottom sheet */}
       {sheet && (
-        <div className="lg:hidden absolute inset-0 z-40 flex flex-col justify-end">
+        <div className="lg:hidden fixed sm:max-lg:absolute inset-0 z-40 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSheet(false)} />
           <div className="relative bg-white rounded-t-3xl max-h-[85%] overflow-y-auto no-scrollbar p-5 pb-8" style={{ animation: "vkUp .25s ease" }}>
             <div className="flex items-center justify-between mb-5">

@@ -96,7 +96,7 @@ export default function ProductModal() {
   ];
 
   return (
-    <div className="absolute lg:fixed inset-0 z-40 flex flex-col lg:items-center lg:justify-center">
+    <div className="fixed sm:max-lg:absolute inset-0 z-40 flex flex-col lg:items-center lg:justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={closeProduct} />
       <div className="relative h-full w-full lg:h-auto lg:w-[460px] lg:max-w-[92vw] bg-slate-50 lg:rounded-4xl max-h-full lg:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
         {/* Floating controls (stay put even when the image is zoom-scrolled) */}

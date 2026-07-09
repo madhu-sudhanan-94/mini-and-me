@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, ShoppingCart, Share2, X } from "lucide-react";
+import { Heart, ShoppingCart, X } from "lucide-react";
 import ProductImage from "./ProductImage.jsx";
 import PriceTag from "./PriceTag.jsx";
 import { outOfStock, lowStock } from "../lib/catalog.js";
@@ -7,7 +7,7 @@ import { useSwipe } from "../lib/useSwipe.js";
 import { useStore } from "../store.jsx";
 
 export default function ProductCard({ p, wide }) {
-  const { openProduct, toggleFav, isFav, addToCart, shareProduct, setScreen } = useStore();
+  const { openProduct, toggleFav, isFav, addToCart, setScreen } = useStore();
   const oos = outOfStock(p);
   const imgs = p.images || [];
   const [imgIdx, setImgIdx] = useState(0);
@@ -28,8 +28,10 @@ export default function ProductCard({ p, wide }) {
       onClick={() => openProduct(p)}
       className={`text-left bg-white rounded-2xl p-2.5 shadow-xs hover:shadow-md transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}
     >
-      <div {...(imgs.length > 1 ? swipe : {})} className="relative rounded-xl bg-linear-to-br from-accent-50 to-brand-100 h-[180px] overflow-hidden touch-pan-y select-none">
+      <div className="relative rounded-xl bg-linear-to-br from-accent-50 to-brand-100 h-[180px] overflow-hidden touch-pan-y select-none">
         <ProductImage key={imgIdx} p={p} color={p.colors[0]} index={imgIdx} />
+        {/* swipe layer — sits below the buttons (z-10) so they stay clickable */}
+        {imgs.length > 1 && <div {...swipe} aria-hidden="true" className="absolute inset-0 z-[1]" />}
 
         {oos && <div className="absolute inset-0 z-10 bg-white/55 flex items-center justify-center"><span className="bg-slate-900/85 text-white text-[10px] font-bold px-2.5 py-1 rounded-md">Out of stock</span></div>}
         {!oos && p.original && <span className="absolute z-10 top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>}
@@ -40,21 +42,18 @@ export default function ProductCard({ p, wide }) {
           <Heart size={14} className={isFav(p.id) ? "text-rose-500" : "text-slate-400"} fill={isFav(p.id) ? "currentColor" : "none"} />
         </button>
 
-        {/* image dots */}
+        {/* image dots (centered) */}
         {imgs.length > 1 && !quick && (
-          <div className="absolute bottom-1.5 left-1.5 flex gap-1 z-10">
+          <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1 z-10">
             {imgs.map((_, i) => (
               <span key={i} onClick={(e) => { stop(e); setImgIdx(i); }} className={`h-1.5 rounded-full cursor-pointer transition-all ${i === imgIdx ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
             ))}
           </div>
         )}
 
-        {/* quick actions: share + add-to-cart */}
+        {/* add-to-cart quick action */}
         {!oos && !quick && (
-          <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1.5 z-10">
-            <button onClick={(e) => { stop(e); shareProduct(p); }} aria-label="Share" className="w-7 h-7 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center text-slate-600 active:scale-90 transition"><Share2 size={13} /></button>
-            <button onClick={(e) => { stop(e); setQuick(true); }} aria-label="Add to cart" className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-500/30 active:scale-90 transition"><ShoppingCart size={15} /></button>
-          </div>
+          <button onClick={(e) => { stop(e); setQuick(true); }} aria-label="Add to cart" className="absolute bottom-1.5 right-1.5 z-10 w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-500/30 active:scale-90 transition"><ShoppingCart size={15} /></button>
         )}
 
         {/* quick-add size picker */}

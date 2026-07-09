@@ -1,9 +1,10 @@
 /* ============================ Catalog: sizes + sample products ============================ */
-// These sample products are the offline fallback; live data loads from Supabase.
+// These sample products are the offline fallback; live data loads from Supabas
+// e.
 
 export const L = ["S", "M", "L", "XL", "XXL"];
 export const W = ["28", "30", "32", "34", "36"];
-export const K = ["2Y", "4Y", "6Y", "8Y"];
+export const K = ["1-3M", "3-6M", "6-9M", "9-12M", "1Y", "2Y", "3Y", "4Y", "5Y", "6Y", "7Y", "8Y"];
 
 export const INITIAL_PRODUCTS = [
   // ---------------- WOMEN ----------------

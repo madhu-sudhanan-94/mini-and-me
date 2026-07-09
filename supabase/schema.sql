@@ -77,9 +77,11 @@ create table if not exists public.products (
   trending       boolean not null default false,
   tag            text,                            -- e.g. 'new'
   stock          integer,                         -- null = not tracked (always available); 0 = out of stock
+  size_stock     jsonb,                            -- optional per-size stock, e.g. {"S": 5, "M": 0}; overrides `stock` per size
   created_at     timestamptz not null default now()
 );
 alter table public.products enable row level security;
+alter table public.products add column if not exists size_stock jsonb;  -- upgrade existing databases
 
 -- Anyone may read the catalogue; only admins may write it.
 drop policy if exists "products_public_read" on public.products;
@@ -105,9 +107,11 @@ create table if not exists public.orders (
   status           text not null default 'placed',  -- placed → confirmed → shipped → delivered → cancelled
   ref              text,                             -- human-readable order ref (e.g. PP123456)
   shipping_address jsonb,
+  note             text,                             -- optional customer order note / delivery instructions
   created_at       timestamptz not null default now()
 );
 alter table public.orders enable row level security;
+alter table public.orders add column if not exists note text;  -- upgrade existing databases
 
 create table if not exists public.order_items (
   id           uuid primary key default gen_random_uuid(),

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { ChevronDown, User, MapPin, Truck, Minus, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, User, MapPin, Truck, Minus, Plus, Trash2, Gift, Check } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR, isEmail } from "../lib/format.js";
+import { SHOP } from "../shop.config.js";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import CouponBox from "../components/CouponBox.jsx";
@@ -14,7 +15,7 @@ export default function Checkout() {
     auth, goToLogin, placeOrder, placingOrder, setScreen, defaultAddress, addresses, session, coupon,
     billingSame, setBillingSame, billingAddrId, setBillingAddrId, billingAddress,
     products, buyNowItem, setBuyNowItem, checkoutItems, checkoutCount, checkoutBill,
-    changeQty, removeItem, changeBuyNowQty,
+    changeQty, removeItem, changeBuyNowQty, giftWrap, setGiftWrap,
   } = useStore();
   // Buy-now shows the single item; from the cart the order is collapsed by default.
   const [itemsOpen, setItemsOpen] = useState(!!buyNowItem);
@@ -23,7 +24,7 @@ export default function Checkout() {
   const fmtAddr = (a) => (a ? [a.line1, a.line2, a.area, a.city, a.state, a.pincode].filter(Boolean).join(", ") : "");
 
   const AddressCard = ({ a }) => (
-    <div className="border border-slate-200 rounded-2xl p-3 flex gap-3">
+    <div className="border border-slate-200 bg-white rounded-2xl p-3 flex gap-3">
       <div className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center shrink-0"><MapPin size={17} className="text-brand-600" /></div>
       <div className="min-w-0">
         <p className="text-sm font-semibold text-slate-800">{a.label}{a.full_name ? " · " + a.full_name : ""}</p>
@@ -42,7 +43,7 @@ export default function Checkout() {
           {buyNowItem ? (
             <p className="text-sm font-semibold text-slate-800 mb-2">Your item</p>
           ) : (
-            <button type="button" onClick={() => setItemsOpen((v) => !v)} aria-expanded={itemsOpen} className="w-full flex items-center justify-between mb-2">
+            <button type="button" onClick={() => setItemsOpen((v) => !v)} aria-expanded={itemsOpen} className="w-full flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-800">Your order <span className="font-normal text-slate-400">({checkoutCount} item{checkoutCount !== 1 ? "s" : ""})</span></span>
               <ChevronDown size={18} className={`text-slate-400 transition-transform ${itemsOpen ? "rotate-180" : ""}`} />
             </button>
@@ -91,6 +92,18 @@ export default function Checkout() {
           </div>
         </section>
 
+        {/* Gift wrapping */}
+        <section>
+          <button type="button" onClick={() => setGiftWrap((v) => !v)} aria-pressed={giftWrap} className={`w-full flex items-center gap-3 rounded-2xl border p-3.5 text-left transition ${giftWrap ? "border-brand-300 bg-white" : "border-slate-200 bg-white"}`}>
+            <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${giftWrap ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`}><Gift size={18} /></span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-semibold text-slate-800">Add gift wrapping</span>
+              <span className="block text-xs text-slate-400">Premium wrap for {formatINR(SHOP.giftWrapFee)}</span>
+            </span>
+            <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition shrink-0 ${giftWrap ? "bg-brand-600 border-brand-600" : "border-slate-300 bg-white"}`}>{giftWrap && <Check size={13} className="text-white" />}</span>
+          </button>
+        </section>
+
         {/* Delivery address */}
         {session && (
           <section>
@@ -99,7 +112,14 @@ export default function Checkout() {
               <button onClick={() => setScreen("addresses")} className="text-xs font-semibold text-brand-600">{defaultAddress ? "Change" : "Add"}</button>
             </div>
             {defaultAddress ? <AddressCard a={defaultAddress} /> : (
-              <button onClick={() => setScreen("addresses")} className="w-full border border-dashed border-brand-300 text-brand-600 font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 text-sm"><MapPin size={16} /> Add a delivery address</button>
+              <button onClick={() => setScreen("addresses")} className="w-full flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-left active:scale-[0.98] transition">
+                <span className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><MapPin size={18} /></span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-semibold text-slate-800">Add a delivery address</span>
+                  <span className="block text-xs text-slate-400">Tell us where to deliver your order</span>
+                </span>
+                <span className="w-8 h-8 rounded-full bg-white ring-1 ring-slate-200 text-brand-600 flex items-center justify-center shrink-0 shadow-xs"><Plus size={16} /></span>
+              </button>
             )}
           </section>
         )}
@@ -140,6 +160,7 @@ export default function Checkout() {
             <div className="flex justify-between text-slate-600"><span>GST ({checkoutBill.ratePct}%, incl.)</span><span>{formatINR(checkoutBill.gst)}</span></div>
             {checkoutBill.discount > 0 && <div className="flex justify-between text-green-600 font-medium"><span>Coupon ({coupon?.code})</span><span>−{formatINR(checkoutBill.discount)}</span></div>}
             <div className="flex justify-between text-slate-600"><span>Delivery</span>{checkoutBill.deliveryFee ? <span>{formatINR(checkoutBill.deliveryFee)}</span> : <span className="text-green-600 font-medium">Free</span>}</div>
+            {checkoutBill.giftWrapFee > 0 && <div className="flex justify-between text-slate-600"><span>Gift wrapping</span><span>{formatINR(checkoutBill.giftWrapFee)}</span></div>}
           </div>
           {!checkoutBill.qualifiesFree && checkoutBill.itemsTotal > 0 && (
             <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 mt-2.5 flex items-center gap-1.5"><Truck size={13} /> Add {formatINR(checkoutBill.toFreeDelivery)} more for FREE delivery</p>

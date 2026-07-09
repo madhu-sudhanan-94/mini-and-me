@@ -11,6 +11,8 @@ export const SHOP = {
   freeDeliveryThreshold: 1000,
   // Delivery charge (₹) applied below the threshold.
   deliveryFee: 99,
+  // Flat fee (₹) for optional gift wrapping at checkout.
+  giftWrapFee: 30,
 };
 
 /*

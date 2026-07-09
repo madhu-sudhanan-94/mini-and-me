@@ -88,6 +88,7 @@ export function StoreProvider({ children }) {
   const [coPhone, setCoPhone] = useState("");
   const [coEmail, setCoEmail] = useState("");
   const [coNote, setCoNote] = useState("");       // optional order note / delivery instructions
+  const [giftWrap, setGiftWrap] = useState(false); // optional gift wrapping add-on at checkout
   const [coupon, setCoupon] = useState(null);       // applied coupon object (or null)
   const [couponMsg, setCouponMsg] = useState("");   // coupon error / hint text
   const [billingSame, setBillingSame] = useState(true);  // billing address == delivery?
@@ -97,7 +98,7 @@ export function StoreProvider({ children }) {
   const [buyNowItem, setBuyNowItem] = useState(null); // express "Buy now" single item (bypasses the cart)
 
   // admin form
-  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, stock: "", sizeStock: {} };
+  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, tag: "", stock: "", sizeStock: {}, customSizes: [] };
   const [form, setForm] = useState(blankForm);
 
   const defaultAddress = addresses.find((a) => a.is_default) || addresses[0] || null;
@@ -116,7 +117,7 @@ export function StoreProvider({ children }) {
     const p = products.find((x) => x.id === i.id);
     return s + (p && p.original && p.original > p.price ? (p.original - p.price) * i.qty : 0);
   }, 0);
-  const computeBill = (lines) => {
+  const computeBill = (lines, wrap = false) => {
     const itemsTotal = linesTotal(lines);
     const savings = linesSavings(lines);
     const g = gstBreakdown(itemsTotal);
@@ -124,9 +125,10 @@ export function StoreProvider({ children }) {
     const qualifiesFree = itemsTotal >= SHOP.freeDeliveryThreshold;
     const deliveryFee = itemsTotal === 0 || qualifiesFree ? 0 : SHOP.deliveryFee;
     const toFreeDelivery = qualifiesFree ? 0 : Math.max(0, SHOP.freeDeliveryThreshold - itemsTotal);
-    const total = Math.max(0, itemsTotal - discount + deliveryFee);
+    const giftWrapFee = wrap && itemsTotal > 0 ? SHOP.giftWrapFee : 0;
+    const total = Math.max(0, itemsTotal - discount + deliveryFee + giftWrapFee);
     return {
-      ...g, itemsTotal, savings, coupon, discount, deliveryFee,
+      ...g, itemsTotal, savings, coupon, discount, deliveryFee, giftWrapFee,
       freeThreshold: SHOP.freeDeliveryThreshold, toFreeDelivery, qualifiesFree,
       totalSaved: savings + discount, total,
     };
@@ -140,7 +142,7 @@ export function StoreProvider({ children }) {
   // Express "Buy now": checkout uses this single item instead of the cart.
   const checkoutItems = useMemo(() => (buyNowItem ? [buyNowItem] : cart), [buyNowItem, cart]);
   const checkoutCount = checkoutItems.reduce((s, i) => s + i.qty, 0);
-  const checkoutBill = useMemo(() => computeBill(checkoutItems), [checkoutItems, products, coupon]);
+  const checkoutBill = useMemo(() => computeBill(checkoutItems, giftWrap), [checkoutItems, products, coupon, giftWrap]);
 
   const applyCoupon = (code) => {
     const c = findCoupon(code);
@@ -154,7 +156,10 @@ export function StoreProvider({ children }) {
   // Drop the express "Buy now" item once the user leaves the checkout flow, so a
   // later normal checkout falls back to the cart.
   useEffect(() => {
-    if (buyNowItem && !["checkout", "addresses", "login"].includes(screen)) { setBuyNowItem(null); setCoupon(null); setCouponMsg(""); }
+    if (!["checkout", "addresses", "login"].includes(screen)) {
+      setGiftWrap(false);
+      if (buyNowItem) { setBuyNowItem(null); setCoupon(null); setCouponMsg(""); }
+    }
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prefill the checkout contact fields from the signed-in profile (only fills blanks).
@@ -768,6 +773,8 @@ export function StoreProvider({ children }) {
       coupon: checkoutBill.coupon ? { code: checkoutBill.coupon.code, discount: checkoutBill.discount } : null,
       discount: checkoutBill.discount,
       delivery_fee: checkoutBill.deliveryFee,
+      giftWrap: checkoutBill.giftWrapFee > 0,
+      gift_wrap_fee: checkoutBill.giftWrapFee,
       subtotal: checkoutBill.subtotal,
       gst: checkoutBill.gst,
       ratePct: checkoutBill.ratePct,
@@ -801,7 +808,7 @@ export function StoreProvider({ children }) {
     setLastOrder({ ...order, shipping, items: itemsSnapshot });
     if (buyNowItem) setBuyNowItem(null); else setCart([]); // buy-now leaves the cart intact
     setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
-    setCoName(""); setCoPhone(""); setCoEmail(""); setCoNote("");
+    setCoName(""); setCoPhone(""); setCoEmail(""); setCoNote(""); setGiftWrap(false);
     setScreen("success");
   };
 
@@ -829,7 +836,8 @@ export function StoreProvider({ children }) {
   const saveProduct = async () => {
     if (!form.name.trim() || !form.price) return;
     if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin to save"); return; }
-    const sizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
+    const baseSizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
+    const sizes = [...baseSizes, ...(form.customSizes || []).filter((s) => s && !baseSizes.includes(s))];
     const images = form.image.split(/\n+/).map((s) => s.trim()).filter(Boolean);
     const body = {
       name: form.name.trim(),
@@ -840,6 +848,7 @@ export function StoreProvider({ children }) {
       colors: (form.colors && form.colors.length) ? form.colors : ["#2563EB"],
       sizes,
       trending: !!form.trending,
+      tag: form.tag || null,
       images,
       image_url: images[0] || null,
     };
@@ -946,9 +955,11 @@ export function StoreProvider({ children }) {
     id: p.id, name: p.name, cat: p.cat, shape: p.shape,
     price: String(p.price), original: p.original ? String(p.original) : "",
     colors: (p.colors && p.colors.length) ? p.colors : ["#2563EB"], image: (p.images || []).join("\n"), trending: !!p.trending,
+    tag: p.tag || "",
     stock: p.stock != null ? String(p.stock) : "",
     sizeStock: p.sizeStock ? Object.fromEntries(Object.entries(p.sizeStock).map(([k, v]) => [k, String(v)])) : {},
     _hadSizeStock: !!p.sizeStock,
+    customSizes: (p.sizes || []).filter((s) => !(p.cat === "kids" ? K : ["pants", "shorts"].includes(p.shape) ? W : L).includes(s)),
   });
 
   const deleteProduct = async (id) => {
@@ -1146,7 +1157,7 @@ export function StoreProvider({ children }) {
     myOrders, adminOrders, ordersBusy,
     selProduct, setSelProduct, quickAdd, setQuickAdd,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
-    query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote,
+    query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote, giftWrap, setGiftWrap,
     coupon, couponMsg, setCouponMsg, billingSame, setBillingSame, billingAddrId, setBillingAddrId,
     lastOrder, placingOrder, form, setForm, blankForm,
     // derived

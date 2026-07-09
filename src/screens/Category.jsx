@@ -79,8 +79,8 @@ export default function Category() {
     <div className="pb-4 lg:pb-10">
       <ScreenHeader title={title} back="home" className="lg:px-6" />
 
-      {/* shopping controls — pinned on mobile so filters/tabs stay reachable while scrolling */}
-      <div className="sticky lg:static top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none pb-1 lg:pb-0">
+      {/* shopping controls — scroll with the content (not pinned) */}
+      <div className="pb-1 lg:pb-0">
         {/* category tabs (hidden for the New in / Trending collections) */}
         {!isCollection && (
           <div className="flex gap-2 px-5 lg:px-6 pt-4 overflow-x-auto no-scrollbar">

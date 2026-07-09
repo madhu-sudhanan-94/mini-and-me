@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, SearchX, X } from "lucide-react";
+import { Heart, ShoppingCart, Search, Sparkles, ArrowRight, User, SearchX, X, Truck } from "lucide-react";
 import EmptyState from "../components/EmptyState.jsx";
 import { heroBlue } from "../theme.js";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -10,6 +10,7 @@ import Garment from "../components/Garment.jsx";
 import { useSwipe } from "../lib/useSwipe.js";
 import Pagination from "../components/Pagination.jsx";
 import { searchProducts } from "../lib/catalog.js";
+import { SHOP } from "../shop.config.js";
 import { useStore } from "../store.jsx";
 
 const ALL_PAGE = 12;
@@ -48,23 +49,23 @@ export default function Home() {
   return (
     <div className="pb-4">
       {/* pinned menu bar: greeting + logo + quick icons stay put while scrolling */}
-      <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 pt-3 pb-3">
-        {firstName && <p className="text-slate-400 text-xs mb-1">Hi, <span className="font-semibold text-slate-600">{firstName}</span> 👋</p>}
-        <div className="flex items-center justify-between gap-3">
-          <BrandLogo imgClass="h-8 ml-[-5px]" />
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center active:scale-90 transition">
-              <Heart size={18} className="text-slate-600" />
-              {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ring-2 ring-slate-50">{favorites.length}</span>}
-            </button>
-            <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center active:scale-90 transition">
-              <ShoppingCart size={18} className="text-slate-600" />
-              {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ring-2 ring-slate-50">{cartCount}</span>}
-            </button>
-            <button onClick={() => setScreen("account")} aria-label="Account" className="w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center overflow-hidden active:scale-90 transition">
-              {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <User size={18} className="text-slate-600" />}
-            </button>
-          </div>
+      <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 h-16 flex items-center justify-between gap-3">
+        <div className="min-w-0 mt-[2px]">
+          {firstName && <p className="text-slate-400 text-xs mb-0.5 leading-none">Hi, <span className="font-semibold text-slate-600">{firstName}</span> 👋</p>}
+          <BrandLogo imgClass={"h-8 ml-[-5px]"} />
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={() => setScreen("favorites")} aria-label="Favourites" className="relative w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center active:scale-90 transition">
+            <Heart size={18} className="text-slate-600" />
+            {favorites.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ring-2 ring-slate-50">{favorites.length}</span>}
+          </button>
+          <button onClick={() => setScreen("cart")} aria-label="Cart" className="relative w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center active:scale-90 transition">
+            <ShoppingCart size={18} className="text-slate-600" />
+            {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-brand-600 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center ring-2 ring-slate-50">{cartCount}</span>}
+          </button>
+          <button onClick={() => setScreen("account")} aria-label="Account" className="w-10 h-10 rounded-full bg-white ring-1 ring-slate-100 shadow-xs flex items-center justify-center overflow-hidden active:scale-90 transition">
+            {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <User size={18} className="text-slate-600" />}
+          </button>
         </div>
       </div>
 
@@ -91,6 +92,14 @@ export default function Home() {
         </div>
       ) : (
         <>
+          {/* Free-shipping promo */}
+          <div className="px-5 lg:px-6 mt-4">
+            <div className="flex items-center gap-2.5 bg-linear-to-r from-brand-50 to-accent-50 rounded-2xl px-4 py-2.5 ring-1 ring-brand-100">
+              <Truck size={17} className="text-brand-600 shrink-0" />
+              <p className="text-xs font-semibold text-brand-700">Free shipping on all orders above {formatINR(SHOP.freeDeliveryThreshold)} 🎉</p>
+            </div>
+          </div>
+
           {/* Hero carousel */}
           <div className="px-5 mt-5">
             <button {...heroSwipe} onClick={() => openProduct(heroP)} className="w-full text-left relative rounded-3xl overflow-hidden p-5 h-52 lg:h-80 flex flex-col justify-end touch-pan-y" style={heroBlue}>
@@ -194,7 +203,7 @@ export default function Home() {
                 <h3 className="font-bold text-slate-900 text-lg">Trending now</h3>
                 <button onClick={() => { setSelCategory("trending"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
               </div>
-              <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
+              <div className="mt-1 flex gap-3 overflow-x-auto px-5 py-3 no-scrollbar">
                 {trending.map((p) => <ProductCard key={p.id} p={p} wide />)}
               </div>
             </div>
@@ -238,7 +247,7 @@ export default function Home() {
                 <h3 className="font-bold text-slate-900 text-lg">New in</h3>
                 <button onClick={() => { setSelCategory("new"); setScreen("category"); }} className="text-brand-600 text-sm font-semibold">See all</button>
               </div>
-              <div className="mt-3 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
+              <div className="mt-1 flex gap-3 overflow-x-auto px-5 py-3 no-scrollbar">
                 {newIn.map((p) => <ProductCard key={p.id} p={p} wide />)}
               </div>
             </div>

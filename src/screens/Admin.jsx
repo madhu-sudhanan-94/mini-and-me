@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { panelBlueDeep } from "../theme.js";
-import { outOfStock, lowStock } from "../lib/catalog.js";
+import { outOfStock, lowStock, COLOR_FAMILIES } from "../lib/catalog.js";
 import { L, W, K } from "../data/products.js";
 import Garment from "../components/Garment.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -48,10 +48,15 @@ export default function Admin() {
 
   const [search, setSearch] = useState("");
   const [draftColor, setDraftColor] = useState("#2563EB");
+  const [imgDraft, setImgDraft] = useState("");
+  const [sizeDraft, setSizeDraft] = useState("");
   const formRef = useRef(null);
   const editing = !!form.id;
   // The size set a product uses depends on its category/shape (mirrors store.saveProduct).
   const formSizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
+  const allSizes = [...formSizes, ...(form.customSizes || []).filter((s) => s && !formSizes.includes(s))];
+  const addCustomSize = () => { const s = sizeDraft.trim(); if (!s || allSizes.some((x) => x.toLowerCase() === s.toLowerCase())) return; setForm((f) => ({ ...f, customSizes: [...(f.customSizes || []), s] })); setSizeDraft(""); };
+  const removeCustomSize = (s) => setForm((f) => ({ ...f, customSizes: (f.customSizes || []).filter((x) => x !== s), sizeStock: Object.fromEntries(Object.entries(f.sizeStock || {}).filter(([k]) => k !== s)) }));
 
   useEffect(() => { loadAdminOrders(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -92,6 +97,13 @@ export default function Admin() {
     setForm({ ...form, colors: safe, color: safe[0] });
   };
 
+  // ---- Image list editor (form.image is newline-joined URLs) ----
+  const imgLines = form.image ? form.image.split("\n") : [];
+  const setImages = (arr) => setForm((f) => ({ ...f, image: arr.join("\n") }));
+  const setImageAt = (i, val) => setImages(imgLines.map((u, idx) => (idx === i ? val : u)));
+  const removeImageAt = (i) => setImages(imgLines.filter((_, idx) => idx !== i));
+  const addImageUrl = () => { const u = imgDraft.trim(); if (!u) return; setImages([...imgLines, u]); setImgDraft(""); };
+
   const scrollToForm = () => setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   const startEdit = (p) => { editProduct(p); scrollToForm(); };
   const startAdd = () => { setForm(blankForm); scrollToForm(); };
@@ -100,7 +112,7 @@ export default function Admin() {
     <div className="flex flex-col min-h-full bg-slate-50">
       {/* ============ Blue admin header ============ */}
       <div className="rounded-b-3xl" style={panelBlueDeep}>
-        <div className="px-5 pt-1 pb-4 flex items-center justify-between max-w-5xl mx-auto lg:px-8">
+        <div className="px-5 pt-5 pb-4 flex items-center justify-between max-w-5xl mx-auto lg:px-8">
           <div className="flex items-center gap-3">
             <button onClick={() => goBack("account")} className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center active:scale-95 transition"><ChevronLeft size={18} className="text-white" /></button>
             <div>
@@ -190,45 +202,100 @@ export default function Admin() {
             {/* Per-size stock (optional — overrides total stock when any are set) */}
             <div className="mb-2">
               <p className="text-xs font-semibold text-slate-500 mb-1.5">Stock per size <span className="font-normal text-slate-400">(optional)</span></p>
-              <div className="flex flex-wrap gap-1.5">
-                {formSizes.map((s) => (
-                  <div key={s} className="flex items-center gap-1 border border-slate-200 rounded-lg pl-2 pr-1 py-1 bg-white">
-                    <span className="text-[11px] font-semibold text-slate-500 min-w-[28px]">{s}</span>
-                    <input value={(form.sizeStock && form.sizeStock[s]) || ""} onChange={(e) => setForm({ ...form, sizeStock: { ...(form.sizeStock || {}), [s]: e.target.value.replace(/\D/g, "") } })} inputMode="numeric" placeholder="—" className="w-12 border border-slate-200 rounded py-1 px-1.5 text-sm text-center outline-hidden focus:border-brand-500" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <textarea value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} rows={2} placeholder="Image URLs — one per line (optional)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 resize-none bg-white" />
-            <label className="mt-1 mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 cursor-pointer">
-              <Upload size={14} /> Upload image
-              <input type="file" accept="image/*" className="hidden" disabled={adminBusy}
-                onChange={async (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ""; if (file) { const url = await uploadProductImage(file); if (url) setForm((f) => ({ ...f, image: (f.image ? f.image + "\n" : "") + url })); } }} />
-            </label>
-
-            {/* -------- Multiple-colour editor -------- */}
-            <div className="mb-3">
-              <p className="text-xs font-semibold text-slate-500 mb-1.5">Colours</p>
-              <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                {colors.map((hex) => (
-                  <span key={hex} className="inline-flex items-center gap-1 pl-1 pr-1.5 py-1 rounded-full border border-slate-200 bg-white">
-                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: hex }} />
-                    <span className="text-[10px] font-medium text-slate-500 uppercase">{hex}</span>
-                    <button type="button" onClick={() => removeColor(hex)} disabled={colors.length <= 1} className="w-4 h-4 rounded-full bg-slate-100 hover:bg-rose-100 flex items-center justify-center text-slate-500 hover:text-rose-500 disabled:opacity-30 disabled:hover:bg-slate-100 disabled:hover:text-slate-500" aria-label={`Remove ${hex}`}><X size={11} /></button>
-                  </span>
-                ))}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {allSizes.map((s) => {
+                  const custom = (form.customSizes || []).includes(s);
+                  return (
+                    <div key={s} className="flex items-center gap-1 border border-slate-200 rounded-lg pl-2 pr-1 py-1 bg-white">
+                      <span className="text-[11px] font-semibold text-slate-500 min-w-[28px]">{s}</span>
+                      <input value={(form.sizeStock && form.sizeStock[s]) || ""} onChange={(e) => setForm({ ...form, sizeStock: { ...(form.sizeStock || {}), [s]: e.target.value.replace(/\D/g, "") } })} inputMode="numeric" placeholder="—" className="w-12 border border-slate-200 rounded py-1 px-1.5 text-sm text-center outline-hidden focus:border-brand-500" />
+                      {custom && <button type="button" onClick={() => removeCustomSize(s)} aria-label={`Remove ${s}`} className="w-4 h-4 rounded-full bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-500 flex items-center justify-center shrink-0"><X size={10} /></button>}
+                    </div>
+                  );
+                })}
               </div>
               <div className="flex items-center gap-2">
-                <input type="color" value={draftColor} onChange={(e) => setDraftColor(e.target.value)} className="w-9 h-9 rounded-lg border border-slate-200 bg-white shrink-0 cursor-pointer" aria-label="Pick a colour" />
-                <button type="button" onClick={addColor} className="inline-flex items-center gap-1 border border-brand-200 bg-brand-50 rounded-lg px-3 py-2 text-xs font-semibold text-brand-600 active:scale-95 transition"><Plus size={14} /> Add colour</button>
+                <input value={sizeDraft} onChange={(e) => setSizeDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSize(); } }} placeholder="Add custom size (e.g. 10Y, XXXL)" className="flex-1 min-w-0 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
+                <button type="button" onClick={addCustomSize} disabled={!sizeDraft.trim()} className="inline-flex items-center gap-1 border border-brand-200 bg-brand-50 rounded-lg px-3 py-2 text-xs font-semibold text-brand-600 disabled:opacity-40 active:scale-95 transition shrink-0"><Plus size={14} /> Add</button>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer mb-3 select-none">
-              <input type="checkbox" checked={form.trending} onChange={(e) => setForm({ ...form, trending: e.target.checked })} className="w-4 h-4 accent-brand-600" />
-              Show in Trending
-            </label>
+            {/* -------- Image editor: one box per image, preview + delete -------- */}
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-slate-500 mb-1.5">Images</p>
+              <div className="space-y-2 mb-2">
+                {imgLines.map((url, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5">
+                    <div className="w-11 h-11 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                      {url.trim() && <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+                    </div>
+                    <input value={url} onChange={(e) => setImageAt(i, e.target.value)} placeholder="Image URL" className="flex-1 min-w-0 text-xs text-slate-600 outline-hidden bg-transparent" />
+                    <button type="button" onClick={() => removeImageAt(i)} aria-label="Delete image" className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-500 flex items-center justify-center shrink-0 transition"><Trash2 size={15} /></button>
+                  </div>
+                ))}
+                {imgLines.length === 0 && <p className="text-xs text-slate-400 py-1">No images yet — add a URL or upload below.</p>}
+              </div>
+              <div className="flex items-center gap-2 mb-3">
+                <input value={imgDraft} onChange={(e) => setImgDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageUrl(); } }} placeholder="Paste image URL" className="flex-1 min-w-0 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
+                <button type="button" onClick={addImageUrl} disabled={!imgDraft.trim()} className="inline-flex items-center gap-1 border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-40 active:scale-95 transition shrink-0"><Plus size={14} /> Add</button>
+                <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 cursor-pointer border border-brand-200 bg-brand-50 rounded-lg px-3 py-2 active:scale-95 transition shrink-0">
+                  <Upload size={14} /> Upload
+                  <input type="file" accept="image/*" className="hidden" disabled={adminBusy}
+                    onChange={async (e) => { const file = e.target.files && e.target.files[0]; e.target.value = ""; if (file) { const url = await uploadProductImage(file); if (url) setForm((f) => ({ ...f, image: (f.image ? f.image + "\n" : "") + url })); } }} />
+                </label>
+              </div>
+            </div>
+
+            {/* -------- Colour editor -------- */}
+            <div className="mb-3 rounded-xl border border-slate-100 bg-white p-3">
+              <p className="text-xs font-semibold text-slate-500 mb-2">Colours <span className="font-normal text-slate-400">· {colors.length} selected</span></p>
+
+              {/* selected colours — tap the × to remove */}
+              <div className="flex flex-wrap gap-2.5 mb-3">
+                {colors.map((hex) => (
+                  <button type="button" key={hex} onClick={() => removeColor(hex)} disabled={colors.length <= 1} title={`Remove ${hex}`} aria-label={`Remove ${hex}`}
+                    className="group relative w-9 h-9 rounded-full shadow-sm ring-1 ring-black/10 active:scale-90 transition disabled:active:scale-100" style={{ backgroundColor: hex }}>
+                    {colors.length > 1 && <span className="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full bg-white shadow ring-1 ring-slate-200 flex items-center justify-center text-slate-500 group-hover:text-rose-500 group-hover:bg-rose-50"><X size={11} /></span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* palette — tap to add / remove */}
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Tap to add</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {COLOR_FAMILIES.map((f) => {
+                  const match = colors.find((c) => String(c).toLowerCase() === f.hex.toLowerCase());
+                  const light = f.key === "white" || f.key === "yellow";
+                  return (
+                    <button type="button" key={f.key} title={f.label} aria-label={f.label} aria-pressed={!!match}
+                      onClick={() => (match ? removeColor(match) : setForm({ ...form, colors: [...colors, f.hex], color: colors[0] }))}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition active:scale-90 ${match ? "ring-2 ring-offset-2 ring-slate-800" : "ring-1 ring-black/10 hover:scale-110"}`} style={{ backgroundColor: f.hex }}>
+                      {match && <Check size={14} className={light ? "text-slate-800" : "text-white"} />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* custom colour */}
+              <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
+                <label className="relative w-9 h-9 rounded-lg ring-1 ring-slate-200 overflow-hidden cursor-pointer shrink-0" style={{ backgroundColor: draftColor }}>
+                  <input type="color" value={draftColor} onChange={(e) => setDraftColor(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Pick a custom colour" />
+                </label>
+                <span className="text-xs font-mono font-medium text-slate-500 uppercase w-[68px]">{draftColor}</span>
+                <button type="button" onClick={addColor} className="ml-auto inline-flex items-center gap-1 border border-brand-200 bg-brand-50 rounded-lg px-3 py-2 text-xs font-semibold text-brand-600 active:scale-95 transition"><Plus size={14} /> Add custom</button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-3">
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+                <input type="checkbox" checked={form.trending} onChange={(e) => setForm({ ...form, trending: e.target.checked })} className="w-4 h-4 accent-brand-600" />
+                Show in Trending
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+                <input type="checkbox" checked={form.tag === "new"} onChange={(e) => setForm({ ...form, tag: e.target.checked ? "new" : "" })} className="w-4 h-4 accent-brand-600" />
+                Show in New in
+              </label>
+            </div>
 
             <div className="flex gap-2">
               <PrimaryButton variant={editing ? "solid" : "gradient"} size="md" full={false} onClick={saveProduct} disabled={adminBusy} className="flex-1 text-sm">

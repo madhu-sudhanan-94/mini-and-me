@@ -9,6 +9,7 @@ import PriceTag from "../components/PriceTag.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import ReviewsSection from "../components/ReviewsSection.jsx";
+import QtyStepper from "../components/QtyStepper.jsx";
 import { useSwipe } from "../lib/useSwipe.js";
 import { useStore } from "../store.jsx";
 
@@ -30,6 +31,7 @@ export default function ProductModal() {
   const [shareOpen, setShareOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [descOverflows, setDescOverflows] = useState(false);
+  const [qty, setQty] = useState(1);
   const descRef = useRef(null);
 
   // Swipe between images (declared before the early-return to satisfy rules of hooks).
@@ -41,7 +43,8 @@ export default function ProductModal() {
   const p = selProduct;
   // reset transient view state when the product / image changes
   useEffect(() => { setImgFailed(false); }, [imgIndex, p?.id]);
-  useEffect(() => { setDescExpanded(false); setShareOpen(false); setLightbox(false); }, [p?.id]);
+  useEffect(() => { setDescExpanded(false); setShareOpen(false); setLightbox(false); setQty(1); }, [p?.id]);
+  useEffect(() => { setQty(1); }, [selSize]); // reset quantity when the size changes
   // Esc closes the full-screen image viewer first (if open)
   useEffect(() => {
     if (!lightbox) return;
@@ -58,6 +61,8 @@ export default function ProductModal() {
   if (!p) return null;
   const oos = outOfStock(p);
   const selSoldOut = sizeOutOfStock(p, selSize);
+  const qMax = (() => { const s = stockFor(p, selSize); return typeof s === "number" ? Math.max(1, s) : 99; })();
+  const isFreeSize = p.sizes.length === 1 && String(p.sizes[0]).toLowerCase() === "free";
   const imgs = p.images || [];
   const src = imgs[imgIndex];
   const chart = SIZE_GUIDE[p.cat] || SIZE_GUIDE.women;
@@ -74,7 +79,7 @@ export default function ProductModal() {
     ["Category", CAT_LABEL[p.cat] || p.cat],
     ["Type", p.shape ? p.shape.charAt(0).toUpperCase() + p.shape.slice(1) : "—"],
     ["Colours", Array.from(new Set((p.colors || []).map((c) => familyLabel(colorFamily(c))))).join(", ") || "—"],
-    ["Sizes", (p.sizes || []).join(" · ") || "—"],
+    ["Sizes", isFreeSize ? "Free size" : ((p.sizes || []).join(" · ") || "—")],
   ];
 
   const shareUrl = (typeof window !== "undefined") ? (window.location.origin + window.location.pathname + "?p=" + p.id) : "";
@@ -173,6 +178,8 @@ export default function ProductModal() {
             </>
           )}
 
+          {!isFreeSize && (
+          <>
           <div className="flex items-center justify-between mt-5 mb-2">
             <p className="text-sm font-semibold text-slate-800">Size</p>
             <button onClick={() => setGuide((g) => !g)} className="text-xs font-semibold text-brand-600">Size guide</button>
@@ -203,11 +210,21 @@ export default function ProductModal() {
               );
             })}
           </div>
+          </>
+          )}
+
+          {/* quantity */}
+          {!oos && !selSoldOut && (
+            <div className="mt-5 flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-800">Quantity</p>
+              <QtyStepper value={qty} onDecrement={() => setQty((q) => Math.max(1, q - 1))} onIncrement={() => setQty((q) => Math.min(q + 1, qMax))} max={qMax} />
+            </div>
+          )}
 
           {related.length > 0 && (
             <div className="mt-6">
               <p className="text-sm font-semibold text-slate-800 mb-2">{usingFallback ? "You may also like" : `Similar in ${catLabel}`}</p>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+              <div className="flex gap-3 overflow-x-auto no-scrollbar py-3 -mx-6 px-6">
                 {related.map((rp) => <ProductCard key={rp.id} p={rp} wide />)}
               </div>
             </div>
@@ -238,10 +255,10 @@ export default function ProductModal() {
             <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Size {selSize} out of stock</button>
           ) : (
             <div className="flex items-center gap-3">
-              <button onClick={() => addToCart(p, selSize, selColor)} className="flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-brand-700 bg-brand-50 border border-brand-200 active:scale-[0.97] transition">
+              <button onClick={() => addToCart(p, selSize, selColor, qty)} className="flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-brand-700 bg-brand-50 border border-brand-200 active:scale-[0.97] transition">
                 <ShoppingCart size={19} /> Add to cart
               </button>
-              <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => buyNow(p, selSize, selColor)} className="flex-1 border border-transparent">
+              <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => buyNow(p, selSize, selColor, qty)} className="flex-1 border border-transparent">
                 Buy now
               </PrimaryButton>
             </div>
@@ -273,7 +290,7 @@ export default function ProductModal() {
       {/* Full-screen image viewer — swipe to change, dots, tap backdrop / Esc to close */}
       {lightbox && (
         <div className="absolute inset-0 z-50 flex flex-col offer-fade bg-black/50 backdrop-blur-md">
-          {/* <button onClick={() => setLightbox(false)} aria-label="Close" className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-slate-900/10 hover:bg-slate-900/20 backdrop-blur text-slate-800 flex items-center justify-center transition active:scale-90"><X size={20} /></button> */}
+          <button onClick={() => setLightbox(false)} aria-label="Close" className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur text-white flex items-center justify-center transition active:scale-90"><X size={20} /></button>
           <div
             {...(imgs.length > 1 ? imgSwipe : {})}
             onClick={() => setLightbox(false)}

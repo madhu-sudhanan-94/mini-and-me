@@ -92,6 +92,12 @@ export default function AdminOrders() {
                 </div>
               )}
 
+              {o.note && (
+                <div className="mt-2.5 rounded-lg bg-amber-50 px-2.5 py-2">
+                  <p className="text-xs text-amber-700 leading-relaxed whitespace-pre-line"><span className="font-semibold">Note:</span> {o.note}</p>
+                </div>
+              )}
+
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${statusChip[o.status] || "bg-slate-100 text-slate-600"}`}>{STATUS_LABEL[o.status] || o.status}</span>
                 <select value={o.status} disabled={ordersBusy} onChange={(e) => updateOrderStatus(o.key, e.target.value)} className="border border-slate-200 rounded-lg py-2 pl-2.5 pr-8 text-sm outline-hidden bg-white disabled:opacity-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron">

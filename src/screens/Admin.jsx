@@ -197,6 +197,8 @@ export default function Admin() {
               <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white" />
             </div>
 
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} placeholder="Description (shown on the product page)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white resize-none mb-2" />
+
             <input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Total stock qty (leave blank if not tracking)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white mb-2" />
 
             {/* Per-size stock (optional — overrides total stock when any are set) */}
@@ -359,7 +361,7 @@ export default function Admin() {
                 onChange={(e) => { const file = e.target.files && e.target.files[0]; e.target.value = ""; if (file) { const reader = new FileReader(); reader.onload = () => importProductsCsv(String(reader.result || "")); reader.readAsText(file); } }} />
             </label>
             <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
-              CSV columns: name, category, shape, price, original_price, colors, sizes, images, trending, tag, description, stock. Separate multiple colours / sizes / image URLs with <b>|</b>.
+              CSV columns: name, category, shape, price, original_price, colors, sizes, images, trending, tag, description, stock, size_stock. Separate multiple colours / sizes / image URLs with <b>|</b>; per-size stock as <b>S:5|M:0|L:3</b>. Rows with an unknown category are skipped.
             </p>
           </div>
         </div>

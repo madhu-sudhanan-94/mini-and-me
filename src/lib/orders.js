@@ -27,6 +27,21 @@ export function normalizeOrder(o) {
     contact: o.customer_phone || o.customer_email || o.contact,
     items: o.order_items || o.items || [],
     shipping: o.shipping_address || o.shipping || null,
+    note: o.note || null,
+    // Persisted checkout breakdown (present on orders placed after the 2026-07
+    // migration; itemsTotal > 0 signals a real breakdown vs an old order's
+    // backfilled zeros). Handles both DB column names and local order fields.
+    itemsTotal: o.items_total ?? o.itemsTotal ?? 0,
+    subtotal: o.subtotal ?? null,
+    gst: o.gst ?? null,
+    gstRatePct: o.gst_rate_pct ?? o.ratePct ?? null,
+    discount: o.discount ?? 0,
+    couponCode: o.coupon_code || o.coupon?.code || null,
+    deliveryFee: o.delivery_fee ?? 0,
+    giftWrapFee: o.gift_wrap_fee ?? 0,
+    giftWrap: o.gift_wrap ?? o.giftWrap ?? false,
+    totalSaved: o.total_saved ?? o.saved ?? 0,
+    billing: o.billing_address || o.billing || null,
   };
 }
 

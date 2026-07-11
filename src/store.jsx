@@ -99,7 +99,7 @@ export function StoreProvider({ children }) {
   const [buyNowItem, setBuyNowItem] = useState(null); // express "Buy now" single item (bypasses the cart)
 
   // admin form
-  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, tag: "", stock: "", sizeStock: {}, customSizes: [] };
+  const blankForm = { id: null, name: "", cat: "women", shape: "dress", price: "", original: "", colors: ["#2563EB"], image: "", trending: false, tag: "", stock: "", sizeStock: {}, customSizes: [], description: "" };
   const [form, setForm] = useState(blankForm);
 
   const defaultAddress = addresses.find((a) => a.is_default) || addresses[0] || null;
@@ -586,6 +586,35 @@ export function StoreProvider({ children }) {
   // Open the full order-detail screen for a given (normalized) order.
   const openOrder = (o) => { setSelectedOrder(o); setScreen("orderdetail"); };
 
+  // ----- Product reviews (shared, from the `reviews` table) -----
+  const [productReviews, setProductReviews] = useState({}); // { [productId]: [rows] }
+  const loadProductReviews = async (productId) => {
+    if (productId == null) return;
+    try {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/reviews?product_id=eq." + productId + "&select=*&order=created_at.desc", { headers: SB_HEADERS });
+      if (res.ok) { const rows = await res.json(); setProductReviews((m) => ({ ...m, [productId]: Array.isArray(rows) ? rows : [] })); }
+    } catch (e) { /* offline — leave whatever we have */ }
+  };
+  // Only a signed-in customer with a DELIVERED order containing this product may
+  // review it (mirrors the reviews_insert_delivered_buyer RLS policy).
+  const canReview = (productId) =>
+    !!session && (myOrders || []).some((o) => o.status === "delivered" && (o.order_items || []).some((it) => it.product_id === productId));
+  const submitReview = async ({ productId, rating, comment }) => {
+    if (!session?.user?.id) { showToast("Log in to write a review"); return false; }
+    if (!rating || rating < 1) { showToast("Pick a star rating first"); return false; }
+    try {
+      const name = (profile?.full_name || (auth?.id || "").split("@")[0] || "Customer").trim();
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/reviews", {
+        method: "POST", headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify({ product_id: productId, user_id: session.user.id, name, rating, comment: (comment || "").trim() || null }),
+      });
+      if (!res.ok) { showToast(res.status === 401 || res.status === 403 ? "Only delivered buyers can review this" : "Couldn't post your review"); return false; }
+      await loadProductReviews(productId);
+      showToast("Thanks for your review!");
+      return true;
+    } catch (e) { showToast("Network error — review not posted"); return false; }
+  };
+
   // Quick-add bottom sheet (tap the cart icon on a product card → pick a size →
   // add to cart / buy now, without leaving the current screen). History-backed so
   // the device Back button just closes the sheet.
@@ -705,15 +734,32 @@ export function StoreProvider({ children }) {
         user_id: extra.userId || null,
         shipping_address: extra.shipping || null,
       };
+      // Full breakdown — persisted once supabase/2026-07-11-feature-migration.sql
+      // has added these columns. On a DB that predates it, PostgREST 400s on the
+      // unknown columns, so we fall back (full → base+note → base) and still
+      // record the order rather than failing it.
+      const fullBody = {
+        ...baseBody,
+        note: order.note || null,
+        items_total: order.itemsTotal,
+        subtotal: order.subtotal,
+        gst: order.gst,
+        gst_rate_pct: order.ratePct,
+        discount: order.discount,
+        coupon_code: order.coupon?.code || null,
+        delivery_fee: order.delivery_fee,
+        gift_wrap: !!order.giftWrap,
+        gift_wrap_fee: order.gift_wrap_fee,
+        total_saved: order.saved,
+        billing_address: extra.billing || null,
+      };
       const postOrder = (body) => authedFetch(SUPABASE_URL + "/rest/v1/orders", {
         method: "POST",
         headers: { ...writeHeaders(), Prefer: "return=representation" },
         body: JSON.stringify(body),
       });
-      // Send the order note when there is one, but if the DB has no `note`
-      // column yet the insert 400s — so retry once WITHOUT the note rather than
-      // failing the whole order. (Add `note text` to the orders table to persist it.)
-      let res = await postOrder(order.note ? { ...baseBody, note: order.note } : baseBody);
+      let res = await postOrder(fullBody);
+      if (!res.ok) res = await postOrder(order.note ? { ...baseBody, note: order.note } : baseBody);
       if (!res.ok && order.note) res = await postOrder(baseBody);
       if (!res.ok) return { ok: false };
       const rows = await res.json().catch(() => []);
@@ -741,6 +787,8 @@ export function StoreProvider({ children }) {
   const placeOrder = async () => {
     if (placingOrder) return;
     if (!coName.trim() || (!coPhone.trim() && !coEmail.trim())) return;
+    // A signed-in user must have a delivery address, or the order ships nowhere.
+    if (session && !defaultAddress) { showToast("Please add a delivery address"); setScreen("addresses"); return; }
     // Don't let an out-of-stock / over-quantity item through checkout.
     const badLine = checkoutItems.find((it) => {
       const p = products.find((x) => x.id === it.id);
@@ -788,7 +836,7 @@ export function StoreProvider({ children }) {
     // Wait for the order to be safely recorded before showing success. If it
     // can't be saved, keep the cart + details so the customer can retry.
     setPlacingOrder(true);
-    const result = await saveOrderToDb(order, itemsSnapshot, order.phone, order.email, { userId: session?.user?.id || null, shipping });
+    const result = await saveOrderToDb(order, itemsSnapshot, order.phone, order.email, { userId: session?.user?.id || null, shipping, billing });
     setPlacingOrder(false);
     if (!result.ok) {
       showToast(result.offline ? "You appear to be offline — order not placed. Please try again." : "Couldn't place your order. Please try again.");
@@ -846,6 +894,7 @@ export function StoreProvider({ children }) {
       tag: form.tag || null,
       images,
       image_url: images[0] || null,
+      description: (form.description || "").trim(),
     };
     // Only send stock when the admin set it, so this keeps working on a DB
     // that hasn't added the `stock` column yet.
@@ -869,7 +918,6 @@ export function StoreProvider({ children }) {
           body: JSON.stringify(body),
         });
       } else {
-        body.description = "Added by admin.";
         res = await authedFetch(SUPABASE_URL + "/rest/v1/products", {
           method: "POST",
           headers: { ...writeHeaders(), Prefer: "return=representation" },
@@ -951,6 +999,7 @@ export function StoreProvider({ children }) {
     price: String(p.price), original: p.original ? String(p.original) : "",
     colors: (p.colors && p.colors.length) ? p.colors : ["#2563EB"], image: (p.images || []).join("\n"), trending: !!p.trending,
     tag: p.tag || "",
+    description: p.desc || "",
     stock: p.stock != null ? String(p.stock) : "",
     sizeStock: p.sizeStock ? Object.fromEntries(Object.entries(p.sizeStock).map(([k, v]) => [k, String(v)])) : {},
     _hadSizeStock: !!p.sizeStock,
@@ -991,7 +1040,7 @@ export function StoreProvider({ children }) {
     setAdminBusy(true);
     try {
       const path = "p-" + Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9.]/g, "_");
-      const up = await fetch(SUPABASE_URL + "/storage/v1/object/products/" + path, {
+      const up = await authedFetch(SUPABASE_URL + "/storage/v1/object/products/" + path, {
         method: "POST",
         headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token, "content-type": file.type, "cache-control": "3600" },
         body: file,
@@ -1007,24 +1056,35 @@ export function StoreProvider({ children }) {
   };
 
   // Admin: bulk-import products from CSV text.
-  // Headers: name, category, shape, price, original_price, colors, sizes, images, trending, tag, description
-  // (colors/sizes separated by | or ; ; images separated by | ; trending = true/yes/1)
+  // Headers: name, category, shape, price, original_price, colors, sizes, images,
+  //          trending, tag, description, stock, size_stock
+  // (colors/sizes separated by | or ; ; images separated by | ; trending = true/yes/1;
+  //  size_stock like "S:5|M:0|L:3")
   const importProductsCsv = async (text) => {
     if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin"); return; }
     const rows = parseCsv(text);
     if (rows.length < 2) { showToast("CSV looks empty or has no rows"); return; }
     const header = rows[0].map((h) => h.trim().toLowerCase());
     const col = (r, k) => { const i = header.indexOf(k); return i >= 0 ? (r[i] || "").trim() : ""; };
+    const VALID_CATS = ["women", "men", "kids", "toys"];
+    const VALID_SHAPES = ["dress", "tee", "shirt", "tunic", "jacket", "pants", "shorts", "overall", "toy"];
+    let skipped = 0;
     const items = rows.slice(1).map((r) => {
       const name = col(r, "name");
       if (!name) return null;
       const cat = (col(r, "category") || "women").toLowerCase();
-      const shape = col(r, "shape") || "tee";
+      if (!VALID_CATS.includes(cat)) { skipped += 1; return null; }  // unknown category → skip (would be unreachable in the shop)
+      let shape = (col(r, "shape") || "tee").toLowerCase();
+      if (!VALID_SHAPES.includes(shape)) shape = "tee";              // unknown shape → safe default
       const sizesRaw = col(r, "sizes");
       const sizes = sizesRaw ? sizesRaw.split(/[|;]/).map((s) => s.trim()).filter(Boolean) : (cat === "toys" ? ["Free"] : cat === "kids" ? K : ["pants", "shorts"].includes(shape) ? W : L);
       const colors = (col(r, "colors") || "#2563EB").split(/[|;]/).map((s) => s.trim()).filter(Boolean);
       const images = (col(r, "images") || col(r, "image_url")).split("|").map((s) => s.trim()).filter(Boolean);
       const stockRaw = col(r, "stock");
+      // Per-size stock, e.g. "S:5|M:0|L:3" → { S:5, M:0, L:3 }
+      const size_stock = {};
+      const ssRaw = col(r, "size_stock");
+      if (ssRaw) ssRaw.split(/[|;]/).forEach((pair) => { const [k, v] = pair.split(":").map((x) => (x || "").trim()); if (k && v !== "" && !isNaN(Number(v))) size_stock[k] = Number(v); });
       return {
         name, category: cat, shape,
         price: Number(col(r, "price")) || 0,
@@ -1033,22 +1093,30 @@ export function StoreProvider({ children }) {
         trending: /^(true|yes|1)$/i.test(col(r, "trending")),
         tag: col(r, "tag") || null,
         description: col(r, "description") || "",
-        // only include stock when the column is present, so import still works
-        // on a DB without the `stock` column
         ...(stockRaw !== "" ? { stock: Number(stockRaw) } : {}),
+        ...(Object.keys(size_stock).length ? { size_stock } : {}),
       };
     }).filter(Boolean);
-    if (!items.length) { showToast("No valid rows (each needs a name)"); return; }
+    if (!items.length) { showToast(skipped ? `No valid rows — ${skipped} skipped (bad category)` : "No valid rows (each needs a name)"); return; }
     setAdminBusy(true);
     try {
-      const res = await authedFetch(SUPABASE_URL + "/rest/v1/products", {
-        method: "POST",
-        headers: { ...writeHeaders(), Prefer: "return=representation" },
-        body: JSON.stringify(items),
-      });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.message || "Import failed"); return; }
+      // Insert row by row so one bad row doesn't fail the whole batch (partial success).
+      const results = await Promise.all(items.map(async (item) => {
+        try {
+          const r = await authedFetch(SUPABASE_URL + "/rest/v1/products", {
+            method: "POST", headers: { ...writeHeaders(), Prefer: "return=minimal" },
+            body: JSON.stringify(item),
+          });
+          return r.ok;
+        } catch { return false; }
+      }));
+      const okCount = results.filter(Boolean).length;
+      const failCount = results.length - okCount;
       await loadProducts({ allowEmpty: true });
-      showToast("Imported " + items.length + " product" + (items.length !== 1 ? "s" : ""));
+      const parts = [`Imported ${okCount}`];
+      if (failCount) parts.push(`${failCount} failed`);
+      if (skipped) parts.push(`${skipped} skipped`);
+      showToast(parts.join(" · "));
     } catch (e) {
       showToast("Network error — import failed");
     } finally {
@@ -1170,6 +1238,7 @@ export function StoreProvider({ children }) {
     loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
     loadMyOrders, loadAdminOrders, updateOrderStatus,
+    productReviews, loadProductReviews, canReview, submitReview,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

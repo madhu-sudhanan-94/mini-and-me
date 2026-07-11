@@ -94,7 +94,7 @@ export default function Checkout() {
 
         {/* Gift wrapping */}
         <section>
-          <button type="button" onClick={() => setGiftWrap((v) => !v)} aria-pressed={giftWrap} className={`w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${giftWrap ? "border-brand-300 bg-white" : "border-slate-200 bg-white"}`}>
+          <button type="button" onClick={() => setGiftWrap((v) => !v)} aria-pressed={giftWrap} className={`-mt-1 w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${giftWrap ? "border-brand-300 bg-white" : "border-slate-200 bg-white"}`}>
             <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${giftWrap ? "bg-brand-50 text-brand-500" : "bg-slate-100 text-slate-500"}`}><Gift size={18} /></span>
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-semibold text-slate-800">Add gift wrapping</span>

@@ -31,6 +31,7 @@ export function buildInvoiceHTML(order) {
   const ratePct = o.ratePct != null ? o.ratePct : 5;
   const discount = o.discount || 0;
   const delivery = o.delivery_fee || 0;
+  const giftWrap = o.gift_wrap_fee || 0;
   const billTo = [o.name, o.phone, o.email].filter(Boolean);
   const ship = addrLines(o.shipping);
 
@@ -119,6 +120,7 @@ export function buildInvoiceHTML(order) {
         ${totalRow(`GST (${ratePct}%)`, formatINR(gst), { muted: true })}
         ${discount > 0 ? totalRow("Discount", "−" + formatINR(discount), { muted: true }) : ""}
         ${totalRow("Delivery", delivery ? formatINR(delivery) : "Free", { muted: true })}
+        ${giftWrap > 0 ? totalRow("Gift wrapping", formatINR(giftWrap), { muted: true }) : ""}
         ${totalRow("Grand Total", formatINR(o.total || 0), { strong: true })}
       </tbody>
     </table>

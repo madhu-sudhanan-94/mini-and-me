@@ -44,16 +44,24 @@ export default function OrderDetail() {
     else showToast("These items are no longer available");
   };
 
-  // Orders store only the line items + grand total, so reconstruct the fee
-  // breakdown from the fixed shop rates. Guarded so we never invent a charge the
-  // total can't cover; any leftover always makes the lines sum back to the total.
-  let rem = (o.total || 0) - subtotal;
-  const deliveryFee = subtotal > 0 && subtotal < SHOP.freeDeliveryThreshold && rem >= SHOP.deliveryFee ? SHOP.deliveryFee : 0;
-  rem -= deliveryFee;
-  const giftWrap = rem >= SHOP.giftWrapFee ? SHOP.giftWrapFee : 0;
-  rem -= giftWrap;
-  const discount = rem < 0 ? -rem : 0;
-  const otherCharges = rem > 0 ? rem : 0;
+  // Prefer the persisted breakdown (orders placed after the 2026-07 migration —
+  // itemsTotal > 0 signals it's stored). Older orders saved only the grand total,
+  // so reconstruct their fees from the fixed shop rates.
+  const hasBreakdown = (o.itemsTotal || 0) > 0;
+  let deliveryFee, giftWrap, discount, otherCharges = 0;
+  if (hasBreakdown) {
+    deliveryFee = o.deliveryFee || 0;
+    giftWrap = o.giftWrapFee || 0;
+    discount = o.discount || 0;
+  } else {
+    let rem = (o.total || 0) - subtotal;
+    deliveryFee = subtotal > 0 && subtotal < SHOP.freeDeliveryThreshold && rem >= SHOP.deliveryFee ? SHOP.deliveryFee : 0;
+    rem -= deliveryFee;
+    giftWrap = rem >= SHOP.giftWrapFee ? SHOP.giftWrapFee : 0;
+    rem -= giftWrap;
+    discount = rem < 0 ? -rem : 0;
+    otherCharges = rem > 0 ? rem : 0;
+  }
 
   return (
     <div className="pb-10">
@@ -112,6 +120,14 @@ export default function OrderDetail() {
           </div>
         )}
 
+        {/* Order note (delivery instructions / gift message) */}
+        {o.note && (
+          <div className="bg-white rounded-xl shadow-card p-4">
+            <p className="text-sm font-semibold text-slate-800 mb-1">Order note</p>
+            <p className="text-sm text-slate-500 leading-relaxed whitespace-pre-line">{o.note}</p>
+          </div>
+        )}
+
         {/* Payment summary */}
         <div className="bg-white rounded-xl shadow-card p-4">
           <p className="text-sm font-semibold text-slate-800 mb-3">Payment summary</p>
@@ -125,7 +141,7 @@ export default function OrderDetail() {
             )}
             {giftWrap > 0 && <div className="flex justify-between text-slate-600"><span>Gift wrapping</span><span>{formatINR(giftWrap)}</span></div>}
             {otherCharges > 0 && <div className="flex justify-between text-slate-600"><span>Other charges</span><span>{formatINR(otherCharges)}</span></div>}
-            {discount > 0 && <div className="flex justify-between text-emerald-600"><span>Discount</span><span>− {formatINR(discount)}</span></div>}
+            {discount > 0 && <div className="flex justify-between text-emerald-600"><span>Discount{o.couponCode ? ` (${o.couponCode})` : ""}</span><span>− {formatINR(discount)}</span></div>}
             <div className="flex justify-between pt-2 mt-1 border-t border-slate-100 text-slate-900 font-bold text-base">
               <span>Total</span><span>{formatINR(o.total)}</span>
             </div>

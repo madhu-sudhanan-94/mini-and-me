@@ -53,8 +53,9 @@ export default function Success() {
             <div className="space-y-1 text-xs">
               <div className="flex justify-between text-slate-500"><span>Taxable value</span><span>{formatINR(lastOrder.subtotal)}</span></div>
               <div className="flex justify-between text-slate-500"><span>GST ({lastOrder.ratePct}%)</span><span>{formatINR(lastOrder.gst)}</span></div>
-              {lastOrder.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>−{formatINR(lastOrder.discount)}</span></div>}
+              {lastOrder.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount{lastOrder.coupon?.code ? ` (${lastOrder.coupon.code})` : ""}</span><span>−{formatINR(lastOrder.discount)}</span></div>}
               <div className="flex justify-between text-slate-500"><span>Delivery</span><span>{lastOrder.delivery_fee ? formatINR(lastOrder.delivery_fee) : "Free"}</span></div>
+              {lastOrder.gift_wrap_fee > 0 && <div className="flex justify-between text-slate-500"><span>Gift wrapping</span><span>{formatINR(lastOrder.gift_wrap_fee)}</span></div>}
               <div className="flex justify-between pt-1.5 mt-1.5 border-t border-slate-100 font-bold text-slate-800"><span>Total</span><span>{formatINR(lastOrder.total)}</span></div>
             </div>
             <p className="text-[10px] text-slate-400 mt-2">{SUPPORT.gstin ? `GSTIN ${SUPPORT.gstin} · ` : ""}Prices inclusive of GST.</p>

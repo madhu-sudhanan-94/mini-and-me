@@ -59,6 +59,25 @@ create policy "profiles_update_own" on public.profiles
 revoke update on public.profiles from anon, authenticated;
 grant update (full_name, phone, gender, dob, avatar_url) on public.profiles to authenticated;
 
+-- Defense-in-depth backstop: even if the column grant above is ever lost (e.g. a
+-- future migration issues a broad `grant update on public.profiles`), a normal
+-- client request can still never change `role`. service_role (server-side) and
+-- direct SQL (auth.role() is null) stay free to promote an admin.
+create or replace function public.enforce_profile_role_immutable()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.role is distinct from old.role
+     and auth.role() in ('anon', 'authenticated') then
+    raise exception 'profiles.role can only be changed by an administrator';
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists enforce_profile_role_immutable on public.profiles;
+create trigger enforce_profile_role_immutable
+  before update on public.profiles
+  for each row execute function public.enforce_profile_role_immutable();
+
 -- ============================================================
 -- products
 -- ============================================================
@@ -170,9 +189,13 @@ create policy "order_items_insert_self" on public.order_items
     exists (select 1 from public.orders o where o.id = order_items.order_id and o.user_id = auth.uid())
   );
 
+-- Guest item inserts must reference a user-less (guest) order — mirrors
+-- orders_insert_guest so anon can't inject items into a signed-in user's order.
 drop policy if exists "order_items_insert_guest" on public.order_items;
 create policy "order_items_insert_guest" on public.order_items
-  for insert to anon with check (true);
+  for insert to anon with check (
+    exists (select 1 from public.orders o where o.id = order_items.order_id and o.user_id is null)
+  );
 
 drop policy if exists "order_items_select_own" on public.order_items;
 create policy "order_items_select_own" on public.order_items

@@ -126,8 +126,6 @@ export function StoreProvider({ children }) {
   };
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
-  const cartTotal = linesTotal(cart);
-  const cartSavings = linesSavings(cart);
   const bill = useMemo(() => computeBill(cart), [cart, products, coupon]);
 
   // Express "Buy now": checkout uses this single item instead of the cart.
@@ -595,20 +593,6 @@ export function StoreProvider({ children }) {
   const closeQuickAdd = () => {
     if (typeof window !== "undefined" && window.history.state && window.history.state.quick != null) { window.history.back(); return; }
     setQuickAdd(null);
-  };
-
-  // Share a product via the native share sheet, falling back to copying the link.
-  // The link carries ?p=<id> which the app opens on load (deep-link, below).
-  const shareProduct = async (p) => {
-    const target = p || selProduct;
-    if (!target || typeof window === "undefined") return;
-    const url = window.location.origin + window.location.pathname + "?p=" + target.id;
-    const data = { title: target.name, text: `Check out ${target.name} — ${formatINR(target.price)}`, url };
-    try {
-      if (navigator.share) { await navigator.share(data); return; }
-    } catch (e) { if (e && e.name === "AbortError") return; /* user dismissed the share sheet */ }
-    try { await navigator.clipboard.writeText(url); showToast("Product link copied"); }
-    catch { showToast("Couldn't copy the link"); }
   };
 
   // Deep-link: a shared ?p=<id> URL opens that product once products are loaded.
@@ -1190,14 +1174,14 @@ export function StoreProvider({ children }) {
     coupon, couponMsg, setCouponMsg,
     lastOrder, placingOrder, form, setForm, blankForm,
     // derived
-    cartCount, cartTotal, cartSavings, bill,
+    cartCount, bill,
     buyNowItem, setBuyNowItem, checkoutItems, checkoutCount, checkoutBill,
     // actions
     showToast, goToLogin, applySession, handleAuth,
     applyCoupon, removeCoupon,
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
     openQuickAdd, closeQuickAdd,
-    toggleFav, isFav, addToCart, buyNow, changeBuyNowQty, changeQty, removeItem, placeOrder, logout, shareProduct,
+    toggleFav, isFav, addToCart, buyNow, changeBuyNowQty, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,

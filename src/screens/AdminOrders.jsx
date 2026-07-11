@@ -16,7 +16,7 @@ const statusChip = {
 };
 
 export default function AdminOrders() {
-  const { adminOrders, ordersBusy, loadAdminOrders, updateOrderStatus, setScreen, goBack } = useStore();
+  const { adminOrders, ordersBusy, loadAdminOrders, updateOrderStatus, goBack } = useStore();
   useEffect(() => { loadAdminOrders(); }, []);
 
   const list = adminOrders.map(normalizeOrder);

@@ -41,7 +41,6 @@ export function normalizeOrder(o) {
     giftWrapFee: o.gift_wrap_fee ?? 0,
     giftWrap: o.gift_wrap ?? o.giftWrap ?? false,
     totalSaved: o.total_saved ?? o.saved ?? 0,
-    billing: o.billing_address || o.billing || null,
   };
 }
 

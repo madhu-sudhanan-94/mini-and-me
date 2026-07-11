@@ -138,7 +138,9 @@ create policy "orders_insert_guest" on public.orders
 
 drop policy if exists "order_items_insert_guest" on public.order_items;
 create policy "order_items_insert_guest" on public.order_items
-  for insert to anon with check (true);
+  for insert to anon with check (
+    exists (select 1 from public.orders o where o.id = order_items.order_id and o.user_id is null)
+  );
 
 -- ---------- Products: multiple images + stock + admin image-upload bucket ----------
 alter table public.products add column if not exists images text[];

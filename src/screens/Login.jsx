@@ -25,7 +25,7 @@ const FacebookIcon = () => (
 
 export default function Login() {
   const {
-    returnTo, setReturnTo, setScreen, setAuth, authBusy, handleAuth,
+    returnTo, setReturnTo, setScreen, authBusy, handleAuth,
     loginEmail, setLoginEmail, setAuthErr, loginPassword, setLoginPassword,
     authMode, setAuthMode, authErr, authNotice, setAuthNotice,
     requestPasswordReset, showToast,

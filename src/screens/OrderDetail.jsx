@@ -63,6 +63,13 @@ export default function OrderDetail() {
     otherCharges = rem > 0 ? rem : 0;
   }
 
+  // Show the taxable base + GST separately when the order carries the persisted
+  // breakdown (matches Checkout/Success/invoice). Legacy orders stored only the
+  // grand total, so fall back to the gross goods total with no GST line.
+  const taxableValue = hasBreakdown && o.subtotal != null ? o.subtotal : subtotal;
+  const gstAmount = hasBreakdown ? (o.gst || 0) : 0;
+  const gstRate = o.gstRatePct ?? 5;
+
   return (
     <div className="pb-10">
       <ScreenHeader title="Order details" back="orders" />
@@ -132,7 +139,8 @@ export default function OrderDetail() {
         <div className="bg-white rounded-xl shadow-card p-4">
           <p className="text-sm font-semibold text-slate-800 mb-3">Payment summary</p>
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(subtotal)}</span></div>
+            <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(taxableValue)}</span></div>
+            {gstAmount > 0 && <div className="flex justify-between text-slate-600"><span>GST ({gstRate}%, incl.)</span><span>{formatINR(gstAmount)}</span></div>}
             {subtotal > 0 && (
               <div className="flex justify-between text-slate-600">
                 <span>Delivery</span>

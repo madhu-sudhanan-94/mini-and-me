@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, Phone, Clock, MapPin, ChevronDown, ArrowRight, MessageCircle, HelpCircle } from "lucide-react";
+import { Mail, Phone, Clock, MapPin, ChevronDown, ArrowRight } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { SUPPORT, FAQS, LEGAL_ORDER, LEGAL_PAGES } from "../content/legal.js";
 import { useStore } from "../store.jsx";

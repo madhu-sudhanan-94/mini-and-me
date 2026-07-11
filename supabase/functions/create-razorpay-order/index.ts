@@ -51,8 +51,10 @@ Deno.serve(async (req) => {
     const ids = [...new Set(items.map((i: { product_id: number }) => i.product_id))].filter((x) => x != null);
     if (!ids.length) return json({ error: "no valid products" }, 400);
 
-    const pRes = await db(`products?id=in.(${ids.join(",")})&select=id,name,price,stock,size_stock`);
-    if (!pRes.ok) return json({ error: "product lookup failed" }, 500);
+    // select=* so a DB missing the optional stock/size_stock columns doesn't 400;
+    // available() below just treats absent stock as untracked.
+    const pRes = await db(`products?id=in.(${ids.join(",")})&select=*`);
+    if (!pRes.ok) { console.error("product lookup failed", await pRes.text()); return json({ error: "product lookup failed" }, 500); }
     const products = await pRes.json();
     const pById = new Map(products.map((p: { id: number }) => [p.id, p]));
 

@@ -65,7 +65,7 @@ export default function Security() {
         {/* Change email */}
         <div className="bg-white rounded-2xl shadow-card p-4">
           <CardHead icon={Mail} tint="bg-violet-50 text-violet-600" title="Change email" subtitle={`Current: ${email || "—"}`} />
-          <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoComplete="email" placeholder="New email address" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+          <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoComplete="email" placeholder="New email address" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10" />
           <PrimaryButton variant="solid" size="md" onClick={changeEmail} disabled={busy || !newEmail.trim().includes("@")} className="mt-3 text-sm">Update email</PrimaryButton>
           <p className="text-[11px] text-slate-400 mt-2">We'll send a confirmation link to the new address.</p>
         </div>

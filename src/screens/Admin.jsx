@@ -180,24 +180,24 @@ export default function Admin() {
               <div className="w-16 h-16 rounded-xl bg-linear-to-br from-accent-50 to-brand-100 flex items-center justify-center shrink-0">
                 <Garment shape={form.shape} color={colors[0]} className="h-[80%]" />
               </div>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" className="flex-1 border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" className="flex-1 border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white" />
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 pl-2 pr-8 text-sm outline-hidden bg-white select-chevron">
+              <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 pl-2 pr-8 text-sm outline-hidden bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron">
                 {CATS.map((c) => <option key={c} value={c}>{CAT_LABEL[c]}</option>)}
               </select>
-              <select value={form.shape} onChange={(e) => setForm({ ...form, shape: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 pl-2 pr-8 text-sm outline-hidden bg-white select-chevron">
+              <select value={form.shape} onChange={(e) => setForm({ ...form, shape: e.target.value })} className="border border-slate-200 rounded-lg py-2.5 pl-2 pr-8 text-sm outline-hidden bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron">
                 {SHAPES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Price ₹" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
-              <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
+              <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Price ₹" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white" />
+              <input value={form.original} onChange={(e) => setForm({ ...form, original: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="MRP ₹ (optional)" className="border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white" />
             </div>
 
-            <input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Total stock qty (leave blank if not tracking)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 bg-white mb-2" />
+            <input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="Total stock qty (leave blank if not tracking)" className="w-full border border-slate-200 rounded-lg py-2.5 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white mb-2" />
 
             {/* Per-size stock (optional — overrides total stock when any are set) */}
             <div className="mb-2">
@@ -208,15 +208,15 @@ export default function Admin() {
                   return (
                     <div key={s} className="flex items-center gap-1 border border-slate-200 rounded-lg pl-2 pr-1 py-1 bg-white">
                       <span className="text-[11px] font-semibold text-slate-500 min-w-[28px]">{s}</span>
-                      <input value={(form.sizeStock && form.sizeStock[s]) || ""} onChange={(e) => setForm({ ...form, sizeStock: { ...(form.sizeStock || {}), [s]: e.target.value.replace(/\D/g, "") } })} inputMode="numeric" placeholder="—" className="w-12 border border-slate-200 rounded py-1 px-1.5 text-sm text-center outline-hidden focus:border-brand-500" />
+                      <input value={(form.sizeStock && form.sizeStock[s]) || ""} onChange={(e) => setForm({ ...form, sizeStock: { ...(form.sizeStock || {}), [s]: e.target.value.replace(/\D/g, "") } })} inputMode="numeric" placeholder="—" className="w-12 border border-slate-200 rounded py-1 px-1.5 text-sm text-center outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10" />
                       {custom && <button type="button" onClick={() => removeCustomSize(s)} aria-label={`Remove ${s}`} className="w-4 h-4 rounded-full bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-500 flex items-center justify-center shrink-0"><X size={10} /></button>}
                     </div>
                   );
                 })}
               </div>
               <div className="flex items-center gap-2">
-                <input value={sizeDraft} onChange={(e) => setSizeDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSize(); } }} placeholder="Add custom size (e.g. 10Y, XXXL)" className="flex-1 min-w-0 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
-                <button type="button" onClick={addCustomSize} disabled={!sizeDraft.trim()} className="inline-flex items-center gap-1 border border-brand-200 bg-brand-50 rounded-lg px-3 py-2 text-xs font-semibold text-brand-600 disabled:opacity-40 active:scale-95 transition shrink-0"><Plus size={14} /> Add</button>
+                <input value={sizeDraft} onChange={(e) => setSizeDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSize(); } }} placeholder="Add custom size (e.g. 10Y, XXXL)" className="flex-1 min-w-0 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white" />
+                <button type="button" onClick={addCustomSize} disabled={!sizeDraft.trim()} className="inline-flex items-center gap-1 border border-brand-200 bg-brand-50 rounded-lg px-3 py-2 text-xs font-semibold text-brand-600 disabled:opacity-50 active:scale-95 transition shrink-0"><Plus size={14} /> Add</button>
               </div>
             </div>
 
@@ -236,8 +236,8 @@ export default function Admin() {
                 {imgLines.length === 0 && <p className="text-xs text-slate-400 py-1">No images yet — add a URL or upload below.</p>}
               </div>
               <div className="flex items-center gap-2 mb-3">
-                <input value={imgDraft} onChange={(e) => setImgDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageUrl(); } }} placeholder="Paste image URL" className="flex-1 min-w-0 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-hidden focus:border-brand-500 bg-white" />
-                <button type="button" onClick={addImageUrl} disabled={!imgDraft.trim()} className="inline-flex items-center gap-1 border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-40 active:scale-95 transition shrink-0"><Plus size={14} /> Add</button>
+                <input value={imgDraft} onChange={(e) => setImgDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageUrl(); } }} placeholder="Paste image URL" className="flex-1 min-w-0 border border-slate-200 rounded-lg py-2 px-3 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white" />
+                <button type="button" onClick={addImageUrl} disabled={!imgDraft.trim()} className="inline-flex items-center gap-1 border border-slate-200 bg-white rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50 active:scale-95 transition shrink-0"><Plus size={14} /> Add</button>
                 <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 cursor-pointer border border-brand-200 bg-brand-50 rounded-lg px-3 py-2 active:scale-95 transition shrink-0">
                   <Upload size={14} /> Upload
                   <input type="file" accept="image/*" className="hidden" disabled={adminBusy}
@@ -311,7 +311,7 @@ export default function Admin() {
             <div className="sticky top-0 z-10 -mx-5 px-5 pt-1 pb-2 bg-slate-50/95 backdrop-blur-sm lg:mx-0 lg:px-0 lg:top-4">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products…" className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-9 text-sm outline-hidden focus:border-brand-500 shadow-xs" />
+                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products…" className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-9 text-sm outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 shadow-xs" />
                 {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" aria-label="Clear search"><X size={16} /></button>}
               </div>
             </div>
@@ -350,7 +350,7 @@ export default function Admin() {
             </div>
 
             {/* -------- Data tools -------- */}
-            <button onClick={refreshFromDb} disabled={adminBusy} className="w-full mt-5 mb-1 border border-slate-200 bg-white text-slate-600 font-semibold py-2.5 rounded-xl text-sm disabled:opacity-60 flex items-center justify-center gap-2 active:scale-[0.99] transition">
+            <button onClick={refreshFromDb} disabled={adminBusy} className="w-full mt-5 mb-1 border border-slate-200 bg-white text-slate-600 font-semibold py-2.5 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.99] transition">
               <RefreshCw size={16} /> Refresh from database
             </button>
             <label className={`w-full mt-2 border border-slate-200 bg-white text-slate-600 font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 ${adminBusy ? "opacity-60" : "cursor-pointer active:scale-[0.99] transition"}`}>

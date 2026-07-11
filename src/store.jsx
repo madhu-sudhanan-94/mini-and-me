@@ -814,7 +814,11 @@ export function StoreProvider({ children }) {
     if (buyNowItem) setBuyNowItem(null); else setCart([]); // buy-now leaves the cart intact
     setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
     setCoName(""); setCoPhone(""); setCoEmail(""); setCoNote(""); setGiftWrap(false);
-    setScreen("success");
+    // Replace the checkout history entry with success (like buyNow), so pressing Back
+    // from the success screen returns to the store — not an emptied checkout page.
+    if (typeof window !== "undefined") { try { window.history.replaceState({ screen: "success" }, ""); } catch {} }
+    screenRef.current = "success";
+    setScreenRaw("success");
   };
 
   const logout = () => {

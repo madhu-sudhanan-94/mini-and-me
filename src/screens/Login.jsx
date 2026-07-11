@@ -63,8 +63,8 @@ export default function Login() {
 
         {/* Email / Phone tabs */}
         <div className="flex bg-slate-100 rounded-xl p-1 mb-5">
-          <button onClick={() => setLoginTab("email")} className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${loginTab === "email" ? "bg-white shadow-sm text-brand-600" : "text-slate-500"}`}><Mail size={15} /> Email</button>
-          <button onClick={() => setLoginTab("phone")} className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${loginTab === "phone" ? "bg-white shadow-sm text-brand-600" : "text-slate-500"}`}><Phone size={15} /> Phone</button>
+          <button onClick={() => setLoginTab("email")} className={`flex-1 py-2 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 ${loginTab === "email" ? "bg-white shadow-sm text-brand-600" : "text-slate-500"}`}><Mail size={15} /> Email</button>
+          <button onClick={() => setLoginTab("phone")} className={`flex-1 py-2 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 ${loginTab === "phone" ? "bg-white shadow-sm text-brand-600" : "text-slate-500"}`}><Phone size={15} /> Phone</button>
         </div>
 
         {loginTab === "email" ? (

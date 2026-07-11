@@ -37,7 +37,7 @@ export default function CouponBox({ bill: billOverride }) {
             className="flex-1 ml-2 py-2.5 outline-hidden text-sm bg-transparent min-w-0"
           />
         </div>
-        <button onClick={() => applyCoupon(code)} disabled={!code.trim()} className="px-4 rounded-xl bg-slate-900 text-white text-sm font-semibold disabled:opacity-40 active:scale-95 transition">Apply</button>
+        <button onClick={() => applyCoupon(code)} disabled={!code.trim()} className="px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold disabled:opacity-50 active:scale-95 transition">Apply</button>
       </div>
       {couponMsg && <p className="text-red-500 text-[11px] mt-1.5">{couponMsg}</p>}
     </div>

@@ -94,7 +94,7 @@ export default function AdminOrders() {
 
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${statusChip[o.status] || "bg-slate-100 text-slate-600"}`}>{STATUS_LABEL[o.status] || o.status}</span>
-                <select value={o.status} disabled={ordersBusy} onChange={(e) => updateOrderStatus(o.key, e.target.value)} className="border border-slate-200 rounded-lg py-2 pl-2.5 pr-8 text-sm outline-hidden bg-white disabled:opacity-60 select-chevron">
+                <select value={o.status} disabled={ordersBusy} onChange={(e) => updateOrderStatus(o.key, e.target.value)} className="border border-slate-200 rounded-lg py-2 pl-2.5 pr-8 text-sm outline-hidden bg-white disabled:opacity-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron">
                   {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
                 </select>
               </div>

@@ -249,14 +249,14 @@ export default function ProductModal() {
         {/* Actions */}
         <div className="p-4 border-t border-slate-100 bg-white shrink-0">
           {oos ? (
-            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
+            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
           ) : selSoldOut ? (
-            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-4 rounded-xl cursor-not-allowed">Size {selSize} out of stock</button>
+            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-4 rounded-xl cursor-not-allowed">Size {selSize} out of stock</button>
           ) : (
             <div className="flex items-center gap-3">
-              <button onClick={() => addToCart(p, selSize, selColor, qty)} className="flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-brand-700 bg-brand-50 border border-brand-200 active:scale-[0.97] transition">
+              <PrimaryButton variant="soft" size="xl" full={false} onClick={() => addToCart(p, selSize, selColor, qty)} className="flex-1">
                 <ShoppingCart size={19} /> Add to cart
-              </button>
+              </PrimaryButton>
               <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => buyNow(p, selSize, selColor, qty)} className="flex-1 border border-transparent">
                 Buy now
               </PrimaryButton>

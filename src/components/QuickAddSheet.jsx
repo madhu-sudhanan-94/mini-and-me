@@ -49,9 +49,9 @@ export default function QuickAddSheet() {
 
   return (
     <div className="fixed sm:max-lg:absolute inset-0 z-[60] flex flex-col justify-end lg:items-center lg:justify-center">
-      <div className="absolute inset-0 bg-black/45" onClick={closeQuickAdd} />
+      <div className="absolute inset-0 bg-black/40" onClick={closeQuickAdd} />
 
-      <div className="relative w-full lg:w-[420px] lg:max-w-[92vw] bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl px-5 pt-3 pb-6" style={{ animation: "vkUp .28s ease" }}>
+      <div className="relative w-full lg:w-[420px] lg:max-w-[92vw] bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl px-5 pt-3 pb-6" style={{ animation: "vkUp .25s ease" }}>
         {/* grab handle (mobile bottom-sheet affordance) */}
         <div className="lg:hidden mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-200" />
         <button onClick={closeQuickAdd} aria-label="Close" className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center active:scale-90 transition"><X size={16} className="text-slate-500" /></button>
@@ -107,14 +107,14 @@ export default function QuickAddSheet() {
         {/* actions */}
         <div className="mt-5">
           {oos ? (
-            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-3.5 rounded-xl cursor-not-allowed">Out of stock</button>
+            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-3.5 rounded-xl cursor-not-allowed">Out of stock</button>
           ) : selSoldOut ? (
-            <button disabled className="w-full bg-slate-200 text-slate-400 font-bold py-3.5 rounded-xl cursor-not-allowed">Size {sel} out of stock</button>
+            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-3.5 rounded-xl cursor-not-allowed">Size {sel} out of stock</button>
           ) : (
             <div className="flex items-center gap-3">
-              <button onClick={add} className="flex-1 inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-brand-700 bg-brand-50 border border-brand-200 active:scale-[0.97] transition">
+              <PrimaryButton variant="soft" size="xl" full={false} onClick={add} className="flex-1">
                 <ShoppingCart size={18} /> Add to cart
-              </button>
+              </PrimaryButton>
               <PrimaryButton variant="gradient" size="xl" full={false} onClick={buy} className="flex-1 border border-transparent">Buy now</PrimaryButton>
             </div>
           )}

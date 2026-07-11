@@ -16,7 +16,7 @@ export default function BottomNav() {
     );
   };
   return (
-    <div className="lg:hidden border-t border-slate-100 bg-white px-3 py-1.5 flex">
+    <div className="lg:hidden fixed sm:max-lg:absolute inset-x-0 bottom-0 z-30 max-w-[430px] mx-auto border-t border-slate-100 bg-white/95 backdrop-blur px-3 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex">
       <Item icon={Home} label="Home" target="home" />
       <Item icon={LayoutGrid} label="Shop" target="category" onClick={() => { setSelCategory("all"); setScreen("category"); }} />
       <Item icon={ShoppingCart} label="Cart" target="cart" badge={cartCount} />

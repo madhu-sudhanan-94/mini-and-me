@@ -26,7 +26,7 @@ export default function PhoneField({ value, onChange, placeholder = "Mobile numb
 
   return (
     <div className="relative">
-      <div className="flex items-center border border-slate-200 rounded-xl focus-within:border-brand-500">
+      <div className="flex items-center border border-slate-200 rounded-xl focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/10">
         <button type="button" onClick={() => setOpen((o) => !o)} aria-label="Select country code" className="flex items-center gap-1 pl-3 pr-2 py-3 border-r border-slate-200 shrink-0">
           <span className="text-base leading-none">{country.flag}</span>
           <span className="text-sm text-slate-600">{country.dial}</span>

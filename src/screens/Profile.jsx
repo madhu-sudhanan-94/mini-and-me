@@ -75,7 +75,7 @@ export default function Profile() {
         <div className="bg-white rounded-2xl shadow-card p-5 space-y-4">
           <div>
             <label className="block text-xs text-slate-500 mb-1">Full name</label>
-            <input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
+            <input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10" />
           </div>
 
           <div>
@@ -91,13 +91,13 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-slate-500 mb-1">Gender</label>
-              <select value={f.gender} onChange={(e) => setF({ ...f, gender: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-9 outline-hidden text-sm focus:border-brand-500 bg-white select-chevron">
+              <select value={f.gender} onChange={(e) => setF({ ...f, gender: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-9 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white select-chevron">
                 {GENDERS.map((g) => <option key={g.label} value={g.value}>{g.label}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">Date of birth</label>
-              <input type="date" value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-2.5 outline-hidden text-sm focus:border-brand-500" />
+              <input type="date" value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} className="w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-2.5 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10" />
             </div>
           </div>
 

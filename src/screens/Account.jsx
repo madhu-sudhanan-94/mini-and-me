@@ -93,7 +93,7 @@ export default function Account() {
         {isGuest ? (
           <PrimaryButton onClick={() => goToLogin()} size="xl"><User size={18} /> Log in / Sign up</PrimaryButton>
         ) : (
-          <button onClick={logout} className="w-full border border-red-200 text-red-500 font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-50 active:scale-[0.99] transition"><LogOut size={18} /> Log out</button>
+          <PrimaryButton variant="danger" size="lg" onClick={logout}><LogOut size={18} /> Log out</PrimaryButton>
         )}
       </div>
     </div>

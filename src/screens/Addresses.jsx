@@ -73,7 +73,7 @@ export default function Addresses() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Full name</label>
-                <input value={editing.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="e.g. Priya Sharma" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 placeholder:text-slate-300" />
+                <input value={editing.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="e.g. Priya Sharma" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Phone</label>
@@ -81,38 +81,38 @@ export default function Addresses() {
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Flat / house no., building</label>
-                <input value={editing.line1} onChange={(e) => set("line1", e.target.value)} placeholder="e.g. Flat 4B, Palm Residency" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 placeholder:text-slate-300" />
+                <input value={editing.line1} onChange={(e) => set("line1", e.target.value)} placeholder="e.g. Flat 4B, Palm Residency" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Street / locality</label>
-                <input value={editing.line2} onChange={(e) => set("line2", e.target.value)} placeholder="e.g. 5th Cross, MG Road" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 placeholder:text-slate-300" />
+                <input value={editing.line2} onChange={(e) => set("line2", e.target.value)} placeholder="e.g. 5th Cross, MG Road" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300" />
               </div>
               <div className="lg:col-span-2">
                 <label className="block text-xs text-slate-500 mb-1">Area / landmark <span className="text-slate-400">(optional)</span></label>
-                <input value={editing.area} onChange={(e) => set("area", e.target.value)} placeholder="e.g. Near City Mall" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 placeholder:text-slate-300" />
+                <input value={editing.area} onChange={(e) => set("area", e.target.value)} placeholder="e.g. Near City Mall" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">City</label>
-                <input value={editing.city} onChange={(e) => set("city", e.target.value)} placeholder="e.g. Bengaluru" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 placeholder:text-slate-300" />
+                <input value={editing.city} onChange={(e) => set("city", e.target.value)} placeholder="e.g. Bengaluru" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">State</label>
                 {editing.country === "India" ? (
-                  <select value={editing.state} onChange={(e) => set("state", e.target.value)} className={`w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-9 outline-hidden text-sm focus:border-brand-500 bg-white select-chevron ${editing.state ? "" : "text-slate-400"}`}>
+                  <select value={editing.state} onChange={(e) => set("state", e.target.value)} className={`w-full border border-slate-200 rounded-xl py-3 pl-2.5 pr-9 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white select-chevron ${editing.state ? "" : "text-slate-400"}`}>
                     <option value="">Select</option>
                     {(editing.state && !INDIAN_STATES.includes(editing.state) ? [editing.state, ...INDIAN_STATES] : INDIAN_STATES).map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 ) : (
-                  <input value={editing.state} onChange={(e) => set("state", e.target.value)} placeholder="State / province" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 placeholder:text-slate-300" />
+                  <input value={editing.state} onChange={(e) => set("state", e.target.value)} placeholder="State / province" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300" />
                 )}
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">PIN code</label>
-                <input value={editing.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="6-digit PIN code" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 placeholder:text-slate-300" />
+                <input value={editing.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="6-digit PIN code" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Country/region</label>
-                <select value={editing.country} onChange={(e) => setEditing((ed) => ({ ...ed, country: e.target.value, state: "" }))} className="w-full border border-slate-200 rounded-xl py-3 pl-3 pr-9 outline-hidden text-sm focus:border-brand-500 bg-white select-chevron">
+                <select value={editing.country} onChange={(e) => setEditing((ed) => ({ ...ed, country: e.target.value, state: "" }))} className="w-full border border-slate-200 rounded-xl py-3 pl-3 pr-9 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white select-chevron">
                   {COUNTRY_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </div>
@@ -129,7 +129,7 @@ export default function Addresses() {
         <div className="sticky bottom-0 z-20 px-5 py-4 border-t border-slate-100 bg-white/95 backdrop-blur lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:backdrop-blur-none">
           <div className="flex gap-2">
             <PrimaryButton onClick={submit} disabled={addrBusy} full={false} className="flex-1">{addrBusy ? "Saving…" : "Save address"}</PrimaryButton>
-            <button onClick={() => setEditing(null)} className="px-5 border border-slate-200 rounded-xl text-sm text-slate-500">Cancel</button>
+            <PrimaryButton variant="secondary" size="lg" full={false} onClick={() => setEditing(null)} className="px-5">Cancel</PrimaryButton>
           </div>
         </div>
         </>

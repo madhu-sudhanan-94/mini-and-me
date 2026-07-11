@@ -134,7 +134,7 @@ export default function Checkout() {
             </button>
             {!billingSame && (
               addresses.length > 1 ? (
-                <select value={billingAddrId || defaultAddress.id} onChange={(e) => setBillingAddrId(e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 pl-3 pr-9 outline-hidden text-sm focus:border-brand-500 bg-white select-chevron">
+                <select value={billingAddrId || defaultAddress.id} onChange={(e) => setBillingAddrId(e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 pl-3 pr-9 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white select-chevron">
                   {addresses.map((a) => <option key={a.id} value={a.id}>{a.label} · {fmtAddr(a)}</option>)}
                 </select>
               ) : (
@@ -176,7 +176,7 @@ export default function Checkout() {
         <section>
           <p className="text-sm font-semibold text-slate-800 mb-3">Where should we send your order updates?</p>
           <label className="block text-xs text-slate-500 mb-1">Full name</label>
-          <input value={coName} onChange={(e) => setCoName(e.target.value)} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 mb-4" />
+          <input value={coName} onChange={(e) => setCoName(e.target.value)} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 mb-4" />
 
           <label className="block text-xs text-slate-500 mb-1">Phone number</label>
           <div className="mb-4"><PhoneField value={coPhone} onChange={setCoPhone} /></div>
@@ -184,7 +184,7 @@ export default function Checkout() {
           <div className="flex items-center gap-3 my-1 text-slate-300 text-xs"><div className="flex-1 h-px bg-slate-200" />or<div className="flex-1 h-px bg-slate-200" /></div>
 
           <label className="block text-xs text-slate-500 mb-1 mt-2">Email</label>
-          <input value={coEmail} onChange={(e) => setCoEmail(e.target.value)} type="email" placeholder="you@email.com" className={`w-full border rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 ${emailInvalid ? "border-red-300" : "border-slate-200"}`} />
+          <input value={coEmail} onChange={(e) => setCoEmail(e.target.value)} type="email" placeholder="you@email.com" className={`w-full border rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 ${emailInvalid ? "border-red-300" : "border-slate-200"}`} />
           {emailInvalid
             ? <p className="text-red-500 text-[11px] mt-1">Enter a valid email address.</p>
             : <p className="text-[11px] text-slate-400 mt-2">Add at least one — a phone number or an email.</p>}
@@ -194,7 +194,7 @@ export default function Checkout() {
         <section>
           <p className="text-sm font-semibold text-slate-800 mb-1">Order note <span className="font-normal text-slate-400">(optional)</span></p>
           <p className="text-[11px] text-slate-400 mb-2">Delivery instructions, a gift message, or anything else we should know.</p>
-          <textarea value={coNote} onChange={(e) => setCoNote(e.target.value)} rows={3} maxLength={500} placeholder="e.g. Leave at the front desk, or call on arrival" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 resize-none" />
+          <textarea value={coNote} onChange={(e) => setCoNote(e.target.value)} rows={3} maxLength={500} placeholder="e.g. Leave at the front desk, or call on arrival" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 resize-none" />
         </section>
       </div>
 

@@ -19,7 +19,7 @@ export default function ProductCard({ p, wide }) {
     });
 
     return (
-        <div onClick={() => openProduct(p)} className={`text-left bg-white rounded-lg overflow-hidden shadow-card hover:shadow-card-hover transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}>
+        <div onClick={() => openProduct(p)} className={`text-left bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}>
             <div className="relative bg-linear-to-br from-accent-50 to-brand-100 h-[190px] overflow-hidden touch-pan-y select-none">
                 <ProductImage key={imgIdx} p={p} color={p.colors[0]} index={imgIdx} />
                 {/* swipe layer — sits below the buttons (z-10) so they stay clickable */}

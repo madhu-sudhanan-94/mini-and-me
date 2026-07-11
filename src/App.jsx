@@ -25,6 +25,7 @@ import ResetPassword from "./screens/ResetPassword.jsx";
 import Security from "./screens/Security.jsx";
 import ProductModal from "./screens/ProductModal.jsx";
 import QuickAddSheet from "./components/QuickAddSheet.jsx";
+import BottomNav from "./components/BottomNav.jsx";
 
 const Logo = BRAND.logo;
 
@@ -62,6 +63,8 @@ function Shell() {
   const Current = SCREENS[screen] || Home;
   const showFooter = screen === "home" && !query.trim(); // hide footer while showing search results
   const showChrome = screen !== "login" && screen !== "resetpw";
+  // Persistent mobile tab bar — hidden on the transactional screens that have their own bottom bar.
+  const showBottomNav = showChrome && !["cart", "checkout", "success"].includes(screen);
   const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-xl";
 
   return (
@@ -71,10 +74,11 @@ function Shell() {
         {showChrome && <DesktopNav />}
         {/* True mobile lets the PAGE scroll (so the browser's address bar can collapse);
             the sm→lg phone-mockup keeps its own inner scroll. */}
-        <div ref={scrollRef} className="flex-1 overflow-visible sm:max-lg:overflow-y-auto no-scrollbar screen-wash">
+        <div ref={scrollRef} className={`flex-1 overflow-visible sm:max-lg:overflow-y-auto no-scrollbar screen-wash ${showBottomNav ? "pb-[64px] lg:pb-0" : ""}`}>
           <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>
           {showFooter && <Footer />}
         </div>
+        {showBottomNav && <BottomNav />}
         <ProductModal />
         <QuickAddSheet />
 

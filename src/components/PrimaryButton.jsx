@@ -12,9 +12,13 @@ import React, { useRef, useState } from "react";
     full    : stretch to full width (default true)
     ...also forwards onClick, disabled, type, className (margins etc.), aria-*, children
 */
+// text/shadow live in the variant so light variants (secondary/danger/soft) aren't forced white.
 const VARIANTS = {
-  gradient: "bg-linear-to-r from-brand-600 to-accent-500 shadow-brand-500/25",
-  solid: "bg-brand-600 hover:bg-brand-700 shadow-brand-500/25",
+  gradient: "text-white shadow-lg bg-linear-to-r from-brand-600 to-accent-500 shadow-brand-500/25",
+  solid: "text-white shadow-lg bg-brand-600 hover:bg-brand-700 shadow-brand-500/25",
+  soft: "text-brand-700 bg-brand-50 hover:bg-brand-100",              // low-emphasis brand action (e.g. Add to cart)
+  secondary: "text-slate-600 bg-white border border-slate-200 hover:bg-slate-50", // cancel / back
+  danger: "text-red-600 bg-white border border-red-200 hover:bg-red-50",          // delete / log out
 };
 const SIZES = {
   md: "py-2.5 rounded-xl text-base",
@@ -50,7 +54,7 @@ export default function PrimaryButton({
       type={type}
       disabled={disabled}
       onClick={handleClick}
-      className={`relative overflow-hidden inline-flex items-center justify-center font-semibold text-white shadow-lg transition-transform duration-150 active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]} ${full ? "w-full" : "px-6"} ${className}`}
+      className={`relative overflow-hidden inline-flex items-center justify-center font-semibold transition-transform duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]} ${full ? "w-full" : "px-6"} ${className}`}
       {...rest}
     >
       {ripples.map((r) => (

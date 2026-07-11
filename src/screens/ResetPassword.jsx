@@ -9,7 +9,7 @@ import { useStore } from "../store.jsx";
 const Logo = BRAND.logo;
 
 export default function ResetPassword() {
-  const { setNewPassword } = useStore();
+  const { setNewPassword, setScreen } = useStore();
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [err, setErr] = useState("");
@@ -46,6 +46,8 @@ export default function ResetPassword() {
             {busy ? "Saving…" : (<>Update password <ArrowRight size={18} /></>)}
           </PrimaryButton>
         </form>
+        {/* escape route — the screen is reached from an email link, so give a way back */}
+        <button onClick={() => setScreen("home")} className="w-full text-center text-sm font-semibold text-slate-500 mt-4 py-2 active:scale-95 transition">Back to store</button>
       </div>
     </div>
   );

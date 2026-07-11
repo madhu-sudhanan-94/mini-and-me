@@ -20,7 +20,9 @@ export default function AdminOrders() {
   useEffect(() => { loadAdminOrders(); }, []);
 
   const list = adminOrders.map(normalizeOrder);
-  const paid = adminOrders.filter((o) => o.status !== "cancelled");
+  // Count toward revenue/AOV only real orders: not cancelled, and not an online
+  // attempt that was never paid (abandoned/failed Razorpay leaves a pending row).
+  const paid = adminOrders.filter((o) => o.status !== "cancelled" && !(o.payment_method === "online" && o.payment_status !== "paid"));
   const revenue = paid.reduce((s, o) => s + (o.total || 0), 0);
   const aov = paid.length ? Math.round(revenue / paid.length) : 0;
   const statusCounts = adminOrders.reduce((m, o) => { const s = o.status || "placed"; m[s] = (m[s] || 0) + 1; return m; }, {});

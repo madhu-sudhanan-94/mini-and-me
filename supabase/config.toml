@@ -1,0 +1,15 @@
+# Supabase local/project config. `supabase link --project-ref <ref>` sets the
+# actual remote project; project_id below is just a local label.
+project_id = "mini-and-me"
+
+# Payment edge functions do their own auth (server-side price recompute + HMAC
+# signature verification), and must be callable by guests with no Supabase JWT,
+# so JWT verification is disabled for them.
+[functions.create-razorpay-order]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false

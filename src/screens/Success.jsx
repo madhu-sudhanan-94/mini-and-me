@@ -9,6 +9,11 @@ import Confetti from "../components/Confetti.jsx";
 
 export default function Success() {
   const { lastOrder, setScreen } = useStore();
+  const online = lastOrder?.payment_method === "online";
+  const paid = lastOrder?.payment_status === "paid";
+  const amountLabel = paid ? "Amount paid" : online ? "Amount" : "Amount payable";
+  const payLabel = online ? (paid ? "Paid online" : "Payment processing") : "Cash on delivery";
+  const payClass = paid ? "text-green-600" : online ? "text-amber-600" : "text-slate-600";
   return (
     <div className="relative flex flex-col min-h-full overflow-hidden">
       <Confetti />
@@ -21,7 +26,7 @@ export default function Success() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-slate-900">Order placed! 🎉</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{lastOrder?.payment_status === "paid" ? "Payment successful! 🎉" : "Order placed! 🎉"}</h2>
         <p className="text-slate-500 text-sm mt-2 max-w-xs">
           Thanks{lastOrder ? ", " + lastOrder.name : ""}. We'll send updates to <span className="font-semibold text-slate-700">{lastOrder?.contact}</span>.
         </p>
@@ -34,8 +39,14 @@ export default function Success() {
           </div>
           {lastOrder?.total != null && (
             <div className="flex justify-between items-center border-t border-slate-100 mt-3 pt-3">
-              <span className="text-xs text-slate-400">Amount paid</span>
+              <span className="text-xs text-slate-400">{amountLabel}</span>
               <span className="font-bold text-slate-800">{formatINR(lastOrder.total)}</span>
+            </div>
+          )}
+          {lastOrder?.payment_method && (
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-xs text-slate-400">Payment</span>
+              <span className={`text-xs font-semibold ${payClass}`}>{payLabel}</span>
             </div>
           )}
           {lastOrder?.saved > 0 && (

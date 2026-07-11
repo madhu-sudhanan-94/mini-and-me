@@ -10,6 +10,8 @@ import { parseCsv } from "./lib/csv.js";
 import { gstBreakdown, formatINR } from "./lib/format.js";
 import { outOfStock, stockFor, sizeOutOfStock, firstInStockSize } from "./lib/catalog.js";
 import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
+import { PAYMENTS } from "./payments.config.js";
+import { createRazorpayOrder, verifyRazorpayPayment, openRazorpayCheckout } from "./lib/razorpay.js";
 
 /*
   StoreProvider holds ALL of the app's state and actions (what used to live in
@@ -82,6 +84,7 @@ export function StoreProvider({ children }) {
   const [coEmail, setCoEmail] = useState("");
   const [coNote, setCoNote] = useState("");       // optional order note / delivery instructions
   const [giftWrap, setGiftWrap] = useState(false); // optional gift wrapping add-on at checkout
+  const [paymentMethod, setPaymentMethod] = useState(PAYMENTS.onlineEnabled ? "online" : "cod"); // 'online' | 'cod'
   const [coupon, setCoupon] = useState(null);       // applied coupon object (or null)
   const [couponMsg, setCouponMsg] = useState("");   // coupon error / hint text
   const [lastOrder, setLastOrder] = useState(null);
@@ -704,6 +707,7 @@ export function StoreProvider({ children }) {
         gift_wrap: !!order.giftWrap,
         gift_wrap_fee: order.gift_wrap_fee,
         total_saved: order.saved,
+        payment_method: "cod",
       };
       const postOrder = (body) => authedFetch(SUPABASE_URL + "/rest/v1/orders", {
         method: "POST",
@@ -784,6 +788,75 @@ export function StoreProvider({ children }) {
     } : null;
     const shipping = snap(defaultAddress);
 
+    // Shared success handoff (clear cart + fields, go to the success screen).
+    const finishOrder = (finalOrder) => {
+      setOrders((o) => [finalOrder, ...o]);
+      setLastOrder(finalOrder);
+      if (buyNowItem) setBuyNowItem(null); else setCart([]); // buy-now leaves the cart intact
+      setCoupon(null); setCouponMsg("");
+      setCoName(""); setCoPhone(""); setCoEmail(""); setCoNote(""); setGiftWrap(false);
+      if (session?.user?.id) loadMyOrders();
+      // Replace the checkout history entry with success (like buyNow), so pressing Back
+      // from the success screen returns to the store — not an emptied checkout page.
+      if (typeof window !== "undefined") { try { window.history.replaceState({ screen: "success" }, ""); } catch {} }
+      screenRef.current = "success";
+      setScreenRaw("success");
+    };
+
+    // ----- Online payment (Razorpay) -----
+    // The edge function re-prices the order server-side and creates a pending DB
+    // order; we only mark success after the signature is verified server-side.
+    if (paymentMethod === "online") {
+      if (!PAYMENTS.onlineEnabled) { showToast("Online payment isn't available right now"); return; }
+      setPlacingOrder(true);
+      try {
+        const created = await createRazorpayOrder({
+          items: checkoutItems.map((it) => ({ product_id: it.id, size: it.size, color: it.color, qty: it.qty })),
+          couponCode: order.coupon?.code || null,
+          giftWrap: checkoutBill.giftWrapFee > 0,
+          contact: { name: order.name, phone: order.phone, email: order.email },
+          note: order.note, shipping, userToken: session?.access_token || null, ref: order.id,
+        });
+        if (!created || !created.razorpayOrderId) {
+          setPlacingOrder(false);
+          showToast(created?.error === "out_of_stock" ? "Sorry, an item just went out of stock." : "Couldn't start payment. Please try again.");
+          return;
+        }
+        // Display the SERVER-confirmed amounts, never the (possibly stale) client bill.
+        const sb = created.bill || {};
+        const onlineOrder = {
+          ...order, status: "placed", shipping, items: itemsSnapshot, payment_method: "online",
+          total: sb.total ?? order.total, subtotal: sb.subtotal ?? order.subtotal, gst: sb.gst ?? order.gst,
+          ratePct: sb.ratePct ?? order.ratePct, discount: sb.discount ?? order.discount,
+          delivery_fee: sb.deliveryFee ?? order.delivery_fee, gift_wrap_fee: sb.giftWrapFee ?? order.gift_wrap_fee,
+        };
+        const payResp = await openRazorpayCheckout({
+          keyId: created.keyId, orderId: created.razorpayOrderId, amount: created.amount,
+          description: `Order ${order.id}`,
+          prefill: { name: order.name, email: order.email || "", contact: order.phone || "" },
+        });
+        if (payResp && payResp.__error === "sdk") { setPlacingOrder(false); showToast("Couldn't open the payment window. Please try again."); return; }
+        if (!payResp) { setPlacingOrder(false); showToast("Payment cancelled"); return; }
+        const verified = await verifyRazorpayPayment(payResp);
+        setPlacingOrder(false);
+        if (verified && verified.ok) {
+          finishOrder({ ...onlineOrder, payment_status: "paid" });
+        } else {
+          // Razorpay's handler only fires AFTER the card is charged, so the money
+          // was taken. Never re-charge on a verify blip — record it as processing
+          // and let the webhook confirm it. Clearing the cart (in finishOrder)
+          // is what prevents a double charge on retry.
+          finishOrder({ ...onlineOrder, payment_status: "pending" });
+          showToast("Payment received — we're confirming it. Track it in My Orders.");
+        }
+      } catch (e) {
+        setPlacingOrder(false);
+        showToast("Payment failed. Please try again.");
+      }
+      return;
+    }
+
+    // ----- Cash on delivery / pay later -----
     // Wait for the order to be safely recorded before showing success. If it
     // can't be saved, keep the cart + details so the customer can retry.
     setPlacingOrder(true);
@@ -793,17 +866,7 @@ export function StoreProvider({ children }) {
       showToast(result.offline ? "You appear to be offline — order not placed. Please try again." : "Couldn't place your order. Please try again.");
       return;
     }
-
-    setOrders((o) => [{ ...order, status: "placed", shipping, items: itemsSnapshot }, ...o]);
-    setLastOrder({ ...order, shipping, items: itemsSnapshot });
-    if (buyNowItem) setBuyNowItem(null); else setCart([]); // buy-now leaves the cart intact
-    setCoupon(null); setCouponMsg("");
-    setCoName(""); setCoPhone(""); setCoEmail(""); setCoNote(""); setGiftWrap(false);
-    // Replace the checkout history entry with success (like buyNow), so pressing Back
-    // from the success screen returns to the store — not an emptied checkout page.
-    if (typeof window !== "undefined") { try { window.history.replaceState({ screen: "success" }, ""); } catch {} }
-    screenRef.current = "success";
-    setScreenRaw("success");
+    finishOrder({ ...order, status: "placed", shipping, items: itemsSnapshot, payment_method: "cod", payment_status: "pending" });
   };
 
   const logout = () => {
@@ -1170,7 +1233,7 @@ export function StoreProvider({ children }) {
     myOrders, adminOrders, ordersBusy,
     selProduct, setSelProduct, selectedOrder, setSelectedOrder, openOrder, quickAdd, setQuickAdd,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
-    query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote, giftWrap, setGiftWrap,
+    query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote, giftWrap, setGiftWrap, paymentMethod, setPaymentMethod,
     coupon, couponMsg, setCouponMsg,
     lastOrder, placingOrder, form, setForm, blankForm,
     // derived

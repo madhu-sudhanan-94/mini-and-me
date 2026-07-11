@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { ChevronDown, User, MapPin, Truck, Minus, Plus, Trash2, Gift, Check } from "lucide-react";
+import { ChevronDown, User, MapPin, Truck, Minus, Plus, Trash2, Gift, Check, CreditCard, Banknote } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR, isEmail } from "../lib/format.js";
 import { SHOP } from "../shop.config.js";
+import { PAYMENTS } from "../payments.config.js";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import CouponBox from "../components/CouponBox.jsx";
@@ -14,8 +15,9 @@ export default function Checkout() {
     coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote,
     auth, goToLogin, placeOrder, placingOrder, setScreen, defaultAddress, addresses, session, coupon,
     products, buyNowItem, setBuyNowItem, checkoutItems, checkoutCount, checkoutBill,
-    changeQty, removeItem, changeBuyNowQty, giftWrap, setGiftWrap,
+    changeQty, removeItem, changeBuyNowQty, giftWrap, setGiftWrap, paymentMethod, setPaymentMethod,
   } = useStore();
+  const payOnline = paymentMethod === "online" && PAYMENTS.onlineEnabled;
   // Buy-now shows the single item; from the cart the order is collapsed by default.
   const [itemsOpen, setItemsOpen] = useState(!!buyNowItem);
   const emailInvalid = coEmail.trim() && !isEmail(coEmail);
@@ -148,6 +150,35 @@ export default function Checkout() {
           {checkoutBill.totalSaved > 0 && <p className="text-right text-xs font-semibold text-green-600 mt-1">You saved {formatINR(checkoutBill.totalSaved)} 🎉</p>}
         </section>
 
+        {/* Payment method */}
+        {(PAYMENTS.onlineEnabled || PAYMENTS.codEnabled) && (
+          <section>
+            <p className="text-sm font-semibold text-slate-800 mb-2">Payment method</p>
+            <div className="space-y-2">
+              {PAYMENTS.onlineEnabled && (
+                <button type="button" onClick={() => setPaymentMethod("online")} aria-pressed={paymentMethod === "online"} className={`w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${paymentMethod === "online" ? "border-brand-400 bg-brand-50/50" : "border-slate-200 bg-white"}`}>
+                  <span className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><CreditCard size={18} /></span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800">Pay online</span>
+                    <span className="block text-xs text-slate-400">UPI, cards, netbanking &amp; wallets</span>
+                  </span>
+                  <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition ${paymentMethod === "online" ? "border-brand-600" : "border-slate-300"}`}>{paymentMethod === "online" && <span className="w-2.5 h-2.5 rounded-full bg-brand-600" />}</span>
+                </button>
+              )}
+              {PAYMENTS.codEnabled && (
+                <button type="button" onClick={() => setPaymentMethod("cod")} aria-pressed={paymentMethod === "cod"} className={`w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${paymentMethod === "cod" ? "border-brand-400 bg-brand-50/50" : "border-slate-200 bg-white"}`}>
+                  <span className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><Banknote size={18} /></span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800">Cash on delivery</span>
+                    <span className="block text-xs text-slate-400">Pay in cash when your order arrives</span>
+                  </span>
+                  <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition ${paymentMethod === "cod" ? "border-brand-600" : "border-slate-300"}`}>{paymentMethod === "cod" && <span className="w-2.5 h-2.5 rounded-full bg-brand-600" />}</span>
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Contact */}
         <section>
           <p className="text-sm font-semibold text-slate-800 mb-3">Where should we send your order updates?</p>
@@ -182,7 +213,9 @@ export default function Checkout() {
           </>
         ) : (
           <PrimaryButton onClick={placeOrder} disabled={!coName.trim() || !hasContact || placingOrder || checkoutCount === 0} size="xl">
-            {placingOrder ? "Placing your order…" : `Place order · ${formatINR(checkoutBill.total)}`}
+            {placingOrder
+              ? (payOnline ? "Starting payment…" : "Placing your order…")
+              : `${payOnline ? "Pay" : "Place order ·"} ${formatINR(checkoutBill.total)}`}
           </PrimaryButton>
         )}
       </div>

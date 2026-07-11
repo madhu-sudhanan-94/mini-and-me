@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Package, Truck, CheckCircle2, Clock, ChevronRight } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR } from "../lib/format.js";
@@ -123,7 +123,12 @@ function ThumbRow({ items, products }) {
 
 export default function Orders() {
   const { myOrders, orders, session, setScreen, loadMyOrders, products, openOrder } = useStore();
-  useEffect(() => { if (session) loadMyOrders(); }, [session]);
+  const [loading, setLoading] = useState(!!session);
+  useEffect(() => {
+    if (!session) { setLoading(false); return; }
+    setLoading(true);
+    loadMyOrders().finally(() => setLoading(false));
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Signed-in users: DB history plus any local order not yet synced (deduped by ref).
   const list = (session ? mergeOrders(myOrders, orders) : orders).map(normalizeOrder);
@@ -132,7 +137,11 @@ export default function Orders() {
     <div className="pb-6">
       <ScreenHeader title="My orders" back="account" />
 
-      {list.length === 0 ? (
+      {list.length === 0 && loading ? (
+        <div className="px-5 mt-4 space-y-4">
+          {[0, 1, 2].map((i) => <div key={i} className="h-28 rounded-xl bg-white shadow-card animate-pulse" />)}
+        </div>
+      ) : list.length === 0 ? (
         <EmptyState icon={Package} title="No orders yet" subtitle="Your placed orders will show up here." className="min-h-[55vh]">
           <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Start shopping</PrimaryButton>
         </EmptyState>

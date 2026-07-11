@@ -141,9 +141,9 @@ export default function ProductModal() {
           {/* Details */}
           <div className="px-5 pt-3 pb-24 lg:pb-2">
           <h2 className="text-xl font-semibold text-slate-900 leading-tight">{p.name}</h2>
-          {oos ? <p className="text-xs font-semibold text-red-500 mt-2">Currently out of stock</p>
-            : selSoldOut ? <p className="text-xs font-semibold text-red-500 mt-2">Size {selSize} is out of stock</p>
-            : sizeLowStock(p, selSize) ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {stockFor(p, selSize)} left{hasSizeStock(p) ? ` in size ${selSize}` : ""}</p> : null}
+          {oos ? <p className="text-xs font-semibold text-red-500 mt-1">Currently out of stock</p>
+            : selSoldOut ? <p className="text-xs font-semibold text-red-500 mt-1">Size {selSize} is out of stock</p>
+            : sizeLowStock(p, selSize) ? <p className="text-xs font-semibold text-amber-600 mt-1">Hurry — only {stockFor(p, selSize)} left{hasSizeStock(p) ? ` in size ${selSize}` : ""}</p> : null}
 
           {/* description — 2 lines + See more (hidden when empty / placeholder) */}
           {hasDesc && (

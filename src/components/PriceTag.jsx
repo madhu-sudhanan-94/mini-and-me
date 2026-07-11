@@ -10,7 +10,7 @@ export default function PriceTag({ p, size = "base" }) {
       <div className="leading-tight">
         <div className="flex items-baseline gap-2">
           <span className="font-bold text-slate-900 text-3xl">{formatINR(p.price)}</span>
-          {showStrike && <span className="text-lg font-normal text-red-600">-{pct}%</span>}
+          {showStrike && <span className="text-lg font-normal text-red-500">-{pct}%</span>}
         </div>
         {showStrike && (
           <p className="text-xs text-slate-500 mt-1">M.R.P.: <span className="line-through">{formatINR(p.original)}</span></p>

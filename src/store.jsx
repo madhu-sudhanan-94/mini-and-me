@@ -11,9 +11,6 @@ import { gstBreakdown, formatINR } from "./lib/format.js";
 import { outOfStock, stockFor, sizeOutOfStock, firstInStockSize } from "./lib/catalog.js";
 import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
 
-// Temporary demo phone login. Real SMS OTP needs a paid provider (roadmap).
-const DEMO_OTP = "1234";
-
 /*
   StoreProvider holds ALL of the app's state and actions (what used to live in
   the single App component). Screens/components read it with the useStore() hook,
@@ -49,11 +46,6 @@ export function StoreProvider({ children }) {
   const [heroIndex, setHeroIndex] = useState(0);
   const [imgIndex, setImgIndex] = useState(0);
 
-  const [loginTab, setLoginTab] = useState("email"); // email | phone
-  const [loginPhone, setLoginPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpErr, setOtpErr] = useState("");
   const [authMode, setAuthMode] = useState("login"); // login | signup
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -92,8 +84,6 @@ export function StoreProvider({ children }) {
   const [giftWrap, setGiftWrap] = useState(false); // optional gift wrapping add-on at checkout
   const [coupon, setCoupon] = useState(null);       // applied coupon object (or null)
   const [couponMsg, setCouponMsg] = useState("");   // coupon error / hint text
-  const [billingSame, setBillingSame] = useState(true);  // billing address == delivery?
-  const [billingAddrId, setBillingAddrId] = useState(null);
   const [lastOrder, setLastOrder] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [buyNowItem, setBuyNowItem] = useState(null); // express "Buy now" single item (bypasses the cart)
@@ -152,7 +142,6 @@ export function StoreProvider({ children }) {
     setCoupon(c); setCouponMsg(""); showToast(`Coupon ${c.code} applied 🎉`);
   };
   const removeCoupon = () => { setCoupon(null); setCouponMsg(""); };
-  const billingAddress = billingSame ? defaultAddress : (addresses.find((a) => a.id === billingAddrId) || defaultAddress);
 
   // Drop the express "Buy now" item once the user leaves the checkout flow, so a
   // later normal checkout falls back to the cart.
@@ -471,19 +460,8 @@ export function StoreProvider({ children }) {
     }
     setReturnTo(target || null);
     setAuthErr(""); setAuthNotice(""); setAuthMode("login");
-    setLoginTab("email"); setOtp(""); setOtpSent(false); setOtpErr("");
     setScreen("login");
   };
-
-  /* ---------- demo phone login (temporary, code 1234) ---------- */
-  const sendPhoneOtp = () => {
-    setOtpErr("");
-    const digits = loginPhone.replace(/\D/g, "");
-    if (digits.length < 8) { setOtpErr("Enter a valid phone number."); return; }
-    setOtp("");
-    setOtpSent(true);
-  };
-  const resetPhoneLogin = () => { setOtpSent(false); setOtp(""); setOtpErr(""); };
 
   const openLegal = (key) => { setLegalPage(key); setScreen("legal"); };
 
@@ -518,15 +496,6 @@ export function StoreProvider({ children }) {
     const { ok, data } = await authUpdateUser(session.access_token, fields);
     if (!ok) { showToast(authErrText(data)); return { ok: false, data }; }
     return { ok: true, data };
-  };
-  const verifyPhoneOtp = () => {
-    if (otp !== DEMO_OTP) { setOtpErr("Incorrect code. For this demo, use " + DEMO_OTP + "."); return; }
-    const phone = loginPhone.trim();
-    setAuth({ role: "customer", id: phone, uid: null });
-    setLoginPhone(""); setOtp(""); setOtpSent(false); setOtpErr("");
-    const dest = returnTo || "home";
-    setReturnTo(null);
-    setScreen(dest);
   };
 
   const applySession = (data) => {
@@ -751,7 +720,6 @@ export function StoreProvider({ children }) {
         gift_wrap: !!order.giftWrap,
         gift_wrap_fee: order.gift_wrap_fee,
         total_saved: order.saved,
-        billing_address: extra.billing || null,
       };
       const postOrder = (body) => authedFetch(SUPABASE_URL + "/rest/v1/orders", {
         method: "POST",
@@ -824,29 +792,28 @@ export function StoreProvider({ children }) {
       const p = products.find((x) => x.id === it.id);
       return { product_id: it.id, product_name: p ? p.name : "Item", size: it.size, color: it.color, unit_price: p ? p.price : 0, qty: it.qty };
     });
-    // snapshot the delivery (and optional billing) address so past orders keep the right destination
+    // snapshot the delivery address so past orders keep the right destination
     const snap = (a) => a ? {
       label: a.label, full_name: a.full_name, phone: a.phone,
       line1: a.line1, line2: a.line2, area: a.area, city: a.city,
       state: a.state, pincode: a.pincode, country: a.country,
     } : null;
     const shipping = snap(defaultAddress);
-    const billing = billingSame ? null : snap(billingAddress);
 
     // Wait for the order to be safely recorded before showing success. If it
     // can't be saved, keep the cart + details so the customer can retry.
     setPlacingOrder(true);
-    const result = await saveOrderToDb(order, itemsSnapshot, order.phone, order.email, { userId: session?.user?.id || null, shipping, billing });
+    const result = await saveOrderToDb(order, itemsSnapshot, order.phone, order.email, { userId: session?.user?.id || null, shipping });
     setPlacingOrder(false);
     if (!result.ok) {
       showToast(result.offline ? "You appear to be offline — order not placed. Please try again." : "Couldn't place your order. Please try again.");
       return;
     }
 
-    setOrders((o) => [{ ...order, status: "placed", shipping, billing, items: itemsSnapshot }, ...o]);
+    setOrders((o) => [{ ...order, status: "placed", shipping, items: itemsSnapshot }, ...o]);
     setLastOrder({ ...order, shipping, items: itemsSnapshot });
     if (buyNowItem) setBuyNowItem(null); else setCart([]); // buy-now leaves the cart intact
-    setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
+    setCoupon(null); setCouponMsg("");
     setCoName(""); setCoPhone(""); setCoEmail(""); setCoNote(""); setGiftWrap(false);
     // Replace the checkout history entry with success (like buyNow), so pressing Back
     // from the success screen returns to the store — not an emptied checkout page.
@@ -864,12 +831,11 @@ export function StoreProvider({ children }) {
     setAdminOrders([]);
     setCart([]);            // don't leave this account's cart/wishlist for the next person
     setFavorites([]);
-    setCoupon(null); setCouponMsg(""); setBillingSame(true); setBillingAddrId(null);
+    setCoupon(null); setCouponMsg("");
     guestMergeRef.current = null;
     setAuth({ role: "guest", id: null });
     setReturnTo(null);
     setLoginEmail(""); setLoginPassword(""); setAuthErr(""); setAuthNotice(""); setAuthMode("login");
-    setLoginTab("email"); setLoginPhone(""); setOtp(""); setOtpSent(false); setOtpErr("");
     setScreen("home"); // back to the store as a guest, not the login wall
   };
 
@@ -1215,20 +1181,19 @@ export function StoreProvider({ children }) {
     orders, setOrders, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
-    loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
     authBusy, session, rememberMe, setRememberMe, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
     addresses, addrBusy, defaultAddress,
     myOrders, adminOrders, ordersBusy,
     selProduct, setSelProduct, selectedOrder, setSelectedOrder, openOrder, quickAdd, setQuickAdd,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote, giftWrap, setGiftWrap,
-    coupon, couponMsg, setCouponMsg, billingSame, setBillingSame, billingAddrId, setBillingAddrId,
+    coupon, couponMsg, setCouponMsg,
     lastOrder, placingOrder, form, setForm, blankForm,
     // derived
-    cartCount, cartTotal, cartSavings, bill, billingAddress,
+    cartCount, cartTotal, cartSavings, bill,
     buyNowItem, setBuyNowItem, checkoutItems, checkoutCount, checkoutBill,
     // actions
-    showToast, goToLogin, sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, applySession, handleAuth,
+    showToast, goToLogin, applySession, handleAuth,
     applyCoupon, removeCoupon,
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
     openQuickAdd, closeQuickAdd,

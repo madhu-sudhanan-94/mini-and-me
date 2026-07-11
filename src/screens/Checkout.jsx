@@ -13,7 +13,6 @@ export default function Checkout() {
   const {
     coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote,
     auth, goToLogin, placeOrder, placingOrder, setScreen, defaultAddress, addresses, session, coupon,
-    billingSame, setBillingSame, billingAddrId, setBillingAddrId, billingAddress,
     products, buyNowItem, setBuyNowItem, checkoutItems, checkoutCount, checkoutBill,
     changeQty, removeItem, changeBuyNowQty, giftWrap, setGiftWrap,
   } = useStore();
@@ -123,29 +122,6 @@ export default function Checkout() {
             )}
           </section>
         )}
-
-        {/* Billing address */}
-        {/* {session && defaultAddress && (
-          <section>
-            <p className="text-sm font-semibold text-slate-800 mb-2">Billing address</p>
-            <button onClick={() => setBillingSame((v) => !v)} className="flex items-center gap-2 mb-2">
-              <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${billingSame ? "bg-brand-600 border-brand-600" : "border-slate-300 bg-white"}`}>{billingSame && <Check size={13} className="text-white" />}</span>
-              <span className="text-sm text-slate-600">Same as delivery address</span>
-            </button>
-            {!billingSame && (
-              addresses.length > 1 ? (
-                <select value={billingAddrId || defaultAddress.id} onChange={(e) => setBillingAddrId(e.target.value)} className="w-full border border-slate-200 rounded-xl py-3 pl-3 pr-9 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 bg-white select-chevron">
-                  {addresses.map((a) => <option key={a.id} value={a.id}>{a.label} · {fmtAddr(a)}</option>)}
-                </select>
-              ) : (
-                <div>
-                  {billingAddress && <AddressCard a={billingAddress} />}
-                  <button onClick={() => setScreen("addresses")} className="text-xs font-semibold text-brand-600 mt-1.5">+ Add another address</button>
-                </div>
-              )
-            )}
-          </section>
-        )} */}
 
         {/* Coupon */}
         <section>

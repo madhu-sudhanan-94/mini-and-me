@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { ChevronLeft, Mail, Phone, Check, ArrowRight } from "lucide-react";
+import { ChevronLeft, Check } from "lucide-react";
 import { BRAND } from "../brand.config.js";
-import PhoneField from "../components/PhoneField.jsx";
 import PasswordField from "../components/PasswordField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
@@ -29,8 +28,7 @@ export default function Login() {
     returnTo, setReturnTo, setScreen, setAuth, authBusy, handleAuth,
     loginEmail, setLoginEmail, setAuthErr, loginPassword, setLoginPassword,
     authMode, setAuthMode, authErr, authNotice, setAuthNotice,
-    loginTab, setLoginTab, loginPhone, setLoginPhone, otp, setOtp, otpSent, otpErr,
-    sendPhoneOtp, verifyPhoneOtp, resetPhoneLogin, requestPasswordReset, showToast,
+    requestPasswordReset, showToast,
     rememberMe, setRememberMe,
   } = useStore();
   const [logoFailed, setLogoFailed] = useState(false);
@@ -61,65 +59,35 @@ export default function Login() {
           <p className="text-slate-500 text-sm mt-1.5">{isSignup ? `Sign up to start shopping with ${BRAND.name}.` : "Log in to your account to continue."}</p>
         </div>
 
-        {/* Email / Phone tabs */}
-        <div className="flex bg-slate-100 rounded-xl p-1 mb-5">
-          <button onClick={() => setLoginTab("email")} className={`flex-1 py-2 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 ${loginTab === "email" ? "bg-white shadow-sm text-brand-600" : "text-slate-500"}`}><Mail size={15} /> Email</button>
-          <button onClick={() => setLoginTab("phone")} className={`flex-1 py-2 rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 ${loginTab === "phone" ? "bg-white shadow-sm text-brand-600" : "text-slate-500"}`}><Phone size={15} /> Phone</button>
-        </div>
+        <form onSubmit={(e) => { e.preventDefault(); if (!authBusy) handleAuth(); }}>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+          <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); setAuthErr(""); }} type="email" autoComplete="email" placeholder="Enter your email" className={inputCls} />
 
-        {loginTab === "email" ? (
-          <>
-            <form onSubmit={(e) => { e.preventDefault(); if (!authBusy) handleAuth(); }}>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-              <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); setAuthErr(""); }} type="email" autoComplete="email" placeholder="Enter your email" className={inputCls} />
-
-              <div className="flex items-center justify-between mb-1.5 mt-4">
-                <label className="text-sm font-medium text-slate-700">Password</label>
-                {authMode === "login" && (
-                  <button type="button" onClick={requestPasswordReset} className="text-xs font-semibold text-brand-600">Forgot password?</button>
-                )}
-              </div>
-              <PasswordField value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} autoComplete={isSignup ? "new-password" : "current-password"} placeholder="Enter your password" />
-
-              <label className="flex items-center gap-2 mt-3.5 text-sm text-slate-600 cursor-pointer select-none w-fit">
-                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 accent-brand-600" />
-                Keep your account signed in on this device.
-              </label>
-
-              {authErr && <p className="text-red-500 text-xs mt-2.5">{authErr}</p>}
-              {authNotice && (
-                <div className="mt-2.5 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
-                  <Check size={15} className="text-brand-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-brand-700">{authNotice}</p>
-                </div>
-              )}
-
-              <PrimaryButton type="submit" disabled={authBusy} className="mt-5">
-                {authBusy ? "Please wait…" : (isSignup ? "Create account" : "Sign in")}
-              </PrimaryButton>
-            </form>
-          </>
-        ) : (
-          <>
-            {!otpSent ? (
-              <form onSubmit={(e) => { e.preventDefault(); sendPhoneOtp(); }}>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone number</label>
-                <PhoneField value={loginPhone} onChange={setLoginPhone} />
-                {otpErr && <p className="text-red-500 text-xs mt-2.5">{otpErr}</p>}
-                <PrimaryButton type="submit" className="mt-5">Send OTP <ArrowRight size={18} /></PrimaryButton>
-              </form>
-            ) : (
-              <form onSubmit={(e) => { e.preventDefault(); verifyPhoneOtp(); }}>
-                <p className="text-xs text-slate-500 mb-2">Enter the code sent to <span className="font-semibold text-slate-700">{loginPhone}</span></p>
-                <input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoFocus placeholder="• • • •" className="w-full text-center tracking-[0.6em] text-xl font-bold border border-slate-200 rounded-xl py-3 outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10" />
-                <div className="mt-2.5 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 text-xs text-brand-700">Demo mode — your code is <b>1234</b>.</div>
-                {otpErr && <p className="text-red-500 text-xs mt-2.5">{otpErr}</p>}
-                <PrimaryButton type="submit" disabled={otp.length < 4} className="mt-4">Verify &amp; continue <ArrowRight size={18} /></PrimaryButton>
-                <button type="button" onClick={resetPhoneLogin} className="w-full mt-3 text-brand-600 text-sm font-semibold py-1.5">Change number</button>
-              </form>
+          <div className="flex items-center justify-between mb-1.5 mt-4">
+            <label className="text-sm font-medium text-slate-700">Password</label>
+            {authMode === "login" && (
+              <button type="button" onClick={requestPasswordReset} className="text-xs font-semibold text-brand-600">Forgot password?</button>
             )}
-          </>
-        )}
+          </div>
+          <PasswordField value={loginPassword} onChange={(e) => { setLoginPassword(e.target.value); setAuthErr(""); }} autoComplete={isSignup ? "new-password" : "current-password"} placeholder="Enter your password" />
+
+          <label className="flex items-center gap-2 mt-3.5 text-sm text-slate-600 cursor-pointer select-none w-fit">
+            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 accent-brand-600" />
+            Keep your account signed in on this device.
+          </label>
+
+          {authErr && <p className="text-red-500 text-xs mt-2.5">{authErr}</p>}
+          {authNotice && (
+            <div className="mt-2.5 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
+              <Check size={15} className="text-brand-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-brand-700">{authNotice}</p>
+            </div>
+          )}
+
+          <PrimaryButton type="submit" disabled={authBusy} className="mt-5">
+            {authBusy ? "Please wait…" : (isSignup ? "Create account" : "Sign in")}
+          </PrimaryButton>
+        </form>
 
         {/* Or + social */}
         <div className="flex items-center gap-3 my-5">

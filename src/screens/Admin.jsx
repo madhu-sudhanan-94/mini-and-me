@@ -11,8 +11,8 @@ import Garment from "../components/Garment.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import { useStore } from "../store.jsx";
 
-const SHAPES = ["dress", "tee", "shirt", "tunic", "jacket", "pants", "shorts", "overall"];
-const CATS = ["women", "men", "kids"];
+const SHAPES = ["dress", "tee", "shirt", "tunic", "jacket", "pants", "shorts", "overall", "toy"];
+const CATS = ["women", "men", "kids", "toys"];
 
 // One tile in the blue header's stat strip.
 function StatTile({ icon: Icon, value, label }) {
@@ -53,7 +53,7 @@ export default function Admin() {
   const formRef = useRef(null);
   const editing = !!form.id;
   // The size set a product uses depends on its category/shape (mirrors store.saveProduct).
-  const formSizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
+  const formSizes = form.cat === "toys" ? [] : form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
   const allSizes = [...formSizes, ...(form.customSizes || []).filter((s) => s && !formSizes.includes(s))];
   const addCustomSize = () => { const s = sizeDraft.trim(); if (!s || allSizes.some((x) => x.toLowerCase() === s.toLowerCase())) return; setForm((f) => ({ ...f, customSizes: [...(f.customSizes || []), s] })); setSizeDraft(""); };
   const removeCustomSize = (s) => setForm((f) => ({ ...f, customSizes: (f.customSizes || []).filter((x) => x !== s), sizeStock: Object.fromEntries(Object.entries(f.sizeStock || {}).filter(([k]) => k !== s)) }));
@@ -139,7 +139,7 @@ export default function Admin() {
       <div className="flex-1 overflow-y-auto px-5 py-4 max-w-5xl mx-auto w-full lg:px-8">
         {/* ============ Quick actions ============ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <button onClick={() => setScreen("adminorders")} className="bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5 active:scale-[0.99] transition text-left">
+          <button onClick={() => setScreen("adminorders")} className="bg-white rounded-2xl p-4 shadow-card flex items-center gap-3.5 active:scale-[0.99] transition text-left">
             <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center shrink-0"><Package size={19} className="text-brand-600" /></div>
             <div className="flex-1 min-w-0">
               <span className="font-semibold text-slate-800 block text-sm">Manage orders</span>
@@ -147,7 +147,7 @@ export default function Admin() {
             </div>
             <ChevronRight size={20} className="text-slate-300 shrink-0" />
           </button>
-          <button onClick={startAdd} className="bg-white rounded-2xl p-4 shadow-xs flex items-center gap-3.5 active:scale-[0.99] transition text-left">
+          <button onClick={startAdd} className="bg-white rounded-2xl p-4 shadow-card flex items-center gap-3.5 active:scale-[0.99] transition text-left">
             <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0"><Plus size={19} className="text-emerald-600" /></div>
             <div className="flex-1 min-w-0">
               <span className="font-semibold text-slate-800 block text-sm">Add product</span>
@@ -162,7 +162,7 @@ export default function Admin() {
           {/* -------- Add / edit form (clearly-marked card) -------- */}
           <div
             ref={formRef}
-            className={`rounded-2xl p-4 shadow-xs mb-4 lg:mb-0 lg:sticky lg:top-4 scroll-mt-4 transition-colors ${editing ? "bg-brand-50 ring-2 ring-brand-500" : "bg-white"}`}
+            className={`rounded-2xl p-4 shadow-card mb-4 lg:mb-0 lg:sticky lg:top-4 scroll-mt-4 transition-colors ${editing ? "bg-brand-50 ring-2 ring-brand-500" : "bg-white"}`}
           >
             {editing ? (
               <div className="-mx-4 -mt-4 mb-4 rounded-t-2xl bg-brand-600 px-4 py-2.5 flex items-center justify-between gap-2">
@@ -324,7 +324,7 @@ export default function Admin() {
               {filtered.map((p) => {
                 const isRow = form.id === p.id;
                 return (
-                  <div key={p.id} className={`bg-white rounded-xl p-2.5 shadow-xs flex items-center gap-3 ${isRow ? "ring-2 ring-brand-500" : ""}`}>
+                  <div key={p.id} className={`bg-white rounded-xl p-2.5 shadow-card flex items-center gap-3 ${isRow ? "ring-2 ring-brand-500" : ""}`}>
                     <div className="w-12 h-12 rounded-lg bg-linear-to-br from-accent-50 to-brand-100 flex items-center justify-center shrink-0 overflow-hidden">
                       {p.images && p.images[0]
                         ? <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
@@ -343,7 +343,7 @@ export default function Admin() {
                 );
               })}
               {filtered.length === 0 && (
-                <div className="bg-white rounded-xl p-6 shadow-xs text-center text-sm text-slate-400">
+                <div className="bg-white rounded-xl p-6 shadow-card text-center text-sm text-slate-400">
                   No products match “{search}”.
                 </div>
               )}

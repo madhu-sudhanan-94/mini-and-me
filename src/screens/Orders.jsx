@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { Package, Truck, CheckCircle2, MapPin, Clock } from "lucide-react";
+import { Package, Truck, CheckCircle2, Clock, ChevronRight } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR } from "../lib/format.js";
-import { ORDER_STEPS, STATUS_LABEL, fmtDate, normalizeOrder, shipLines, mergeOrders } from "../lib/orders.js";
+import { ORDER_STEPS, STATUS_LABEL, fmtDate, normalizeOrder, mergeOrders } from "../lib/orders.js";
 import { useStore } from "../store.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import EmptyState from "../components/EmptyState.jsx";
@@ -24,7 +24,7 @@ const STATUS_STYLE = {
   cancelled: { pill: "bg-rose-100 text-rose-600", dot: "bg-rose-500", Icon: Clock },
 };
 
-function StatusPill({ status }) {
+export function StatusPill({ status }) {
   const s = STATUS_STYLE[status] || STATUS_STYLE.placed;
   const { Icon } = s;
   return (
@@ -44,7 +44,7 @@ const TRACK_STEPS = [
   { key: "delivered", label: "Delivered", Icon: CheckCircle2 },
 ];
 
-function StepTracker({ status }) {
+export function StepTracker({ status }) {
   const cancelled = status === "cancelled";
   const idx = ORDER_STEPS.indexOf(status); // 0..3 over placed/confirmed/shipped/delivered
   // Progress across the 3 visible milestones (confirmed→delivered).
@@ -90,7 +90,7 @@ function StepTracker({ status }) {
 // "+N" chip absorbs overflow beyond 4 thumbnails.
 function ThumbRow({ items, products }) {
   const imgOf = (it) => products.find((p) => p.id === it.product_id)?.images?.[0];
-  const shown = items.slice(0, 4);
+  const shown = items.slice(0, 3);
   const extra = items.length - shown.length;
   return (
     <div className="flex items-center">
@@ -122,7 +122,7 @@ function ThumbRow({ items, products }) {
 }
 
 export default function Orders() {
-  const { myOrders, orders, session, setScreen, loadMyOrders, products } = useStore();
+  const { myOrders, orders, session, setScreen, loadMyOrders, products, openOrder } = useStore();
   useEffect(() => { if (session) loadMyOrders(); }, [session]);
 
   // Signed-in users: DB history plus any local order not yet synced (deduped by ref).
@@ -137,13 +137,15 @@ export default function Orders() {
           <PrimaryButton variant="solid" full={false} onClick={() => setScreen("home")} className="px-6">Start shopping</PrimaryButton>
         </EmptyState>
       ) : (
-        <div className="px-5 mt-4 space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+        <div className="px-5 mt-4">
+        <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
           {list.map((o, oi) => {
             const count = o.items.length;
             return (
-              <div
+              <button
                 key={o.key}
-                className="ord-rise bg-white rounded-2xl shadow-xs p-4"
+                onClick={() => openOrder(o)}
+                className="ord-rise w-full text-left bg-white rounded-2xl shadow-card p-4 active:scale-[0.99] transition"
                 style={{ animationDelay: `${Math.min(oi, 6) * 0.06}s` }}
               >
                 {/* Header: ref + date on the left, status pill on the right */}
@@ -155,7 +157,7 @@ export default function Orders() {
                   <StatusPill status={o.status} />
                 </div>
 
-                {/* Visual receipt: thumbnails + a short item summary */}
+                {/* Visual receipt: thumbnails + a short item summary + tap affordance */}
                 {count > 0 && (
                   <div className="mt-3.5 flex items-center gap-3">
                     <ThumbRow items={o.items} products={products} />
@@ -166,42 +168,20 @@ export default function Orders() {
                         {count > 1 ? ` · +${count - 1} more` : ""}
                       </p>
                     </div>
-                  </div>
-                )}
-
-                <StepTracker status={o.status} />
-
-                {/* Itemised lines */}
-                {count > 0 && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
-                    {o.items.map((it, i) => (
-                      <div key={i} className="flex justify-between text-xs">
-                        <span className="truncate pr-2 text-slate-500">
-                          {it.product_name}
-                          <span className="text-slate-400">{it.size ? ` · ${it.size}` : ""} × {it.qty || 1}</span>
-                        </span>
-                        <span className="shrink-0 font-medium text-slate-600">{formatINR((it.unit_price || 0) * (it.qty || 1))}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Shipping address */}
-                {o.shipping && (
-                  <div className="mt-3 flex gap-2">
-                    <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-slate-500 leading-relaxed">{[o.shipping.full_name, shipLines(o.shipping)].filter(Boolean).join(" · ")}</p>
+                    <ChevronRight size={18} className="text-slate-300 shrink-0" />
                   </div>
                 )}
 
                 {/* Emphasised total footer */}
                 <div className="mt-3.5 flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-2.5">
                   <span className="text-xs font-medium text-slate-500">Order total</span>
-                  <span className="text-lg font-extrabold text-slate-900 tracking-tight">{formatINR(o.total)}</span>
+                  <span className="text-lg font-bold text-slate-900 tracking-tight">{formatINR(o.total)}</span>
                 </div>
-              </div>
+              </button>
             );
           })}
+        </div>
+          <PrimaryButton variant="solid" onClick={() => setScreen("home")} className="mt-4">Continue shopping</PrimaryButton>
         </div>
       )}
     </div>

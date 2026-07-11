@@ -9,7 +9,7 @@ import CouponBox from "../components/CouponBox.jsx";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
-  const { cart, products, setScreen, removeItem, changeQty, bill, coupon, cartCount } = useStore();
+  const { cart, products, setScreen, removeItem, changeQty, bill, coupon, cartCount, openProduct } = useStore();
 
   return (
     <div className="flex flex-col min-h-full">
@@ -27,13 +27,13 @@ export default function Cart() {
               if (!p) return null;
               const onSale = p.original && p.original > p.price;
               return (
-                <div key={idx} className="bg-white rounded-2xl p-3 shadow-xs flex gap-3">
-                  <div className="relative w-20 h-[84px] rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0">
+                <div key={idx} className="bg-white rounded-2xl p-3 shadow-card flex gap-3">
+                  <button onClick={() => openProduct(p)} aria-label={`View ${p.name}`} className="relative w-20 h-[84px] rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0 active:scale-95 transition">
                     <ProductImage p={p} color={item.color} />
-                  </div>
+                  </button>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                      <p className="font-semibold text-slate-800 text-[15px] truncate pr-2">{p.name}</p>
+                      <button onClick={() => openProduct(p)} className="font-semibold text-slate-800 text-[15px] truncate pr-2 text-left hover:text-brand-600 transition">{p.name}</button>
                       <button onClick={() => removeItem(idx)} className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={17} /></button>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -82,7 +82,7 @@ export default function Cart() {
               </div>
               <div className="flex justify-between items-center pt-2.5 mt-2.5 border-t border-brand-100">
                 <span className="font-semibold text-slate-800">{cartCount} item{cartCount !== 1 ? "s" : ""} · to pay</span>
-                <span className="text-xl font-extrabold text-slate-900">{formatINR(bill.total)}</span>
+                <span className="text-xl font-bold text-slate-900">{formatINR(bill.total)}</span>
               </div>
               {bill.totalSaved > 0 && <p className="text-right text-xs font-semibold text-green-600 mt-1">You saved {formatINR(bill.totalSaved)} 🎉</p>}
             </div>

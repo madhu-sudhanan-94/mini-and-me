@@ -19,8 +19,8 @@ export default function ProductCard({ p, wide }) {
     });
 
     return (
-        <div onClick={() => openProduct(p)} className={`text-left bg-white rounded-2xl p-2 sm:p-2.5 shadow-[0_2px_12px_rgba(2,6,23,0.09)] hover:shadow-[0_8px_24px_rgba(2,6,23,0.13)] transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}>
-            <div className="relative rounded-xl bg-linear-to-br from-accent-50 to-brand-100 h-[180px] overflow-hidden touch-pan-y select-none">
+        <div onClick={() => openProduct(p)} className={`text-left bg-white rounded-lg overflow-hidden shadow-card hover:shadow-card-hover transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}>
+            <div className="relative bg-linear-to-br from-accent-50 to-brand-100 h-[190px] overflow-hidden touch-pan-y select-none">
                 <ProductImage key={imgIdx} p={p} color={p.colors[0]} index={imgIdx} />
                 {/* swipe layer — sits below the buttons (z-10) so they stay clickable */}
                 {imgs.length > 1 && <div {...swipe} aria-hidden="true" className="absolute inset-0 z-[1]" />}
@@ -30,7 +30,7 @@ export default function ProductCard({ p, wide }) {
                         <span className="bg-slate-900/85 text-white text-[10px] font-bold px-2.5 py-1 rounded-md">Out of stock</span>
                     </div>
                 )}
-                {!oos && p.original && <span className="absolute z-10 top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>}
+                {!oos && p.original && p.tag !== "new" && <span className="absolute z-10 top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>}
                 {!oos && p.tag === "new" && <span className="absolute z-10 top-1.5 left-1.5 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">NEW</span>}
 
                 {/* favourite */}
@@ -76,8 +76,8 @@ export default function ProductCard({ p, wide }) {
                 )}
             </div>
 
-            <div className="px-1">
-                <p className="mt-2 text-[13px] font-semibold text-slate-800 truncate">{p.name}</p>
+            <div className="px-2.5 pt-2 pb-2.5">
+                <p className="text-[13px] font-semibold text-slate-800 truncate">{p.name}</p>
                 <div className="mt-0.5">
                     <PriceTag p={p} />
                 </div>

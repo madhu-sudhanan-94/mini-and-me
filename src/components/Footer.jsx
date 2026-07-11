@@ -10,7 +10,7 @@ export default function Footer() {
     <footer className="mt-8 border-t border-slate-100 bg-white px-6 py-6 lg:px-8">
       <div className="lg:max-w-6xl lg:mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
-          <p className="font-extrabold text-slate-900">{BRAND.name}</p>
+          <p className="font-bold text-slate-900">{BRAND.name}</p>
           <p className="text-xs text-slate-400 mt-0.5">{BRAND.tagline}</p>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">

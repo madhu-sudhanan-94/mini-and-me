@@ -59,7 +59,7 @@ export default function Checkout() {
               const inc = () => (buyNowItem ? changeBuyNowQty(1) : changeQty(idx, 1));
               const del = () => { if (buyNowItem) { setBuyNowItem(null); setScreen("home"); } else removeItem(idx); };
               return (
-                <div key={idx} className="bg-white rounded-2xl p-3 shadow-xs flex gap-3">
+                <div key={idx} className="bg-white rounded-2xl p-3 shadow-card flex gap-3">
                   <div className="relative w-20 h-[84px] rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0">
                     <ProductImage p={p} color={item.color} />
                   </div>
@@ -95,7 +95,7 @@ export default function Checkout() {
         {/* Gift wrapping */}
         <section>
           <button type="button" onClick={() => setGiftWrap((v) => !v)} aria-pressed={giftWrap} className={`w-full flex items-center gap-3 rounded-2xl border p-3.5 text-left transition ${giftWrap ? "border-brand-300 bg-white" : "border-slate-200 bg-white"}`}>
-            <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${giftWrap ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`}><Gift size={18} /></span>
+            <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${giftWrap ? "bg-brand-100 text-brand-600" : "bg-slate-100 text-slate-500"}`}><Gift size={18} /></span>
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-semibold text-slate-800">Add gift wrapping</span>
               <span className="block text-xs text-slate-400">Premium wrap for {formatINR(SHOP.giftWrapFee)}</span>
@@ -167,7 +167,7 @@ export default function Checkout() {
           )}
           <div className="flex justify-between items-center pt-2.5 mt-2.5 border-t border-brand-100">
             <span className="font-semibold text-slate-800">{checkoutCount} item{checkoutCount !== 1 ? "s" : ""} · to pay</span>
-            <span className="text-xl font-extrabold text-slate-900">{formatINR(checkoutBill.total)}</span>
+            <span className="text-xl font-bold text-slate-900">{formatINR(checkoutBill.total)}</span>
           </div>
           {checkoutBill.totalSaved > 0 && <p className="text-right text-xs font-semibold text-green-600 mt-1">You saved {formatINR(checkoutBill.totalSaved)} 🎉</p>}
         </section>
@@ -198,7 +198,7 @@ export default function Checkout() {
         </section>
       </div>
 
-      <div className="p-5 border-t border-slate-100 lg:border-0">
+      <div className="sticky bottom-0 z-20 p-5 border-t border-slate-100 bg-white/95 backdrop-blur lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:backdrop-blur-none">
         {auth.role === "guest" ? (
           <>
             <PrimaryButton onClick={() => goToLogin("checkout")} size="xl"><User size={18} /> Log in to place order</PrimaryButton>

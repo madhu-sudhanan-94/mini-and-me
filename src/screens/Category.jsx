@@ -15,7 +15,7 @@ const PRICE_BOUNDS = [0, 10000]; // fixed price range for the slider
 
 export default function Category() {
   const { products, selCategory, setSelCategory, setScreen } = useStore();
-  const cats = ["all", "kids", "women", "men"];
+  const cats = ["all", "kids", "women", "men", "toys"];
   // selCategory can also be a "collection" — "new" or "trending" — opened from
   // the Home "See all" links. Those hide the category tabs and set the title.
   const isCollection = selCategory === "new" || selCategory === "trending";

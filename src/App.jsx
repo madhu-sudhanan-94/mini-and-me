@@ -16,6 +16,7 @@ import Account from "./screens/Account.jsx";
 import Profile from "./screens/Profile.jsx";
 import Addresses from "./screens/Addresses.jsx";
 import Orders from "./screens/Orders.jsx";
+import OrderDetail from "./screens/OrderDetail.jsx";
 import Admin from "./screens/Admin.jsx";
 import AdminOrders from "./screens/AdminOrders.jsx";
 import LegalPage from "./screens/LegalPage.jsx";
@@ -30,7 +31,7 @@ const Logo = BRAND.logo;
 const SCREENS = {
   login: Login, home: Home, category: Category, favorites: Favorites,
   cart: Cart, checkout: Checkout, success: Success, account: Account, profile: Profile,
-  addresses: Addresses, orders: Orders, admin: Admin, adminorders: AdminOrders,
+  addresses: Addresses, orders: Orders, orderdetail: OrderDetail, admin: Admin, adminorders: AdminOrders,
   legal: LegalPage, contact: Contact, resetpw: ResetPassword, security: Security,
 };
 
@@ -51,7 +52,7 @@ function Shell() {
           <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
             <Logo size={30} className="text-white" />
           </div>
-          <p className="text-white text-xl font-extrabold">{BRAND.name}</p>
+          <p className="text-white text-xl font-bold">{BRAND.name}</p>
           <p className="text-brand-100 text-sm mt-1">Loading your store…</p>
         </div>
       </div>

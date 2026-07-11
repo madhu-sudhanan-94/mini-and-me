@@ -32,7 +32,7 @@ export default function ResetPassword() {
           <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-5">
             <Logo size={26} className="text-white" />
           </div>
-          <h1 className="text-white text-2xl font-extrabold leading-tight">Set a new password</h1>
+          <h1 className="text-white text-2xl font-bold leading-tight">Set a new password</h1>
           <p className="text-brand-100 mt-1.5 text-sm">Choose a new password for your {BRAND.name} account.</p>
         </div>
       </div>

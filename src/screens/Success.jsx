@@ -21,13 +21,13 @@ export default function Success() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-extrabold text-slate-900">Order placed! 🎉</h2>
+        <h2 className="text-2xl font-bold text-slate-900">Order placed! 🎉</h2>
         <p className="text-slate-500 text-sm mt-2 max-w-xs">
           Thanks{lastOrder ? ", " + lastOrder.name : ""}. We'll send updates to <span className="font-semibold text-slate-700">{lastOrder?.contact}</span>.
         </p>
 
         {/* Order card */}
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-xs p-4 mt-6 w-full max-w-xs">
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-card p-4 mt-6 w-full max-w-xs">
           <div className="flex justify-between items-center">
             <span className="text-xs text-slate-400">Order ID</span>
             <span className="font-bold text-slate-800">{lastOrder?.id}</span>
@@ -45,7 +45,7 @@ export default function Success() {
 
         {/* Tax invoice */}
         {lastOrder?.items?.length > 0 && (
-          <div className="bg-white border border-slate-100 rounded-2xl shadow-xs p-4 mt-4 w-full max-w-xs text-left">
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-card p-4 mt-4 w-full max-w-xs text-left">
             <div className="flex items-center justify-between mb-2.5">
               <p className="text-sm font-bold text-slate-800">Tax invoice</p>
               <button onClick={() => printInvoice(lastOrder)} className="text-xs font-semibold text-brand-600 flex items-center gap-1 active:scale-95 transition"><Download size={13} /> Download</button>

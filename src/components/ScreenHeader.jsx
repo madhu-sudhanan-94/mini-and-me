@@ -17,10 +17,10 @@ export default function ScreenHeader({ title, back = "home", onBack, right = nul
   const { goBack } = useStore();
   const handleBack = onBack || (() => goBack(back));
   return (
-    <div className={`flex items-center gap-4 ${padded ? "px-5 pt-[18px]" : ""} ${className}`}>
-      <button onClick={handleBack} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition shrink-0"><ChevronLeft size={20} className="text-slate-700" /></button>
-      <h2 className="-mt-[1px] text-[26px] font-medium text-slate-900 truncate">{title}</h2>
-      {right && <div className="ml-auto shrink-0">{right}</div>}
+    <div className={`flex items-center gap-2 ${padded ? "px-5 pt-[18px] pb-1" : ""} ${className}`}>
+      <button onClick={handleBack} aria-label="Back" className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center active:scale-95 transition shrink-0"><ChevronLeft size={20} className="text-slate-700" /></button>
+      <h2 className="flex-1 min-w-0 text-center text-lg font-semibold text-slate-900 truncate">{title}</h2>
+      <div className="w-9 shrink-0 flex justify-end">{right}</div>
     </div>
   );
 }

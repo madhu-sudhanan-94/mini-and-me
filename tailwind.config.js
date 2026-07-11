@@ -24,6 +24,13 @@ export default {
       fontFamily: {
         sans: [BRAND.font],
       },
+      // Single source for the standard card shadow — soft, even on all sides.
+      // Use `shadow-card` on card containers (product, order, address, cart,
+      // favourites…) and `hover:shadow-card-hover` for the lift on tappable cards.
+      boxShadow: {
+        card: "0 2px 12px rgba(2,6,23,0.09)",
+        "card-hover": "0 8px 24px rgba(2,6,23,0.13)",
+      },
     },
   },
   plugins: [],

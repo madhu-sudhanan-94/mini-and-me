@@ -104,50 +104,48 @@ export default function ProductModal() {
     <div className="fixed sm:max-lg:absolute inset-0 z-40 flex flex-col lg:items-center lg:justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={closeProduct} />
       <div className="relative h-full w-full lg:h-auto lg:w-[460px] lg:max-w-[92vw] bg-slate-50 lg:rounded-4xl max-h-full lg:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
-        {/* Floating controls (stay put even when the image is zoom-scrolled) */}
-        <button onClick={closeProduct} aria-label="Close" className="absolute top-3 left-3 z-20 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition"><X size={18} className="text-slate-600" /></button>
-        <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-          <button onClick={openShare} aria-label="Share" className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
-            <Share2 size={18} className="text-slate-600" />
-          </button>
-          <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
-            <Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-600"} fill={isFav(p.id) ? "currentColor" : "none"} />
-          </button>
+        {/* Header scrolls away with the content (not pinned). */}
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="relative z-30 flex items-center gap-1 px-2.5 py-2.5 bg-white/95 backdrop-blur border-b border-slate-100">
+          <button onClick={closeProduct} aria-label="Close" className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center active:scale-90 transition shrink-0"><X size={20} className="text-slate-700" /></button>
+          <p className="flex-1 min-w-0 truncate text-[15px] font-bold text-slate-900 px-1">{p.name}</p>
+          <button onClick={openShare} aria-label="Share" className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center active:scale-90 transition shrink-0"><Share2 size={18} className="text-slate-700" /></button>
+          <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center active:scale-90 transition shrink-0"><Heart size={19} className={isFav(p.id) ? "text-rose-500" : "text-slate-700"} fill={isFav(p.id) ? "currentColor" : "none"} /></button>
         </div>
 
-        {/* Image — tap to open the full-screen viewer */}
-        <div
-          {...(imgs.length > 1 ? imgSwipe : {})}
-          className="relative shrink-0 h-72 sm:h-80 bg-linear-to-br from-accent-100 to-brand-200 overflow-hidden touch-pan-y"
-        >
-          {src && !imgFailed ? (
-            <img
-              src={src} alt={p.name} onError={() => setImgFailed(true)}
-              onClick={() => imgs.length && setLightbox(true)}
-              className="w-full h-full object-contain cursor-zoom-in"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center"><Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[80%]" /></div>
-          )}
-          {/* Dot indicators */}
-          {imgs.length > 1 && (
-            <div className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5">
-              {imgs.map((_, i) => (
-                <button key={i} onClick={() => setImgIndex(i)} aria-label={`Image ${i + 1}`} className={`h-1.5 rounded-full transition-all ${i === imgIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
-              ))}
-            </div>
-          )}
-          {/* Full-screen button */}
-          {src && !imgFailed && (
-            <button onClick={() => setLightbox(true)} aria-label="View full screen" className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
-              <Maximize2 size={15} className="text-slate-600" />
-            </button>
-          )}
-        </div>
+          {/* Image — tap to open the full-screen viewer */}
+          <div
+            {...(imgs.length > 1 ? imgSwipe : {})}
+            className="relative h-72 sm:h-80 bg-linear-to-br from-accent-100 to-brand-200 overflow-hidden touch-pan-y"
+          >
+            {src && !imgFailed ? (
+              <img
+                src={src} alt={p.name} onError={() => setImgFailed(true)}
+                onClick={() => imgs.length && setLightbox(true)}
+                className="w-full h-full object-contain cursor-zoom-in"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center"><Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[80%]" /></div>
+            )}
+            {/* Dot indicators */}
+            {imgs.length > 1 && (
+              <div className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5">
+                {imgs.map((_, i) => (
+                  <button key={i} onClick={() => setImgIndex(i)} aria-label={`Image ${i + 1}`} className={`h-1.5 rounded-full transition-all ${i === imgIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"}`} />
+                ))}
+              </div>
+            )}
+            {/* Full-screen button */}
+            {src && !imgFailed && (
+              <button onClick={() => setLightbox(true)} aria-label="View full screen" className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition">
+                <Maximize2 size={15} className="text-slate-600" />
+              </button>
+            )}
+          </div>
 
-        {/* Details (scrollable) */}
-        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-2 no-scrollbar">
-          <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">{p.name}</h2>
+          {/* Details */}
+          <div className="px-6 pt-4 pb-2">
+          <h2 className="text-2xl font-bold text-slate-900 leading-tight">{p.name}</h2>
           {oos ? <p className="text-xs font-semibold text-red-500 mt-2">Currently out of stock</p>
             : selSoldOut ? <p className="text-xs font-semibold text-red-500 mt-2">Size {selSize} is out of stock</p>
             : sizeLowStock(p, selSize) ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {stockFor(p, selSize)} left{hasSizeStock(p) ? ` in size ${selSize}` : ""}</p> : null}
@@ -245,6 +243,7 @@ export default function ProductModal() {
 
           {/* Ratings & reviews */}
           <ReviewsSection productId={p.id} />
+          </div>
         </div>
 
         {/* Actions */}

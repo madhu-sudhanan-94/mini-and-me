@@ -34,9 +34,9 @@ export default function Home() {
   const allPageCount = Math.max(1, Math.ceil(products.length / ALL_PAGE));
   const allSafe = Math.min(allPage, allPageCount);
   const allShown = products.slice((allSafe - 1) * ALL_PAGE, allSafe * ALL_PAGE);
-  const cats = ["kids", "women", "men"];
-  const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500" };
-  const catShape = { women: "dress", men: "shirt", kids: "overall" };
+  const cats = ["kids", "women", "men", "toys"];
+  const catColor = { women: "from-rose-400 to-pink-500", men: "from-brand-500 to-indigo-500", kids: "from-amber-400 to-orange-500", toys: "from-teal-400 to-emerald-500" };
+  const catShape = { women: "dress", men: "shirt", kids: "overall", toys: "toy" };
   const catImg = {};
   for (const c of cats) {
     const withImg = products.find((p) => p.cat === c && p.images && p.images[0]);
@@ -106,7 +106,7 @@ export default function Home() {
               <ProductImage p={heroP} color="#ffffff" />
               <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/15 to-transparent" />
               <span className="absolute top-4 left-4 z-10 bg-white/25 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">✨ Featured</span>
-              <h3 className="text-white text-2xl font-extrabold relative z-10 leading-tight max-w-[70%] drop-shadow-sm">{heroP.name}</h3>
+              <h3 className="text-white text-2xl font-bold relative z-10 leading-tight max-w-[70%] drop-shadow-sm">{heroP.name}</h3>
               <div className="flex items-baseline gap-2 mt-1 relative z-10">
                 <span className="text-white text-xl font-bold drop-shadow-sm">{formatINR(heroP.price)}</span>
                 {heroP.original && <span className="text-brand-100 line-through text-sm">{formatINR(heroP.original)}</span>}
@@ -161,7 +161,7 @@ export default function Home() {
                 <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white">Festive Edit</span>
               </span>
               <div className="relative z-10">
-                <p className="promo-textshine text-[17px] font-extrabold leading-tight tracking-tight">Up to 40% off</p>
+                <p className="promo-textshine text-[17px] font-bold leading-tight tracking-tight">Up to 40% off</p>
                 <div className="flex items-center justify-between gap-1.5">
                   <span className="whitespace-nowrap text-[11px] font-medium text-white/90">Shop the sale</span>
                   <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/20 ring-1 ring-inset ring-white/30 backdrop-blur-sm transition-transform duration-300 group-hover:translate-x-0.5">
@@ -185,7 +185,7 @@ export default function Home() {
                 <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white">Just In</span>
               </span>
               <div className="relative z-10">
-                <p className="promo-textshine text-[17px] font-extrabold leading-tight tracking-tight">New Arrivals</p>
+                <p className="promo-textshine text-[17px] font-bold leading-tight tracking-tight">New Arrivals</p>
                 <div className="flex items-center justify-between gap-1.5">
                   <span className="whitespace-nowrap text-[11px] font-medium text-white/90">Explore now</span>
                   <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/20 ring-1 ring-inset ring-white/30 backdrop-blur-sm transition-transform duration-300 group-hover:translate-x-0.5">

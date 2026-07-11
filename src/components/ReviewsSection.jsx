@@ -32,7 +32,7 @@ export default function ReviewsSection({ productId }) {
 
   return (
     <div className="mt-6">
-      <p className="text-sm font-semibold text-slate-800 mb-2">Ratings &amp; reviews{count > 0 && <span className="text-slate-400 font-normal"> ({count})</span>}</p>
+      <p className="text-sm font-semibold text-slate-900 mb-2">Ratings &amp; reviews{count > 0 && <span className="text-slate-400 font-normal"> ({count})</span>}</p>
 
       {count > 0 && (
         <div className="flex items-center gap-2 mb-3">

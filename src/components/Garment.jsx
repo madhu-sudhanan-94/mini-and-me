@@ -81,6 +81,29 @@ export default function Garment({ shape, color, className = "", style = {} }) {
         <path d="M60 50 L60 60" stroke={light} strokeWidth="1.4" opacity="0.4" />
       </>
     );
+  } else if (shape === "toy") {
+    // teddy bear
+    body = (
+      <>
+        <circle cx="37" cy="104" r="11" fill={color} />
+        <circle cx="63" cy="104" r="11" fill={color} />
+        <circle cx="37" cy="106" r="4" fill={dark} opacity="0.25" />
+        <circle cx="63" cy="106" r="4" fill={dark} opacity="0.25" />
+        <circle cx="25" cy="74" r="10" fill={color} />
+        <circle cx="75" cy="74" r="10" fill={color} />
+        <ellipse cx="50" cy="84" rx="24" ry="25" fill={color} />
+        <ellipse cx="50" cy="87" rx="12" ry="14" fill={light} opacity="0.35" />
+        <circle cx="35" cy="28" r="9" fill={color} />
+        <circle cx="65" cy="28" r="9" fill={color} />
+        <circle cx="35" cy="28" r="4" fill={dark} opacity="0.3" />
+        <circle cx="65" cy="28" r="4" fill={dark} opacity="0.3" />
+        <circle cx="50" cy="42" r="20" fill={color} />
+        <ellipse cx="50" cy="49" rx="9" ry="7" fill={light} opacity="0.55" />
+        <circle cx="43" cy="40" r="2.4" fill={dark} />
+        <circle cx="57" cy="40" r="2.4" fill={dark} />
+        <circle cx="50" cy="46" r="2.6" fill={dark} />
+      </>
+    );
   } else if (shape === "overall") {
     body = (
       <>

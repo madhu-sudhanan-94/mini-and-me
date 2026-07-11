@@ -56,24 +56,24 @@ export default function Security() {
 
       <div className="px-5 mt-4 space-y-4">
         {/* Change password */}
-        <div className="bg-white rounded-2xl shadow-xs p-4">
+        <div className="bg-white rounded-2xl shadow-card p-4">
           <CardHead icon={KeyRound} tint="bg-brand-50 text-brand-600" title="Change password" subtitle="Update the password you use to sign in — at least 6 characters." />
           <PasswordField value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" placeholder="New password (min 6 characters)" />
-          <PrimaryButton variant="solid" size="md" onClick={changePassword} disabled={busy} className="mt-3 text-sm">Update password</PrimaryButton>
+          <PrimaryButton variant="solid" size="md" onClick={changePassword} disabled={busy || pw.length < 6} className="mt-3 text-sm">Update password</PrimaryButton>
         </div>
 
         {/* Change email */}
-        <div className="bg-white rounded-2xl shadow-xs p-4">
+        <div className="bg-white rounded-2xl shadow-card p-4">
           <CardHead icon={Mail} tint="bg-violet-50 text-violet-600" title="Change email" subtitle={`Current: ${email || "—"}`} />
           <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} autoComplete="email" placeholder="New email address" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500" />
-          <PrimaryButton variant="solid" size="md" onClick={changeEmail} disabled={busy} className="mt-3 text-sm">Update email</PrimaryButton>
+          <PrimaryButton variant="solid" size="md" onClick={changeEmail} disabled={busy || !newEmail.trim().includes("@")} className="mt-3 text-sm">Update email</PrimaryButton>
           <p className="text-[11px] text-slate-400 mt-2">We'll send a confirmation link to the new address.</p>
         </div>
 
         {/* Delete account */}
-        <div className="bg-white rounded-2xl shadow-xs p-4">
+        <div className="bg-white rounded-2xl shadow-card p-4 ring-1 ring-red-100">
           <CardHead icon={Trash2} tint="bg-red-50 text-red-500" title="Delete account" subtitle="Permanently remove your account and data. This sends a request to our team and signs you out." />
-          <button onClick={deleteAccount} className="w-full border border-red-200 text-red-500 font-semibold py-2.5 rounded-xl text-base hover:bg-red-50 active:scale-[0.99] transition">Request account deletion</button>
+          <button onClick={deleteAccount} className="w-full inline-flex items-center justify-center gap-2 border border-red-200 text-red-500 font-semibold py-2.5 rounded-xl text-sm hover:bg-red-50 active:scale-[0.99] transition"><Trash2 size={16} /> Request account deletion</button>
         </div>
       </div>
     </div>

@@ -57,7 +57,7 @@ export default function Login() {
           ) : (
             <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-500 to-accent-400 shadow-lg mx-auto mb-4 flex items-center justify-center"><Logo size={28} className="text-white" /></div>
           )}
-          <h1 className="text-2xl font-extrabold text-slate-900">{isSignup ? "Create account" : "Welcome back"}</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{isSignup ? "Create account" : "Welcome back"}</h1>
           <p className="text-slate-500 text-sm mt-1.5">{isSignup ? `Sign up to start shopping with ${BRAND.name}.` : "Log in to your account to continue."}</p>
         </div>
 

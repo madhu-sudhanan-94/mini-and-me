@@ -14,7 +14,7 @@ export default function DesktopNav() {
       <BrandLogo imgClass="h-8" />
       <nav className="flex items-center gap-1">
         <button onClick={() => setScreen("home")} className={link(screen === "home")}>Home</button>
-        {["women", "men", "kids"].map((c) => (
+        {["women", "men", "kids", "toys"].map((c) => (
           <button key={c} onClick={() => { setSelCategory(c); setScreen("category"); }} className={link(screen === "category" && selCategory === c)}>{CAT_LABEL[c]}</button>
         ))}
       </nav>

@@ -52,7 +52,7 @@ export default function Account() {
 
         {/* Profile card */}
         {session ? (
-          <button onClick={() => setScreen("profile")} className="w-full bg-white rounded-2xl shadow-xs p-4 mt-4 flex items-center gap-4 text-left hover:bg-slate-50 active:scale-[0.99] transition">
+          <button onClick={() => setScreen("profile")} className="w-full bg-white rounded-2xl shadow-card p-4 mt-5 flex items-center gap-4 text-left hover:bg-slate-50 active:scale-[0.99] transition">
             {Avatar}
             <div className="min-w-0 flex-1">
               <p className="font-bold text-slate-900 truncate">{name}</p>
@@ -61,7 +61,7 @@ export default function Account() {
             <ChevronRight size={20} className="text-slate-300" />
           </button>
         ) : (
-          <div className="w-full bg-white rounded-2xl shadow-xs p-4 mt-4 flex items-center gap-4">
+          <div className="w-full bg-white rounded-2xl shadow-card p-4 mt-4 flex items-center gap-4">
             {Avatar}
             <div className="min-w-0 flex-1">
               <p className="font-bold text-slate-900 truncate">{name}</p>
@@ -75,7 +75,7 @@ export default function Account() {
         {groups.map((g) => (
           <div key={g.label}>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1 mb-2">{g.label}</p>
-            <div className="bg-white rounded-2xl shadow-xs divide-y divide-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-card divide-y divide-slate-100 overflow-hidden">
               {g.items.map((it) => (
                 <button key={it.label} onClick={it.action} className="w-full p-4 flex items-center gap-3.5 hover:bg-slate-50 active:bg-slate-100 transition text-left">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${TINT[it.tint]}`}><it.icon size={19} /></div>

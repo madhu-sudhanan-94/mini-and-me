@@ -39,8 +39,10 @@ export const BRAND = {
   // Put it at public/brand-banner.png (falls back to a gradient header if missing).
   banner: "/brand-banner.png",
 
-  // Font family used across the app (wired into Tailwind's `font-sans`)
-  font: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  // Font family used across the app (wired into Tailwind's `font-sans`).
+  // The first family is the webfont loaded in index.html — change BOTH to
+  // re-skin the typeface (e.g. swap 'Inter' for 'Poppins' / 'Manrope').
+  font: "'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
 
   colors: {
     // PRIMARY ramp — main brand colour is `600`

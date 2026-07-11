@@ -14,7 +14,7 @@ export function isEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((v || "").trim());
 }
 
-export const CAT_LABEL = { all: "All", women: "Women", men: "Men", kids: "Kids" };
+export const CAT_LABEL = { all: "All", women: "Women", men: "Men", kids: "Kids", toys: "Toys" };
 
 // Lighten (p > 0) or darken (p < 0) a #rrggbb hex by fraction p (0..1)
 export function shade(hex, p) {

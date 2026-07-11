@@ -74,6 +74,7 @@ export function StoreProvider({ children }) {
   const [ordersBusy, setOrdersBusy] = useState(false);
 
   const [selProduct, setSelProduct] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null); // order shown on the order-detail screen
   const [selColor, setSelColor] = useState(null);
   const [selSize, setSelSize] = useState(null);
   const [quickAdd, setQuickAdd] = useState(null); // product shown in the quick-add bottom sheet
@@ -293,12 +294,13 @@ export function StoreProvider({ children }) {
   };
   useEffect(() => { loadProfile(); }, [session?.user?.id]);
 
-  // Load the signed-in user's delivery addresses (default first)
+  // Load the signed-in user's delivery addresses. Stable order (newest first) so
+  // picking a new default does NOT reshuffle the list / jump a card to the top.
   const loadAddresses = async () => {
     const uid = session?.user?.id;
     if (!uid) { setAddresses([]); return; }
     try {
-      const res = await authedFetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&select=*&order=is_default.desc,created_at.desc", { headers: writeHeaders() });
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid + "&select=*&order=created_at.desc", { headers: writeHeaders() });
       if (res.ok) {
         const rows = await res.json();
         if (Array.isArray(rows)) setAddresses(rows);
@@ -595,6 +597,9 @@ export function StoreProvider({ children }) {
     setSelProduct(null);
   };
 
+  // Open the full order-detail screen for a given (normalized) order.
+  const openOrder = (o) => { setSelectedOrder(o); setScreen("orderdetail"); };
+
   // Quick-add bottom sheet (tap the cart icon on a product card → pick a size →
   // add to cart / buy now, without leaving the current screen). History-backed so
   // the device Back button just closes the sheet.
@@ -836,7 +841,7 @@ export function StoreProvider({ children }) {
   const saveProduct = async () => {
     if (!form.name.trim() || !form.price) return;
     if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin to save"); return; }
-    const baseSizes = form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
+    const baseSizes = form.cat === "toys" ? ["Free"] : form.cat === "kids" ? K : ["pants", "shorts"].includes(form.shape) ? W : L;
     const sizes = [...baseSizes, ...(form.customSizes || []).filter((s) => s && !baseSizes.includes(s))];
     const images = form.image.split(/\n+/).map((s) => s.trim()).filter(Boolean);
     const body = {
@@ -959,7 +964,7 @@ export function StoreProvider({ children }) {
     stock: p.stock != null ? String(p.stock) : "",
     sizeStock: p.sizeStock ? Object.fromEntries(Object.entries(p.sizeStock).map(([k, v]) => [k, String(v)])) : {},
     _hadSizeStock: !!p.sizeStock,
-    customSizes: (p.sizes || []).filter((s) => !(p.cat === "kids" ? K : ["pants", "shorts"].includes(p.shape) ? W : L).includes(s)),
+    customSizes: (p.sizes || []).filter((s) => !(p.cat === "toys" ? ["Free"] : p.cat === "kids" ? K : ["pants", "shorts"].includes(p.shape) ? W : L).includes(s)),
   });
 
   const deleteProduct = async (id) => {
@@ -1026,7 +1031,7 @@ export function StoreProvider({ children }) {
       const cat = (col(r, "category") || "women").toLowerCase();
       const shape = col(r, "shape") || "tee";
       const sizesRaw = col(r, "sizes");
-      const sizes = sizesRaw ? sizesRaw.split(/[|;]/).map((s) => s.trim()).filter(Boolean) : (cat === "kids" ? K : ["pants", "shorts"].includes(shape) ? W : L);
+      const sizes = sizesRaw ? sizesRaw.split(/[|;]/).map((s) => s.trim()).filter(Boolean) : (cat === "toys" ? ["Free"] : cat === "kids" ? K : ["pants", "shorts"].includes(shape) ? W : L);
       const colors = (col(r, "colors") || "#2563EB").split(/[|;]/).map((s) => s.trim()).filter(Boolean);
       const images = (col(r, "images") || col(r, "image_url")).split("|").map((s) => s.trim()).filter(Boolean);
       const stockRaw = col(r, "stock");
@@ -1111,13 +1116,14 @@ export function StoreProvider({ children }) {
   const makeDefaultAddress = async (id) => {
     const uid = session?.user?.id;
     if (!uid) return;
-    setAddrBusy(true);
+    // Optimistic + authoritative for the UI: flip the flags instantly and keep the
+    // list order stable — no busy-disable, no refetch — so every click responds
+    // immediately (rapid switches don't get swallowed by an in-flight request).
+    setAddresses((prev) => prev.map((a) => ({ ...a, is_default: a.id === id })));
     try {
       await authedFetch(SUPABASE_URL + "/rest/v1/addresses?user_id=eq." + uid, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: false }) });
       await authedFetch(SUPABASE_URL + "/rest/v1/addresses?id=eq." + id, { method: "PATCH", headers: writeHeaders(), body: JSON.stringify({ is_default: true }) });
-      await loadAddresses();
-    } catch (e) { /* ignore */ }
-    finally { setAddrBusy(false); }
+    } catch (e) { /* keep optimistic state; a later load re-syncs from the DB */ }
   };
 
   // Save the signed-in user's profile fields (name, phone, gender, dob, avatar_url…)
@@ -1155,7 +1161,7 @@ export function StoreProvider({ children }) {
     authBusy, session, rememberMe, setRememberMe, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
     addresses, addrBusy, defaultAddress,
     myOrders, adminOrders, ordersBusy,
-    selProduct, setSelProduct, quickAdd, setQuickAdd,
+    selProduct, setSelProduct, selectedOrder, setSelectedOrder, openOrder, quickAdd, setQuickAdd,
     selColor, setSelColor, selSize, setSelSize, selCategory, setSelCategory,
     query, setQuery, toast, legalPage, openLegal, coName, setCoName, coPhone, setCoPhone, coEmail, setCoEmail, coNote, setCoNote, giftWrap, setGiftWrap,
     coupon, couponMsg, setCouponMsg, billingSame, setBillingSame, billingAddrId, setBillingAddrId,

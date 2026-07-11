@@ -61,7 +61,7 @@ export default function OrderDetail() {
 
       <div className="px-5 mt-4 space-y-4">
         {/* Status + tracker */}
-        <div className="bg-white rounded-2xl shadow-card p-4">
+        <div className="bg-white rounded-xl shadow-card p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-base font-bold text-slate-800">#{o.ref}</p>
@@ -74,7 +74,7 @@ export default function OrderDetail() {
 
         {/* Items */}
         {count > 0 && (
-          <div className="bg-white rounded-2xl shadow-card p-4">
+          <div className="bg-white rounded-xl shadow-card p-4">
             <p className="text-sm font-semibold text-slate-800 mb-3">Items</p>
             <div className="space-y-3">
               {o.items.map((it, i) => {
@@ -103,7 +103,7 @@ export default function OrderDetail() {
 
         {/* Delivery address */}
         {o.shipping && (
-          <div className="bg-white rounded-2xl shadow-card p-4">
+          <div className="bg-white rounded-xl shadow-card p-4">
             <p className="text-sm font-semibold text-slate-800 mb-2">Delivery address</p>
             <div className="flex gap-2">
               <MapPin size={15} className="text-slate-400 shrink-0 mt-0.5" />
@@ -113,7 +113,7 @@ export default function OrderDetail() {
         )}
 
         {/* Payment summary */}
-        <div className="bg-white rounded-2xl shadow-card p-4">
+        <div className="bg-white rounded-xl shadow-card p-4">
           <p className="text-sm font-semibold text-slate-800 mb-3">Payment summary</p>
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(subtotal)}</span></div>

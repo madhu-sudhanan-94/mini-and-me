@@ -24,7 +24,7 @@ export default function Checkout() {
   const fmtAddr = (a) => (a ? [a.line1, a.line2, a.area, a.city, a.state, a.pincode].filter(Boolean).join(", ") : "");
 
   const AddressCard = ({ a }) => (
-    <div className="border border-slate-200 bg-white rounded-2xl p-3 flex gap-3">
+    <div className="border border-slate-200 bg-white rounded-xl p-3 flex gap-3">
       <div className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center shrink-0"><MapPin size={17} className="text-brand-600" /></div>
       <div className="min-w-0">
         <p className="text-sm font-semibold text-slate-800">{a.label}{a.full_name ? " · " + a.full_name : ""}</p>
@@ -49,8 +49,8 @@ export default function Checkout() {
             </button>
           )}
           <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${(buyNowItem || itemsOpen) ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-            <div className="overflow-hidden min-h-0">
-              <div className="space-y-3">
+            <div className="overflow-hidden min-h-0 -mx-3 px-3">
+              <div className="space-y-3 pt-3 pb-3">
             {checkoutItems.map((item, idx) => {
               const p = products.find((x) => x.id === item.id);
               if (!p) return null;
@@ -59,8 +59,8 @@ export default function Checkout() {
               const inc = () => (buyNowItem ? changeBuyNowQty(1) : changeQty(idx, 1));
               const del = () => { if (buyNowItem) { setBuyNowItem(null); setScreen("home"); } else removeItem(idx); };
               return (
-                <div key={idx} className="bg-white rounded-2xl p-3 shadow-card flex gap-3">
-                  <div className="relative w-20 h-[84px] rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0">
+                <div key={idx} className="bg-white rounded-xl p-3 shadow-card flex gap-3">
+                  <div className="relative w-20 h-[84px] rounded-lg bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0">
                     <ProductImage p={p} color={item.color} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -94,8 +94,8 @@ export default function Checkout() {
 
         {/* Gift wrapping */}
         <section>
-          <button type="button" onClick={() => setGiftWrap((v) => !v)} aria-pressed={giftWrap} className={`w-full flex items-center gap-3 rounded-2xl border p-3.5 text-left transition ${giftWrap ? "border-brand-300 bg-white" : "border-slate-200 bg-white"}`}>
-            <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${giftWrap ? "bg-brand-100 text-brand-600" : "bg-slate-100 text-slate-500"}`}><Gift size={18} /></span>
+          <button type="button" onClick={() => setGiftWrap((v) => !v)} aria-pressed={giftWrap} className={`w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${giftWrap ? "border-brand-300 bg-white" : "border-slate-200 bg-white"}`}>
+            <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${giftWrap ? "bg-brand-50 text-brand-500" : "bg-slate-100 text-slate-500"}`}><Gift size={18} /></span>
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-semibold text-slate-800">Add gift wrapping</span>
               <span className="block text-xs text-slate-400">Premium wrap for {formatINR(SHOP.giftWrapFee)}</span>
@@ -112,7 +112,7 @@ export default function Checkout() {
               <button onClick={() => setScreen("addresses")} className="text-xs font-semibold text-brand-600">{defaultAddress ? "Change" : "Add"}</button>
             </div>
             {defaultAddress ? <AddressCard a={defaultAddress} /> : (
-              <button onClick={() => setScreen("addresses")} className="w-full flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-left active:scale-[0.98] transition">
+              <button onClick={() => setScreen("addresses")} className="w-full flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3.5 text-left active:scale-[0.98] transition">
                 <span className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><MapPin size={18} /></span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-slate-800">Add a delivery address</span>
@@ -154,7 +154,7 @@ export default function Checkout() {
         </section>
 
         {/* Order summary */}
-        <section className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-2xl p-4">
+        <section className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-xl p-4">
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(checkoutBill.subtotal)}</span></div>
             <div className="flex justify-between text-slate-600"><span>GST ({checkoutBill.ratePct}%, incl.)</span><span>{formatINR(checkoutBill.gst)}</span></div>

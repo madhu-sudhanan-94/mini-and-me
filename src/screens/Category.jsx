@@ -106,7 +106,7 @@ export default function Category() {
       <div className="lg:flex lg:gap-6 lg:px-6 lg:mt-5">
         {/* desktop sidebar */}
         <aside className="hidden lg:block w-64 shrink-0">
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 sticky top-20">
+          <div className="bg-white rounded-xl border border-slate-100 p-5 sticky top-20">
             <div className="flex items-center justify-between mb-4">
               <p className="font-semibold text-slate-900">Filters</p>
               {activeFilters > 0 && <button onClick={resetFilters} className="text-xs font-semibold text-brand-600">Clear ({activeFilters})</button>}

@@ -71,7 +71,7 @@ export default function Home() {
 
       {/* Search — scrolls away with the content (not pinned) */}
       <div className="lg:hidden px-5 mt-4">
-        <div className="flex items-center gap-2.5 bg-white rounded-2xl px-4 py-3.5 ring-1 ring-slate-100 shadow-xs">
+        <div className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-3.5 ring-1 ring-slate-100 shadow-xs">
           <Search size={18} className="text-slate-400 shrink-0" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search dresses, kurtas, jeans…" className="flex-1 outline-hidden text-sm bg-transparent placeholder:text-slate-400" />
           {query && (
@@ -94,7 +94,7 @@ export default function Home() {
         <>
           {/* Free-shipping promo */}
           <div className="px-5 lg:px-6 mt-4">
-            <div className="flex items-center gap-2.5 bg-linear-to-r from-brand-50 to-accent-50 rounded-2xl px-4 py-2.5 ring-1 ring-brand-100">
+            <div className="flex items-center gap-2.5 bg-linear-to-r from-brand-50 to-accent-50 rounded-xl px-4 py-2.5 ring-1 ring-brand-100">
               <Truck size={17} className="text-brand-600 shrink-0" />
               <p className="text-xs font-semibold text-brand-700">Free shipping on all orders above {formatINR(SHOP.freeDeliveryThreshold)} 🎉</p>
             </div>
@@ -223,7 +223,7 @@ export default function Home() {
               {/* opposite-corner color bloom for depth */}
               <span aria-hidden className="pointer-events-none absolute -left-10 -bottom-12 h-32 w-32 rounded-full bg-fuchsia-300/35 blur-3xl" />
 
-              <div className="relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+              <div className="relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/15 ring-1 ring-inset ring-white/25 backdrop-blur-md">
                 <Sparkles size={22} className="text-white" aria-hidden />
               </div>
               <div className="relative z-10 min-w-0 flex-1">

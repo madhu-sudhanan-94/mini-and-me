@@ -101,19 +101,8 @@ export default function ProductModal() {
   ];
 
   return (
-    <div className="fixed sm:max-lg:absolute inset-0 z-40 flex flex-col lg:items-center lg:justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={closeProduct} />
-      <div className="relative h-full w-full lg:h-auto lg:w-[460px] lg:max-w-[92vw] bg-slate-50 lg:rounded-4xl max-h-full lg:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl" style={{ animation: "vkUp .25s ease" }}>
-        {/* Header scrolls away with the content (not pinned). */}
-        <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="relative z-30 flex items-center gap-1 px-2.5 py-2.5 bg-white/95 backdrop-blur border-b border-slate-100">
-          <button onClick={closeProduct} aria-label="Close" className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center active:scale-90 transition shrink-0"><X size={20} className="text-slate-700" /></button>
-          <p className="flex-1 min-w-0 truncate text-[15px] font-bold text-slate-900 px-1">{p.name}</p>
-          <button onClick={openShare} aria-label="Share" className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center active:scale-90 transition shrink-0"><Share2 size={18} className="text-slate-700" /></button>
-          <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center active:scale-90 transition shrink-0"><Heart size={19} className={isFav(p.id) ? "text-rose-500" : "text-slate-700"} fill={isFav(p.id) ? "currentColor" : "none"} /></button>
-        </div>
-
-          {/* Image — tap to open the full-screen viewer */}
+    <div className="bg-slate-50">
+          {/* Image — the floating controls scroll with the page (this is a routed screen, not a modal) */}
           <div
             {...(imgs.length > 1 ? imgSwipe : {})}
             className="relative h-72 sm:h-80 bg-linear-to-br from-accent-100 to-brand-200 overflow-hidden touch-pan-y"
@@ -127,6 +116,12 @@ export default function ProductModal() {
             ) : (
               <div className="absolute inset-0 flex items-center justify-center"><Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[80%]" /></div>
             )}
+            {/* Floating controls — over the image; they scroll away with it (not pinned) */}
+            <button onClick={closeProduct} aria-label="Close" className="absolute top-3 left-3 z-20 w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition"><X size={18} className="text-slate-600" /></button>
+            <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+              <button onClick={openShare} aria-label="Share" className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition"><Share2 size={18} className="text-slate-600" /></button>
+              <button onClick={() => toggleFav(p.id)} aria-label={isFav(p.id) ? "Remove from favourites" : "Add to favourites"} className="w-9 h-9 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs active:scale-90 transition"><Heart size={18} className={isFav(p.id) ? "text-rose-500" : "text-slate-600"} fill={isFav(p.id) ? "currentColor" : "none"} /></button>
+            </div>
             {/* Dot indicators */}
             {imgs.length > 1 && (
               <div className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5">
@@ -144,8 +139,8 @@ export default function ProductModal() {
           </div>
 
           {/* Details */}
-          <div className="px-6 pt-4 pb-2">
-          <h2 className="text-2xl font-bold text-slate-900 leading-tight">{p.name}</h2>
+          <div className="px-5 pt-3 pb-24 lg:pb-2">
+          <h2 className="text-xl font-semibold text-slate-900 leading-tight">{p.name}</h2>
           {oos ? <p className="text-xs font-semibold text-red-500 mt-2">Currently out of stock</p>
             : selSoldOut ? <p className="text-xs font-semibold text-red-500 mt-2">Size {selSize} is out of stock</p>
             : sizeLowStock(p, selSize) ? <p className="text-xs font-semibold text-amber-600 mt-2">Hurry — only {stockFor(p, selSize)} left{hasSizeStock(p) ? ` in size ${selSize}` : ""}</p> : null}
@@ -165,11 +160,11 @@ export default function ProductModal() {
 
           {p.colors.length > 1 && (
             <>
-              <p className="text-sm font-semibold text-slate-800 mt-5 mb-2">Colour</p>
-              <div className="flex gap-3">
+              <p className="text-sm font-semibold text-slate-800 mt-4 mb-2">Colour</p>
+              <div className="flex gap-2.5">
                 {p.colors.map((c) => (
-                  <button key={c} onClick={() => setSelColor(c)} className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${selColor === c ? "border-brand-500" : "border-transparent"}`} style={{ outline: "1px solid #e2e8f0" }}>
-                    <span className="w-7 h-7 rounded-full" style={{ background: c }} />
+                  <button key={c} onClick={() => setSelColor(c)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${selColor === c ? "border-brand-500" : "border-transparent"}`} style={{ outline: "1px solid #e2e8f0" }}>
+                    <span className="w-6 h-6 rounded-full" style={{ background: c }} />
                   </button>
                 ))}
               </div>
@@ -178,7 +173,7 @@ export default function ProductModal() {
 
           {!isFreeSize && (
           <>
-          <div className="flex items-center justify-between mt-5 mb-2">
+          <div className="flex items-center justify-between mt-4 mb-2">
             <p className="text-sm font-semibold text-slate-800">Size</p>
             <button onClick={() => setGuide((g) => !g)} className="text-xs font-semibold text-brand-600">Size guide</button>
           </div>
@@ -204,32 +199,32 @@ export default function ProductModal() {
             {p.sizes.map((s) => {
               const soldOut = sizeOutOfStock(p, s);
               return (
-                <button key={s} onClick={() => !soldOut && setSelSize(s)} disabled={soldOut} aria-label={soldOut ? `Size ${s} — out of stock` : `Size ${s}`} className={`min-w-[48px] px-3 py-2.5 rounded-xl text-sm font-semibold transition ${soldOut ? "bg-slate-100 text-slate-300 line-through cursor-not-allowed" : selSize === s ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{s}</button>
+                <button key={s} onClick={() => !soldOut && setSelSize(s)} disabled={soldOut} aria-label={soldOut ? `Size ${s} — out of stock` : `Size ${s}`} className={`min-w-[44px] px-3 py-2 rounded-xl text-sm font-semibold transition ${soldOut ? "bg-slate-100 text-slate-300 line-through cursor-not-allowed" : selSize === s ? "bg-brand-600 text-white shadow-md shadow-brand-500/25" : "bg-slate-100 text-slate-500"}`}>{s}</button>
               );
             })}
           </div>
           </>
           )}
 
-          {/* quantity */}
+          {/* quantity — rounded − / value / + stepper pill */}
           {!oos && !selSoldOut && (
-            <div className="mt-5 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-800">Quantity</p>
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-slate-800 mb-2">Quantity</p>
               <QtyStepper value={qty} onDecrement={() => setQty((q) => Math.max(1, q - 1))} onIncrement={() => setQty((q) => Math.min(q + 1, qMax))} max={qMax} />
             </div>
           )}
 
           {related.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-5">
               <p className="text-sm font-semibold text-slate-800 mb-2">{usingFallback ? "You may also like" : `Similar in ${catLabel}`}</p>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar py-3 -mx-6 px-6">
+              <div className="flex gap-3 overflow-x-auto no-scrollbar py-3 -mx-5 px-5">
                 {related.map((rp) => <ProductCard key={rp.id} p={rp} wide />)}
               </div>
             </div>
           )}
 
           {/* Product details */}
-          <div className="mt-6">
+          <div className="mt-5">
             <p className="text-sm font-semibold text-slate-800 mb-2">Product details</p>
             <dl className="bg-white rounded-xl border border-slate-100 overflow-hidden text-sm">
               {detailRows.map(([k, v], i) => (
@@ -244,20 +239,19 @@ export default function ProductModal() {
           {/* Ratings & reviews */}
           <ReviewsSection productId={p.id} />
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="p-4 border-t border-slate-100 bg-white shrink-0">
+        {/* Actions — sticky at the bottom on mobile, inline on desktop */}
+        <div className="sticky bottom-0 z-20 px-4 py-3 border-t border-slate-100 bg-white/95 backdrop-blur lg:static lg:bg-transparent lg:border-0">
           {oos ? (
-            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-4 rounded-xl cursor-not-allowed">Out of stock</button>
+            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-3 rounded-xl cursor-not-allowed">Out of stock</button>
           ) : selSoldOut ? (
-            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-4 rounded-xl cursor-not-allowed">Size {selSize} out of stock</button>
+            <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-3 rounded-xl cursor-not-allowed">Size {selSize} out of stock</button>
           ) : (
             <div className="flex items-center gap-3">
-              <PrimaryButton variant="soft" size="xl" full={false} onClick={() => addToCart(p, selSize, selColor, qty)} className="flex-1">
-                <ShoppingCart size={19} /> Add to cart
+              <PrimaryButton variant="soft" size="lg" full={false} onClick={() => addToCart(p, selSize, selColor, qty)} className="flex-1">
+                <ShoppingCart size={18} /> Add to cart
               </PrimaryButton>
-              <PrimaryButton variant="gradient" size="xl" full={false} onClick={() => buyNow(p, selSize, selColor, qty)} className="flex-1 border border-transparent">
+              <PrimaryButton variant="gradient" size="lg" full={false} onClick={() => buyNow(p, selSize, selColor, qty)} className="flex-1 border border-transparent">
                 Buy now
               </PrimaryButton>
             </div>
@@ -266,7 +260,7 @@ export default function ProductModal() {
 
         {/* Share sheet (fallback when the OS share sheet isn't available) */}
         {shareOpen && (
-          <div className="absolute inset-0 z-50 flex flex-col justify-end" onClick={() => setShareOpen(false)}>
+          <div className="fixed sm:max-lg:absolute inset-0 z-50 flex flex-col justify-end" onClick={() => setShareOpen(false)}>
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative bg-white rounded-t-3xl p-5 pb-7" onClick={(e) => e.stopPropagation()} style={{ animation: "vkUp .25s ease" }}>
               <div className="flex items-center justify-between mb-4">
@@ -276,7 +270,7 @@ export default function ProductModal() {
               <div className="grid grid-cols-5 gap-2">
                 {shareTargets.map((t) => (
                   <button key={t.name} onClick={t.action} className="flex flex-col items-center gap-1.5 active:scale-95 transition">
-                    <span className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center" style={{ background: t.bg }}>{t.icon}</span>
+                    <span className="w-[52px] h-[52px] rounded-xl flex items-center justify-center" style={{ background: t.bg }}>{t.icon}</span>
                     <span className="text-[10px] text-slate-500 text-center leading-tight">{t.name}</span>
                   </button>
                 ))}
@@ -284,11 +278,10 @@ export default function ProductModal() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Full-screen image viewer — swipe to change, dots, tap backdrop / Esc to close */}
       {lightbox && (
-        <div className="absolute inset-0 z-50 flex flex-col offer-fade bg-black/50 backdrop-blur-md">
+        <div className="fixed sm:max-lg:absolute inset-0 z-50 flex flex-col offer-fade bg-black/50 backdrop-blur-md">
           <button onClick={() => setLightbox(false)} aria-label="Close" className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur text-white flex items-center justify-center transition active:scale-90"><X size={20} /></button>
           <div
             {...(imgs.length > 1 ? imgSwipe : {})}
@@ -296,7 +289,7 @@ export default function ProductModal() {
             className="relative z-10 flex-1 flex items-center justify-center overflow-hidden touch-pan-y p-4"
           >
             {src && !imgFailed ? (
-              <img src={src} alt={p.name} onError={() => setImgFailed(true)} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl shadow-black/25" />
+              <img src={src} alt={p.name} onError={() => setImgFailed(true)} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain rounded-xl shadow-2xl shadow-black/25" />
             ) : (
               <Garment shape={p.shape} color={selColor || p.colors[0]} className="h-[70%]" />
             )}

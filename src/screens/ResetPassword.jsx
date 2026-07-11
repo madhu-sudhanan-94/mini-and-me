@@ -29,7 +29,7 @@ export default function ResetPassword() {
     <div className="flex flex-col min-h-full">
       <div className="relative pb-8 rounded-b-[2.5rem] shrink-0" style={panelBlue}>
         <div className="px-6 pt-8">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-5">
+          <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-5">
             <Logo size={26} className="text-white" />
           </div>
           <h1 className="text-white text-2xl font-bold leading-tight">Set a new password</h1>

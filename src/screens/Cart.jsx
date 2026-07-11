@@ -27,8 +27,8 @@ export default function Cart() {
               if (!p) return null;
               const onSale = p.original && p.original > p.price;
               return (
-                <div key={idx} className="bg-white rounded-2xl p-3 shadow-card flex gap-3">
-                  <button onClick={() => openProduct(p)} aria-label={`View ${p.name}`} className="relative w-20 h-[84px] rounded-xl bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0 active:scale-95 transition">
+                <div key={idx} className="bg-white rounded-xl p-3 shadow-card flex gap-3">
+                  <button onClick={() => openProduct(p)} aria-label={`View ${p.name}`} className="relative w-20 h-[84px] rounded-lg bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0 active:scale-95 transition">
                     <ProductImage p={p} color={item.color} />
                   </button>
                   <div className="flex-1 min-w-0">
@@ -73,7 +73,7 @@ export default function Cart() {
             <div className="mb-4"><CouponBox /></div>
 
             {/* Summary */}
-            <div className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-2xl p-4">
+            <div className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-xl p-4">
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(bill.subtotal)}</span></div>
                 <div className="flex justify-between text-slate-600"><span>GST ({bill.ratePct}%, incl.)</span><span>{formatINR(bill.gst)}</span></div>

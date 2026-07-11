@@ -30,7 +30,7 @@ import BottomNav from "./components/BottomNav.jsx";
 const Logo = BRAND.logo;
 
 const SCREENS = {
-  login: Login, home: Home, category: Category, favorites: Favorites,
+  login: Login, home: Home, category: Category, favorites: Favorites, product: ProductModal,
   cart: Cart, checkout: Checkout, success: Success, account: Account, profile: Profile,
   addresses: Addresses, orders: Orders, orderdetail: OrderDetail, admin: Admin, adminorders: AdminOrders,
   legal: LegalPage, contact: Contact, resetpw: ResetPassword, security: Security,
@@ -50,7 +50,7 @@ function Shell() {
     return (
       <div className="min-h-dvh flex items-center justify-center font-sans" style={panelBlue}>
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center mx-auto mb-4">
             <Logo size={30} className="text-white" />
           </div>
           <p className="text-white text-xl font-bold">{BRAND.name}</p>
@@ -63,9 +63,10 @@ function Shell() {
   const Current = SCREENS[screen] || Home;
   const showFooter = screen === "home" && !query.trim(); // hide footer while showing search results
   const showChrome = screen !== "login" && screen !== "resetpw";
-  // Persistent mobile tab bar — hidden on the transactional screens that have their own bottom bar.
-  const showBottomNav = showChrome && !["cart", "checkout", "success"].includes(screen);
-  const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : "lg:max-w-xl";
+  // Persistent mobile tab bar — hidden on screens with their own sticky bottom action bar
+  // (checkout's Place order, addresses' Save/Cancel, the product page's Add-to-cart bar).
+  const showBottomNav = showChrome && !["checkout", "addresses", "product"].includes(screen);
+  const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : screen === "product" ? "lg:max-w-2xl" : "lg:max-w-xl";
 
   return (
     <div className="min-h-dvh bg-slate-300 lg:bg-slate-50 flex justify-center sm:max-lg:py-6 font-sans">
@@ -79,7 +80,6 @@ function Shell() {
           {showFooter && <Footer />}
         </div>
         {showBottomNav && <BottomNav />}
-        <ProductModal />
         <QuickAddSheet />
 
         {/* Toast */}

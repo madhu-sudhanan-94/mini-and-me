@@ -51,11 +51,11 @@ export default function Login() {
         {/* Header */}
         <div className="text-center mt-2 mb-6">
           {BRAND.icon && !logoFailed ? (
-            <div className="w-20 h-20 rounded-2xl bg-white shadow-md ring-1 ring-slate-100 mx-auto mb-4 flex items-center justify-center overflow-hidden">
+            <div className="w-20 h-20 rounded-xl bg-white shadow-md ring-1 ring-slate-100 mx-auto mb-4 flex items-center justify-center overflow-hidden">
               <img src={BRAND.icon} alt={BRAND.name} onError={() => setLogoFailed(true)} className="w-full h-full object-contain p-1" />
             </div>
           ) : (
-            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-500 to-accent-400 shadow-lg mx-auto mb-4 flex items-center justify-center"><Logo size={28} className="text-white" /></div>
+            <div className="w-16 h-16 rounded-xl bg-linear-to-br from-brand-500 to-accent-400 shadow-lg mx-auto mb-4 flex items-center justify-center"><Logo size={28} className="text-white" /></div>
           )}
           <h1 className="text-2xl font-bold text-slate-900">{isSignup ? "Create account" : "Welcome back"}</h1>
           <p className="text-slate-500 text-sm mt-1.5">{isSignup ? `Sign up to start shopping with ${BRAND.name}.` : "Log in to your account to continue."}</p>

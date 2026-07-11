@@ -47,7 +47,7 @@ export default function ReviewsSection({ productId }) {
       ) : (
         <div className="space-y-3">
           {list.map((r) => (
-            <div key={r.id} className="bg-white rounded-2xl border border-slate-100 p-3">
+            <div key={r.id} className="bg-white rounded-xl border border-slate-100 p-3">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center shrink-0">{(r.name || "A").charAt(0).toUpperCase()}</div>
                 <div className="flex-1 min-w-0">

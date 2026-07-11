@@ -234,16 +234,6 @@ export function StoreProvider({ children }) {
     try { window.history.replaceState({ screen: "home" }, ""); } catch {}
     const onPop = (e) => {
       const st = (e && e.state) || { screen: "home" };
-      if (st.product != null) {
-        // only (re)load the product when it actually changed, so closing an
-        // overlay above the modal doesn't reset the modal's image/size.
-        if (!selProductRef.current || selProductRef.current.id !== st.product) {
-          const p = (productsRef.current || []).find((x) => x.id === st.product);
-          if (p) { setSelProduct(p); setSelColor(p.colors[0]); setSelSize(firstInStockSize(p) || p.sizes[0]); setImgIndex(0); }
-        }
-      } else if (selProductRef.current) {
-        setSelProduct(null);
-      }
       // quick-add bottom sheet
       if (st.quick != null) {
         const p = (productsRef.current || []).find((x) => x.id === st.quick);
@@ -589,13 +579,9 @@ export function StoreProvider({ children }) {
   };
   const openProduct = (p) => {
     showProduct(p);
-    // push a history entry so browser Back closes the product instead of navigating
-    if (typeof window !== "undefined") { try { window.history.pushState({ screen: screenRef.current, product: p.id }, ""); } catch {} }
+    setScreen("product"); // product is a routed screen now; setScreen handles the history push
   };
-  const closeProduct = () => {
-    if (typeof window !== "undefined" && window.history.state && window.history.state.product != null) { window.history.back(); return; }
-    setSelProduct(null);
-  };
+  const closeProduct = () => { goBack(); };
 
   // Open the full order-detail screen for a given (normalized) order.
   const openOrder = (o) => { setSelectedOrder(o); setScreen("orderdetail"); };

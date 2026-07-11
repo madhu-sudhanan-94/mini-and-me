@@ -19,11 +19,11 @@ export default function ProductCard({ p, wide }) {
     });
 
     return (
-        <div onClick={() => openProduct(p)} className={`text-left bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}>
-            <div className="relative bg-linear-to-br from-accent-50 to-brand-100 h-[190px] overflow-hidden touch-pan-y select-none">
+        <div onClick={() => openProduct(p)} className={`text-left bg-white rounded-lg overflow-hidden shadow-card hover:shadow-card-hover transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}>
+            <div className={`relative bg-linear-to-br from-accent-50 to-brand-100 h-[180px] overflow-hidden select-none ${wide ? "" : "touch-pan-y"}`}>
                 <ProductImage key={imgIdx} p={p} color={p.colors[0]} index={imgIdx} />
-                {/* swipe layer — sits below the buttons (z-10) so they stay clickable */}
-                {imgs.length > 1 && <div {...swipe} aria-hidden="true" className="absolute inset-0 z-[1]" />}
+                {/* swipe layer — only for grid cards; wide (carousel) cards let the row scroll horizontally */}
+                {!wide && imgs.length > 1 && <div {...swipe} aria-hidden="true" className="absolute inset-0 z-[1]" />}
 
                 {oos && (
                     <div className="absolute inset-0 z-10 bg-white/55 flex items-center justify-center">

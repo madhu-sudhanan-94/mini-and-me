@@ -8,15 +8,15 @@ export default function BottomNav() {
   const Item = ({ icon: Icon, label, target, badge, onClick }) => {
     const active = screen === target;
     return (
-      <button onClick={onClick || (() => setScreen(target))} className="relative flex flex-col items-center gap-0.5 flex-1 py-1">
-        <Icon size={21} className={active ? "text-brand-600" : "text-slate-400"} />
+      <button onClick={onClick || (() => setScreen(target))} className="relative flex flex-col items-center gap-0.5 flex-1 py-0.5">
+        <Icon size={20} className={active ? "text-brand-600" : "text-slate-400"} />
         <span className={`text-[10px] ${active ? "text-brand-600 font-semibold" : "text-slate-400"}`}>{label}</span>
         {badge > 0 && <span className="absolute top-0 right-7 bg-brand-600 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">{badge}</span>}
       </button>
     );
   };
   return (
-    <div className="lg:hidden fixed sm:max-lg:absolute inset-x-0 bottom-0 z-30 max-w-[430px] mx-auto border-t border-slate-100 bg-white/95 backdrop-blur px-3 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex">
+    <div className="lg:hidden fixed sm:max-lg:absolute inset-x-0 bottom-0 z-30 max-w-[430px] mx-auto border-t border-slate-100 bg-white/95 backdrop-blur px-3 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] flex">
       <Item icon={Home} label="Home" target="home" />
       <Item icon={LayoutGrid} label="Shop" target="category" onClick={() => { setSelCategory("all"); setScreen("category"); }} />
       <Item icon={ShoppingCart} label="Cart" target="cart" badge={cartCount} />

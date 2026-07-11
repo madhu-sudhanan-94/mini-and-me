@@ -58,7 +58,7 @@ export default function QuickAddSheet() {
 
         {/* product summary */}
         <div className="flex gap-4">
-          <button onClick={() => imgs.length && setZoom(true)} aria-label="View image" className="relative w-24 h-28 rounded-2xl overflow-hidden bg-linear-to-br from-accent-50 to-brand-100 shrink-0 ring-1 ring-slate-100 cursor-zoom-in active:scale-95 transition">
+          <button onClick={() => imgs.length && setZoom(true)} aria-label="View image" className="relative w-24 h-28 rounded-xl overflow-hidden bg-linear-to-br from-accent-50 to-brand-100 shrink-0 ring-1 ring-slate-100 cursor-zoom-in active:scale-95 transition">
             <ProductImage p={p} color={p.colors[0]} index={0} />
             {imgs.length > 0 && <span aria-hidden className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs"><Maximize2 size={11} className="text-slate-600" /></span>}
           </button>
@@ -127,7 +127,7 @@ export default function QuickAddSheet() {
           <button onClick={(e) => { e.stopPropagation(); setZoom(false); }} aria-label="Close" className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/15 backdrop-blur text-white flex items-center justify-center active:scale-90 transition"><X size={20} /></button>
           <div {...(imgs.length > 1 ? zoomSwipe : {})} className="flex-1 flex items-center justify-center overflow-hidden touch-pan-y p-4">
             {zimg ? (
-              <img src={zimg} alt={p.name} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl shadow-black/30" />
+              <img src={zimg} alt={p.name} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain rounded-xl shadow-2xl shadow-black/30" />
             ) : (
               <Garment shape={p.shape} color={p.colors[0]} className="h-[60%]" />
             )}

@@ -139,7 +139,7 @@ export default function Admin() {
       <div className="flex-1 overflow-y-auto px-5 py-4 max-w-5xl mx-auto w-full lg:px-8">
         {/* ============ Quick actions ============ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <button onClick={() => setScreen("adminorders")} className="bg-white rounded-2xl p-4 shadow-card flex items-center gap-3.5 active:scale-[0.99] transition text-left">
+          <button onClick={() => setScreen("adminorders")} className="bg-white rounded-xl p-4 shadow-card flex items-center gap-3.5 active:scale-[0.99] transition text-left">
             <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center shrink-0"><Package size={19} className="text-brand-600" /></div>
             <div className="flex-1 min-w-0">
               <span className="font-semibold text-slate-800 block text-sm">Manage orders</span>
@@ -147,7 +147,7 @@ export default function Admin() {
             </div>
             <ChevronRight size={20} className="text-slate-300 shrink-0" />
           </button>
-          <button onClick={startAdd} className="bg-white rounded-2xl p-4 shadow-card flex items-center gap-3.5 active:scale-[0.99] transition text-left">
+          <button onClick={startAdd} className="bg-white rounded-xl p-4 shadow-card flex items-center gap-3.5 active:scale-[0.99] transition text-left">
             <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0"><Plus size={19} className="text-emerald-600" /></div>
             <div className="flex-1 min-w-0">
               <span className="font-semibold text-slate-800 block text-sm">Add product</span>
@@ -162,7 +162,7 @@ export default function Admin() {
           {/* -------- Add / edit form (clearly-marked card) -------- */}
           <div
             ref={formRef}
-            className={`rounded-2xl p-4 shadow-card mb-4 lg:mb-0 lg:sticky lg:top-4 scroll-mt-4 transition-colors ${editing ? "bg-brand-50 ring-2 ring-brand-500" : "bg-white"}`}
+            className={`rounded-xl p-4 shadow-card mb-4 lg:mb-0 lg:sticky lg:top-4 scroll-mt-4 transition-colors ${editing ? "bg-brand-50 ring-2 ring-brand-500" : "bg-white"}`}
           >
             {editing ? (
               <div className="-mx-4 -mt-4 mb-4 rounded-t-2xl bg-brand-600 px-4 py-2.5 flex items-center justify-between gap-2">

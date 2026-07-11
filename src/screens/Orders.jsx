@@ -145,7 +145,7 @@ export default function Orders() {
               <button
                 key={o.key}
                 onClick={() => openOrder(o)}
-                className="ord-rise w-full text-left bg-white rounded-2xl shadow-card p-4 active:scale-[0.99] transition"
+                className="ord-rise w-full text-left bg-white rounded-xl shadow-card p-4 active:scale-[0.99] transition"
                 style={{ animationDelay: `${Math.min(oi, 6) * 0.06}s` }}
               >
                 {/* Header: ref + date on the left, status pill on the right */}

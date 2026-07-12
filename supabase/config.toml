@@ -22,3 +22,6 @@ verify_jwt = false
 
 [functions.reconcile-orders]
 verify_jwt = false
+
+[functions.release-reservation]
+verify_jwt = false

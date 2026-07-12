@@ -23,6 +23,8 @@ export default {
       },
       fontFamily: {
         sans: [BRAND.font],
+        // Display face for the brand wordmark + headings (`font-brand`).
+        brand: [BRAND.displayFont],
       },
       // Single source for the standard card shadow — soft, even on all sides.
       // Use `shadow-card` on card containers (product, order, address, cart,

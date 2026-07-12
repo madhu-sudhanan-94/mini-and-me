@@ -136,7 +136,7 @@ export default function Orders() {
   // as paid instead of staying hidden. Settled orders flip to 'paid' → the
   // predicate goes false, so this can't loop on genuinely-abandoned rows.
   useEffect(() => {
-    if (session && myOrders.some((o) => o.payment_method === "online" && o.payment_status === "pending" && o.status !== "cancelled")) {
+    if (session && myOrders.some((o) => o.payment_method === "online" && (o.payment_status === "pending" || o.payment_status === "failed") && o.status !== "cancelled")) {
       reconcileOrders();
     }
   }, [myOrders, session]); // eslint-disable-line react-hooks/exhaustive-deps

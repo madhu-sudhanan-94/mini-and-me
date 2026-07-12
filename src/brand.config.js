@@ -44,6 +44,14 @@ export const BRAND = {
   // re-skin the typeface (e.g. swap 'Inter' for 'Poppins' / 'Manrope').
   font: "'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
 
+  // DISPLAY font — a distinctive typeface for the brand wordmark ("Mini & Me")
+  // and headlines on the Login screen, so the brand has personality while
+  // body/UI text stays in the clean `font` above for readability. Applied via
+  // Tailwind's `font-brand` utility (currently only in src/screens/Login.jsx).
+  // Change BOTH the family here AND the webfont <link> in index.html to re-skin
+  // the display face (e.g. 'Fraunces' → 'Playfair Display' / 'Baloo 2').
+  displayFont: "'Fraunces', ui-serif, Georgia, Cambria, 'Times New Roman', serif",
+
   colors: {
     // PRIMARY ramp — main brand colour is `600`
     brand: {

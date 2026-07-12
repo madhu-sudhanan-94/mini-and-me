@@ -4,7 +4,7 @@ import ScreenHeader from "../components/ScreenHeader.jsx";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import EmptyState from "../components/EmptyState.jsx";
-import { COUNTRY_NAMES } from "../lib/countries.js";
+import { COUNTRY_NAMES, isValidPhone } from "../lib/countries.js";
 import { INDIAN_STATES } from "../lib/india.js";
 import { useStore } from "../store.jsx";
 
@@ -44,6 +44,7 @@ export default function Addresses() {
     const f = editing;
     if (!f.line1.trim() || !f.city.trim() || !f.state.trim() || !f.pincode.trim()) { setErr("Fill in flat/house, city, state and PIN code."); return; }
     if (!/^\d{6}$/.test(f.pincode.trim())) { setErr("PIN code must be 6 digits."); return; }
+    if (f.phone && f.phone.trim() && !isValidPhone(f.phone)) { setErr("Enter a valid mobile number, or leave it blank."); return; }
     const payload = {
       label: f.label, full_name: f.full_name.trim() || null, phone: f.phone.trim() || null,
       line1: f.line1.trim(), line2: f.line2.trim() || null, area: f.area.trim() || null,

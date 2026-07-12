@@ -27,6 +27,16 @@ export async function verifyRazorpayPayment(payload) {
   }
 }
 
+// Free the stock reserved at checkout when the customer dismisses the payment
+// modal. Best-effort + fire-and-forget; the server re-checks Razorpay so a
+// payment that actually went through is settled rather than released.
+export async function releaseReservation(razorpayOrderId) {
+  try {
+    if (!razorpayOrderId) return;
+    await fetch(FN("release-reservation"), { method: "POST", headers: FN_HEADERS, body: JSON.stringify({ razorpayOrderId }) });
+  } catch { /* best-effort */ }
+}
+
 let sdkPromise = null;
 function loadSdk() {
   if (typeof window === "undefined") return Promise.resolve(false);

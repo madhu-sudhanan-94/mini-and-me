@@ -41,6 +41,15 @@ export default function ProductCard({ p, wide }) {
                 {!oos && p.original && p.tag !== "new" && <span className="absolute z-10 top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>}
                 {!oos && p.tag === "new" && <span className="absolute z-10 top-1.5 left-1.5 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">NEW</span>}
 
+                {/* rating pill — overlaid on the image, white background */}
+                {rating && rating.count > 0 && (
+                    <span className="absolute z-10 bottom-1.5 left-1.5 inline-flex items-center gap-0.5 bg-white/95 backdrop-blur-sm rounded-md pl-1 pr-1.5 py-0.5 shadow-sm">
+                        <Star size={10} className="text-amber-400" fill="currentColor" />
+                        <span className="text-[10px] font-bold text-slate-700">{rating.avg.toFixed(1)}</span>
+                        <span className="text-[9px] text-slate-400">({rating.count})</span>
+                    </span>
+                )}
+
                 {/* favourite */}
                 <button
                     onClick={(e) => {
@@ -86,13 +95,6 @@ export default function ProductCard({ p, wide }) {
 
             <div className="px-2.5 pt-2 pb-2.5">
                 <p className="text-[13px] font-semibold text-slate-800 truncate">{p.name}</p>
-                {rating && rating.count > 0 && (
-                    <div className="flex items-center gap-1 mt-0.5">
-                        <Star size={11} className="text-amber-400" fill="currentColor" />
-                        <span className="text-[11px] font-semibold text-slate-600">{rating.avg.toFixed(1)}</span>
-                        <span className="text-[10px] text-slate-400">({rating.count})</span>
-                    </div>
-                )}
                 <div className="mt-0.5">
                     <PriceTag p={p} />
                 </div>

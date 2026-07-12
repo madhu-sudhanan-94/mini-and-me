@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown, User, MapPin, Truck, Minus, Plus, Trash2, Gift, Check, CreditCard, Banknote } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR, isEmail } from "../lib/format.js";
+import { isValidPhone } from "../lib/countries.js";
 import { SHOP, COUPONS_ENABLED } from "../shop.config.js";
 import { PAYMENTS } from "../payments.config.js";
 import PhoneField from "../components/PhoneField.jsx";
@@ -22,7 +23,8 @@ export default function Checkout() {
   // Buy-now shows the single item; from the cart the order is collapsed by default.
   const [itemsOpen, setItemsOpen] = useState(!!buyNowItem);
   const emailInvalid = coEmail.trim() && !isEmail(coEmail);
-  const hasContact = coPhone.trim() || (coEmail.trim() && isEmail(coEmail));
+  const phoneInvalid = coPhone.trim() && !isValidPhone(coPhone);
+  const hasContact = (coPhone.trim() && isValidPhone(coPhone)) || (coEmail.trim() && isEmail(coEmail));
   const fmtAddr = (a) => (a ? [a.line1, a.line2, a.area, a.city, a.state, a.pincode].filter(Boolean).join(", ") : "");
 
   const AddressCard = ({ a }) => (
@@ -192,7 +194,10 @@ export default function Checkout() {
           <input value={coName} onChange={(e) => setCoName(e.target.value)} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 mb-4" />
 
           <label className="block text-xs text-slate-500 mb-1">Phone number</label>
-          <div className="mb-4"><PhoneField value={coPhone} onChange={setCoPhone} /></div>
+          <div className="mb-4">
+            <PhoneField value={coPhone} onChange={setCoPhone} />
+            {phoneInvalid && <p className="text-red-500 text-[11px] mt-1">Enter a valid mobile number.</p>}
+          </div>
 
           <div className="flex items-center gap-3 my-1 text-slate-300 text-xs"><div className="flex-1 h-px bg-slate-200" />or<div className="flex-1 h-px bg-slate-200" /></div>
 

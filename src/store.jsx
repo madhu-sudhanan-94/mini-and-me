@@ -7,11 +7,12 @@ import {
 import { PKEY, OKEY, CKEY, FKEY, AKEY, sget, sset, getRemember, saveSessionLocal, loadSessionLocal, clearSessionLocal } from "./lib/storage.js";
 import { INITIAL_PRODUCTS, L, W, K } from "./data/products.js";
 import { parseCsv } from "./lib/csv.js";
-import { gstBreakdown, formatINR } from "./lib/format.js";
+import { gstBreakdown, formatINR, isEmail } from "./lib/format.js";
+import { isValidPhone } from "./lib/countries.js";
 import { outOfStock, stockFor, sizeOutOfStock, firstInStockSize } from "./lib/catalog.js";
 import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
 import { PAYMENTS } from "./payments.config.js";
-import { createRazorpayOrder, verifyRazorpayPayment, openRazorpayCheckout } from "./lib/razorpay.js";
+import { createRazorpayOrder, verifyRazorpayPayment, openRazorpayCheckout, releaseReservation } from "./lib/razorpay.js";
 
 /*
   StoreProvider holds ALL of the app's state and actions (what used to live in
@@ -908,7 +909,9 @@ export function StoreProvider({ children }) {
 
   const placeOrder = async () => {
     if (placingOrder) return;
-    if (!coName.trim() || (!coPhone.trim() && !coEmail.trim())) return;
+    // Backstop for the UI gating: need a name + at least one VALID contact.
+    if (!coName.trim()) return;
+    if (!((coPhone.trim() && isValidPhone(coPhone)) || (coEmail.trim() && isEmail(coEmail)))) return;
     // A signed-in user must have a delivery address, or the order ships nowhere.
     if (session && !defaultAddress) { showToast("Please add a delivery address"); setScreen("addresses"); return; }
     // Don't let an out-of-stock / over-quantity item through checkout.
@@ -1002,8 +1005,11 @@ export function StoreProvider({ children }) {
           description: `Order ${order.id}`,
           prefill: { name: order.name, email: order.email || "", contact: order.phone || "" },
         });
-        if (payResp && payResp.__error === "sdk") { setPlacingOrder(false); showToast("Couldn't open the payment window. Please try again."); return; }
-        if (!payResp) { setPlacingOrder(false); showToast("Payment cancelled"); return; }
+        // Payment window couldn't open, or the customer dismissed it without
+        // paying → free the stock we reserved at checkout (server re-checks
+        // Razorpay, so a payment that did go through is settled, not released).
+        if (payResp && payResp.__error === "sdk") { setPlacingOrder(false); releaseReservation(created.razorpayOrderId); showToast("Couldn't open the payment window. Please try again."); return; }
+        if (!payResp) { setPlacingOrder(false); releaseReservation(created.razorpayOrderId); showToast("Payment cancelled"); return; }
         const verified = await verifyRazorpayPayment(payResp);
         setPlacingOrder(false);
         if (verified && verified.ok) {

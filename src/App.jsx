@@ -66,7 +66,9 @@ function Shell() {
   // Persistent mobile tab bar — hidden on screens with their own sticky bottom action bar
   // (checkout's Place order, addresses' Save/Cancel, the product page's Add-to-cart bar).
   const showBottomNav = showChrome && !["checkout", "addresses", "product"].includes(screen);
-  const deskWidth = ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : screen === "product" ? "lg:max-w-2xl" : "lg:max-w-xl";
+  const isLogin = screen === "login";
+  // Login breaks out of the centred column to a full-screen split layout on desktop.
+  const deskWidth = isLogin ? "lg:max-w-none" : ["home", "category", "favorites"].includes(screen) ? "lg:max-w-6xl" : (screen === "admin" || screen === "adminorders") ? "lg:max-w-4xl" : screen === "product" ? "lg:max-w-2xl" : "lg:max-w-xl";
 
   return (
     <div className="min-h-dvh bg-slate-300 lg:bg-slate-50 flex justify-center sm:max-lg:py-6 font-sans">
@@ -76,7 +78,7 @@ function Shell() {
         {/* True mobile lets the PAGE scroll (so the browser's address bar can collapse);
             the sm→lg phone-mockup keeps its own inner scroll. */}
         <div ref={scrollRef} className={`flex-1 overflow-visible sm:max-lg:overflow-y-auto no-scrollbar screen-wash ${showBottomNav ? "pb-[64px] lg:pb-0" : ""}`}>
-          <div className={`lg:mx-auto lg:w-full lg:px-6 ${deskWidth}`}><Current /></div>
+          <div className={`lg:mx-auto lg:w-full ${isLogin ? "" : "lg:px-6"} ${deskWidth}`}><Current /></div>
           {showFooter && <Footer />}
         </div>
         {showBottomNav && <BottomNav />}

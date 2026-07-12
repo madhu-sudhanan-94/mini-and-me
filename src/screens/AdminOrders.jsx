@@ -76,10 +76,13 @@ function AdminOrderCard({ o }) {
 
   return (
     <div className="bg-white rounded-xl shadow-card p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-bold text-slate-800">#{o.ref}</p>
-          <p className="text-xs text-slate-400">{fmtDate(o.date)} · {o.name || "—"}{o.contact ? " · " + o.contact : ""}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-slate-800">#{o.ref}</p>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${statusChip[o.status] || "bg-slate-100 text-slate-600"}`}>{STATUS_LABEL[o.status] || o.status}</span>
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5">{fmtDate(o.date)} · {o.name || "—"}{o.contact ? " · " + o.contact : ""}</p>
         </div>
         <div className="text-right shrink-0">
           <span className="font-bold text-slate-900 block">{formatINR(o.total)}</span>
@@ -120,7 +123,27 @@ function AdminOrderCard({ o }) {
         </div>
       )}
 
-      {/* Tracking editor */}
+      {/* Actions: change status, then tracking / refund */}
+      <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-slate-500 shrink-0">Update status</span>
+          <select value={o.status} disabled={ordersBusy} onChange={onStatusChange} className="flex-1 border border-slate-200 rounded-lg py-2 pl-3 pr-8 text-sm outline-hidden bg-white disabled:opacity-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron">
+            {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setTrackOpen((v) => !v)} className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg py-2 active:scale-95 transition">
+            <Truck size={14} /> {hasTracking ? "Edit tracking" : "Add tracking"}
+          </button>
+          {canRefund && (
+            <button onClick={() => setRefundOpen((v) => !v)} className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-rose-600 border border-rose-200 rounded-lg py-2 active:scale-95 transition">
+              <RotateCcw size={14} /> Refund
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tracking editor — opens under the actions */}
       {trackOpen && (
         <div className="mt-2.5 rounded-lg border border-slate-200 p-2.5 space-y-2">
           <div className="grid grid-cols-2 gap-2">
@@ -136,7 +159,7 @@ function AdminOrderCard({ o }) {
         </div>
       )}
 
-      {/* Partial-refund editor */}
+      {/* Partial-refund editor — opens under the actions */}
       {refundOpen && (
         <div className="mt-2.5 rounded-lg border border-slate-200 p-2.5">
           <p className="text-xs text-slate-500 mb-1.5">Refundable: <span className="font-semibold text-slate-700">{formatINR(remaining)}</span></p>
@@ -147,24 +170,6 @@ function AdminOrderCard({ o }) {
           </div>
         </div>
       )}
-
-      {/* Action row: status + tracking/refund toggles */}
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${statusChip[o.status] || "bg-slate-100 text-slate-600"}`}>{STATUS_LABEL[o.status] || o.status}</span>
-        <div className="flex items-center gap-1.5 flex-wrap justify-end">
-          <button onClick={() => setTrackOpen((v) => !v)} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg px-2.5 py-1.5 active:scale-95 transition">
-            <Truck size={13} /> {hasTracking ? "Edit tracking" : "Add tracking"}
-          </button>
-          {canRefund && (
-            <button onClick={() => setRefundOpen((v) => !v)} className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 border border-rose-200 rounded-lg px-2.5 py-1.5 active:scale-95 transition">
-              <RotateCcw size={13} /> Refund
-            </button>
-          )}
-          <select value={o.status} disabled={ordersBusy} onChange={onStatusChange} className="border border-slate-200 rounded-lg py-2 pl-2.5 pr-8 text-sm outline-hidden bg-white disabled:opacity-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron">
-            {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-          </select>
-        </div>
-      </div>
     </div>
   );
 }
@@ -181,7 +186,7 @@ export default function AdminOrders() {
   // captured-but-pending ones (so revenue is right) and sweep abandoned checkouts.
   // Only fires when such rows exist, so a clean list makes zero Razorpay calls.
   useEffect(() => {
-    if (adminOrders.some((o) => o.payment_method === "online" && o.payment_status === "pending" && o.status !== "cancelled")) {
+    if (adminOrders.some((o) => o.payment_method === "online" && (o.payment_status === "pending" || o.payment_status === "failed") && o.status !== "cancelled")) {
       reconcileOrders();
     }
   }, [adminOrders]); // eslint-disable-line react-hooks/exhaustive-deps

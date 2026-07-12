@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronLeft, Check } from "lucide-react";
+import { ChevronLeft, Check, Truck, RotateCcw, ShieldCheck } from "lucide-react";
 import { BRAND } from "../brand.config.js";
 import PasswordField from "../components/PasswordField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -40,14 +40,61 @@ export default function Login() {
   const inputCls = "w-full border border-slate-200 rounded-xl py-3.5 px-4 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition";
 
   return (
-    <div className="flex flex-col min-h-full">
-      <div className="px-6 pt-[18px]">
-        <button onClick={back} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-slate-700" /></button>
-      </div>
+    <div className="flex flex-col lg:flex-row min-h-full lg:min-h-dvh bg-slate-50 lg:bg-white">
+      {/* Desktop brand panel (left) */}
+      <aside className="hidden lg:flex lg:w-1/2 relative flex-col p-14 overflow-hidden text-white bg-linear-to-br from-brand-600 via-brand-500 to-accent-500">
+        <span aria-hidden className="pointer-events-none absolute -top-20 -right-16 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
+        <span aria-hidden className="pointer-events-none absolute -bottom-24 -left-20 w-96 h-96 rounded-full bg-accent-300/25 blur-3xl" />
 
-      <div className="flex-1 px-7 pb-8 w-full mx-auto">
+        {/* brand */}
+        <div className="relative z-10 flex items-center gap-3">
+          {/* <div className="w-11 h-11 rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+            {BRAND.icon && !logoFailed ? (
+              <img src={BRAND.icon} alt="" onError={() => setLogoFailed(true)} className="w-full h-full object-contain p-1" />
+            ) : (
+              <Logo size={22} className="text-white" />
+            )}
+          </div> */}
+          <span className="font-brand text-3xl font-normal tracking-tight">{BRAND.name}</span>
+        </div>
+
+        {/* headline + feature highlights (fill the panel) */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center max-w-md">
+          <span className="inline-block self-start bg-white/15 ring-1 ring-white/25 backdrop-blur-sm text-white text-[11px] font-semibold uppercase tracking-[0.14em] px-3 py-1 rounded-full mb-5">Kids · Men · Women</span>
+          <h2 className="font-brand text-4xl font-semibold leading-[1.15] tracking-tight drop-shadow-sm">Fashion for the whole family, delivered across India.</h2>
+          <p className="mt-4 text-white/85 text-base">{BRAND.tagline}</p>
+
+          <ul className="mt-9 space-y-4">
+            {[
+              { Icon: Truck, title: "Free shipping", sub: "On all orders above ₹1,000" },
+              { Icon: RotateCcw, title: "Easy returns", sub: "7-day hassle-free returns" },
+              { Icon: ShieldCheck, title: "Secure checkout", sub: "Safe & encrypted payments" },
+            ].map(({ Icon, title, sub }) => (
+              <li key={title} className="flex items-center gap-3.5">
+                <span className="w-11 h-11 rounded-xl bg-white/15 ring-1 ring-white/20 backdrop-blur-sm flex items-center justify-center shrink-0"><Icon size={19} /></span>
+                <div>
+                  <p className="font-semibold text-sm leading-tight">{title}</p>
+                  <p className="text-white/70 text-xs mt-0.5">{sub}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative z-10 text-white/60 text-sm">Trusted by families across India.</p>
+      </aside>
+
+      {/* Form side (right on desktop, full on mobile) */}
+      <div className="flex-1 lg:w-1/2 flex flex-col">
+        <div className="px-6 pt-[18px] lg:hidden">
+          <button onClick={back} aria-label="Back" className="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center active:scale-95 transition"><ChevronLeft size={20} className="text-slate-700" /></button>
+        </div>
+
+        <div className="flex-1 flex flex-col lg:justify-center px-7 lg:px-14 pt-2 pb-8 w-full max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mt-2 mb-6">
+        <div className="text-center lg:text-left mt-2 mb-6">
+          {/* Logo — mobile only (desktop shows branding in the left panel) */}
+          <div className="lg:hidden">
           {BRAND.icon && !logoFailed ? (
             <div className="w-20 h-20 rounded-xl bg-white shadow-md ring-1 ring-slate-100 mx-auto mb-4 flex items-center justify-center overflow-hidden">
               <img src={BRAND.icon} alt={BRAND.name} onError={() => setLogoFailed(true)} className="w-full h-full object-contain p-1" />
@@ -55,7 +102,8 @@ export default function Login() {
           ) : (
             <div className="w-16 h-16 rounded-xl bg-linear-to-br from-brand-500 to-accent-400 shadow-lg mx-auto mb-4 flex items-center justify-center"><Logo size={28} className="text-white" /></div>
           )}
-          <h1 className="text-2xl font-bold text-slate-900">{isSignup ? "Create account" : "Welcome back"}</h1>
+          </div>
+          <h1 className="font-brand text-3xl font-semibold tracking-tight text-slate-900">{isSignup ? "Create account" : "Welcome back"}</h1>
           <p className="text-slate-500 text-sm mt-1.5">{isSignup ? `Sign up to start shopping with ${BRAND.name}.` : "Log in to your account to continue."}</p>
         </div>
 
@@ -109,6 +157,7 @@ export default function Login() {
         {/* <button onClick={() => { setReturnTo(null); setAuth({ role: "guest", id: null }); setScreen("home"); }} className="w-full text-slate-400 text-sm font-medium py-2 mt-1">Skip for now →</button> */}
 
         <p className="text-center text-xs text-slate-500 mt-3 px-1">Admin? Log in with your admin email to manage products.</p>
+        </div>
       </div>
     </div>
   );

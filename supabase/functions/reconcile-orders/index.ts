@@ -2,13 +2,12 @@
 // cleans up abandoned checkouts. Ground truth is always Razorpay, never a client
 // claim. Two modes, chosen by the caller's token:
 //
-//   • ADMIN token → sweep ALL pending online orders. For each: if Razorpay shows
-//     a captured payment, settle it to 'paid' (the DB triggers then confirm the
-//     order + decrement stock) and send the confirmation email; else, if the
-//     order is older than ABANDON_HOURS with no capture, mark it cancelled/failed
-//     (an abandoned pre-payment checkout — it never decremented stock, so the
-//     restore trigger, which only fires for old.payment_status='paid', is a
-//     no-op and inventory is not inflated).
+//   • ADMIN token → sweep ALL unpaid (pending/failed) online orders. For each: if
+//     Razorpay shows a captured payment, settle it to 'paid' (the confirm trigger
+//     then advances it; stock was already reserved at checkout) and send the
+//     confirmation email; else, if the order is older than ABANDON_HOURS with no
+//     capture, cancel it — which frees the stock reserved at checkout (the restore
+//     trigger fires because stock_reserved is true).
 //
 //   • USER token → settle only THIS user's captured-but-pending orders so a
 //     verify-payment blip can't leave a paying customer's order invisible in
@@ -81,8 +80,10 @@ Deno.serve(async (req) => {
     // A known caller is required: guests (user_id null) rely on the webhook.
     if (!admin && !uid) return json({ error: "not_authorized" }, 403);
 
-    // Pending online orders that actually reached Razorpay (have an order id).
-    let path = `orders?payment_method=eq.online&payment_status=eq.pending&status=neq.cancelled&razorpay_order_id=not.is.null&select=id,total,created_at,razorpay_order_id&order=created_at.asc&limit=${MAX_ORDERS}`;
+    // Unpaid online orders that reached Razorpay (have an order id). 'failed' is
+    // included so a payment.failed order (which reserved stock at checkout) is
+    // reclaimed too — otherwise its reserved stock would leak.
+    let path = `orders?payment_method=eq.online&payment_status=in.(pending,failed)&status=neq.cancelled&razorpay_order_id=not.is.null&select=id,total,created_at,razorpay_order_id&order=created_at.asc&limit=${MAX_ORDERS}`;
     if (!admin) path += `&user_id=eq.${uid}`;
 
     const gRes = await db(path);
@@ -111,11 +112,11 @@ Deno.serve(async (req) => {
           await sendOrderEmail(String(o.id), "confirmation"); // idempotent
         }
       } else if (cap.state === "none" && admin && new Date(o.created_at).getTime() < cutoff) {
-        // Abandoned: Razorpay 2xx-CONFIRMED no capture AND it's older than the
-        // window. Only touches still-pending rows; no stock is restored (old
-        // payment_status is 'pending', not 'paid'). On "unknown" we do nothing —
-        // a transient API error must never cancel a possibly-paid order.
-        const cRes = await db(`orders?id=eq.${o.id}&payment_status=eq.pending&status=neq.cancelled`, {
+        // Abandoned: Razorpay 2xx-CONFIRMED no capture AND older than the window.
+        // Cancelling frees the stock reserved at checkout (the restore trigger
+        // fires because stock_reserved is true). On "unknown" we do nothing — a
+        // transient API error must never cancel a possibly-paid order.
+        const cRes = await db(`orders?id=eq.${o.id}&payment_status=in.(pending,failed)&status=neq.cancelled`, {
           method: "PATCH",
           body: JSON.stringify({ status: "cancelled", payment_status: "failed" }),
         });

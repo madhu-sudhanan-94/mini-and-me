@@ -7,6 +7,7 @@ import PrimaryButton from "../components/PrimaryButton.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import CouponBox from "../components/CouponBox.jsx";
 import { COUPONS_ENABLED } from "../shop.config.js";
+import { stockFor, sizeOutOfStock, sizeLowStock, outOfStock } from "../lib/catalog.js";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
@@ -27,8 +28,11 @@ export default function Cart() {
               const p = products.find((x) => x.id === item.id);
               if (!p) return null;
               const onSale = p.original && p.original > p.price;
+              const soldOut = outOfStock(p) || sizeOutOfStock(p, item.size);
+              const avail = stockFor(p, item.size);
+              const low = !soldOut && sizeLowStock(p, item.size);
               return (
-                <div key={idx} className="bg-white rounded-xl p-3 shadow-card flex gap-3">
+                <div key={idx} className={`bg-white rounded-xl p-3 shadow-card flex gap-3 ${soldOut ? "ring-1 ring-rose-200" : ""}`}>
                   <button onClick={() => openProduct(p)} aria-label={`View ${p.name}`} className="relative w-20 h-[84px] rounded-lg bg-linear-to-br from-accent-50 to-brand-100 overflow-hidden shrink-0 active:scale-95 transition">
                     <ProductImage p={p} color={item.color} />
                   </button>
@@ -41,6 +45,9 @@ export default function Cart() {
                       Size {item.size}
                       {onSale && <span className="ml-2 text-[10px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">SAVE {formatINR((p.original - p.price) * item.qty)}</span>}
                     </p>
+                    {soldOut
+                      ? <p className="text-[11px] font-bold text-rose-600 mt-1">Out of stock — remove to check out</p>
+                      : low && <p className="text-[11px] font-semibold text-amber-600 mt-1">Only {avail} left</p>}
                     <div className="flex items-center justify-between mt-2.5">
                       <div className="flex items-center bg-slate-100 rounded-full">
                         <button onClick={() => changeQty(idx, -1)} className="w-7 h-7 flex items-center justify-center"><Minus size={14} /></button>

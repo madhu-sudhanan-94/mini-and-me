@@ -1,7 +1,7 @@
 // send-order-email — admin-triggered shipped/delivered notifications. The
 // order-confirmation email is sent server-side from verify-payment/webhook, not
 // here. Admin-gated by token.
-import { background, corsHeaders, db, json } from "../_shared/util.ts";
+import { corsHeaders, db, json } from "../_shared/util.ts";
 import { sendOrderEmail } from "../_shared/email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     const { orderId, kind, userToken } = await req.json().catch(() => ({}));
     if (!orderId || (kind !== "shipped" && kind !== "delivered")) return json({ error: "bad request" }, 400);
     if (!(await isAdmin(userToken))) return json({ error: "not_authorized" }, 403);
-    background(sendOrderEmail(orderId, kind));
+    await sendOrderEmail(orderId, kind);
     return json({ ok: true });
   } catch (e) {
     console.error("send-order-email error", e);

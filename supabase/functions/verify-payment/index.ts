@@ -1,7 +1,7 @@
 // verify-payment — called by the client right after Razorpay Checkout succeeds.
 // Verifies the payment signature with the secret key, then marks the matching
 // order 'paid'. Idempotent (safe if the webhook already marked it paid).
-import { background, corsHeaders, db, hmacHex, json, safeEqual } from "../_shared/util.ts";
+import { corsHeaders, db, hmacHex, json, safeEqual } from "../_shared/util.ts";
 import { sendOrderEmail } from "../_shared/email.ts";
 
 const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")!;
@@ -34,9 +34,10 @@ Deno.serve(async (req) => {
       if (!uRes.ok) return json({ ok: false, error: "update failed" }, 500);
     }
 
-    // Order-confirmation email — off the response path (idempotent; skips if
-    // already sent / cancelled). Never blocks or fails the payment result.
-    if (order.status !== "cancelled") background(sendOrderEmail(order.id, "confirmation"));
+    // Order-confirmation email (idempotent; skips if already sent / cancelled).
+    // Awaited so the edge runtime doesn't kill it — sendOrderEmail never throws
+    // and is timeout-bounded, so it can't break or hang the payment result.
+    if (order.status !== "cancelled") await sendOrderEmail(order.id, "confirmation");
 
     return json({ ok: true, orderId: order.id });
   } catch (e) {

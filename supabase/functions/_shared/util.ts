@@ -31,17 +31,6 @@ export function db(path: string, init: RequestInit = {}) {
   });
 }
 
-// Run a task after the response is sent (so email latency never sits on the
-// payment critical path). Uses the Supabase edge runtime's waitUntil when
-// available, else fire-and-forget. Never rejects.
-export function background(p: Promise<unknown>): void {
-  const safe = Promise.resolve(p).catch(() => {});
-  try {
-    // @ts-ignore EdgeRuntime is provided by the Supabase edge runtime
-    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(safe);
-  } catch { /* fire-and-forget */ }
-}
-
 // HMAC-SHA256 → lowercase hex (Razorpay signature scheme).
 export async function hmacHex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(

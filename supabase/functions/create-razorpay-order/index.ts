@@ -3,7 +3,7 @@
 // stock, verifies the caller's identity from their token (never trusts a
 // client-supplied user id), creates a Razorpay order + a matching 'pending' DB
 // order, and returns the ids + server breakdown the client needs.
-import { corsHeaders, db, json } from "../_shared/util.ts";
+import { corsHeaders, db, json, rateLimited } from "../_shared/util.ts";
 import { computeTotals } from "../_shared/pricing.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -40,6 +40,8 @@ function available(p: { stock?: number | null; size_stock?: Record<string, numbe
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+  const rl = await rateLimited(req, "create-order", 20, 60); // 20/min per IP
+  if (rl) return rl;
 
   try {
     const body = await req.json().catch(() => ({}));

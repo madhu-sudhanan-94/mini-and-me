@@ -1,7 +1,7 @@
 // refund-order — admin cancels an order. For a paid online order it issues a
 // Razorpay refund and marks it cancelled+refunded (the DB trigger then restores
 // stock). For COD/unpaid orders it just marks cancelled. Admin-gated by token.
-import { corsHeaders, db, json } from "../_shared/util.ts";
+import { corsHeaders, db, json, rateLimited } from "../_shared/util.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -29,6 +29,8 @@ async function isAdmin(token?: string | null): Promise<boolean> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+  const rl = await rateLimited(req, "refund-order", 30, 60);
+  if (rl) return rl;
 
   try {
     const { orderId, userToken } = await req.json().catch(() => ({}));

@@ -31,6 +31,31 @@ export function db(path: string, init: RequestInit = {}) {
   });
 }
 
+// Fixed-window rate limit by caller IP + function name. Returns a 429 Response
+// when the limit is exceeded, else null (proceed). Fails OPEN — a limiter error
+// never blocks a legitimate request.
+export async function rateLimited(req: Request, name: string, max: number, windowSeconds: number): Promise<Response | null> {
+  // Use the platform-observed IP: x-real-ip, or the RIGHTMOST x-forwarded-for
+  // hop (the leftmost is client-appendable and trivially spoofable). If we can't
+  // identify the caller, skip limiting rather than lump everyone into one bucket.
+  const xff = (req.headers.get("x-forwarded-for") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const ip = (req.headers.get("x-real-ip") || xff[xff.length - 1] || "").trim();
+  if (!ip) return null;
+  try {
+    const r = await db("rpc/rate_limit_hit", {
+      method: "POST",
+      body: JSON.stringify({ p_key: `${name}:${ip}`, p_max: max, p_window_seconds: windowSeconds }),
+    });
+    if (r.ok && (await r.json()) === false) {
+      return new Response(JSON.stringify({ error: "rate_limited" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(windowSeconds) },
+      });
+    }
+  } catch { /* fail open */ }
+  return null;
+}
+
 // HMAC-SHA256 → lowercase hex (Razorpay signature scheme).
 export async function hmacHex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(

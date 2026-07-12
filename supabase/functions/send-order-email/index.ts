@@ -1,7 +1,7 @@
 // send-order-email — admin-triggered shipped/delivered notifications. The
 // order-confirmation email is sent server-side from verify-payment/webhook, not
 // here. Admin-gated by token.
-import { corsHeaders, db, json } from "../_shared/util.ts";
+import { corsHeaders, db, json, rateLimited } from "../_shared/util.ts";
 import { sendOrderEmail } from "../_shared/email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -25,6 +25,8 @@ async function isAdmin(token?: string | null): Promise<boolean> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+  const rl = await rateLimited(req, "send-order-email", 30, 60);
+  if (rl) return rl;
 
   try {
     const { orderId, kind, userToken } = await req.json().catch(() => ({}));

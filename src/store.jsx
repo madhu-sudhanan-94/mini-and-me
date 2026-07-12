@@ -611,8 +611,10 @@ export function StoreProvider({ children }) {
     if (!rating || rating < 1) { showToast("Pick a star rating first"); return false; }
     try {
       const name = (profile?.full_name || (auth?.id || "").split("@")[0] || "Customer").trim();
-      const res = await authedFetch(SUPABASE_URL + "/rest/v1/reviews", {
-        method: "POST", headers: { ...writeHeaders(), Prefer: "return=representation" },
+      // Upsert on (product_id, user_id): one review per buyer per product — a
+      // repeat submission edits their existing review instead of duplicating.
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/reviews?on_conflict=product_id,user_id", {
+        method: "POST", headers: { ...writeHeaders(), Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({ product_id: productId, user_id: session.user.id, name, rating, comment: (comment || "").trim() || null }),
       });
       if (!res.ok) { showToast(res.status === 401 || res.status === 403 ? "Only delivered buyers can review this" : "Couldn't post your review"); return false; }

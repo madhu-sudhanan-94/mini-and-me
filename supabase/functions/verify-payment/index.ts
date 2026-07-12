@@ -1,7 +1,7 @@
 // verify-payment — called by the client right after Razorpay Checkout succeeds.
 // Verifies the payment signature with the secret key, then marks the matching
 // order 'paid'. Idempotent (safe if the webhook already marked it paid).
-import { corsHeaders, db, hmacHex, json, safeEqual } from "../_shared/util.ts";
+import { corsHeaders, db, hmacHex, json, rateLimited, safeEqual } from "../_shared/util.ts";
 import { sendOrderEmail } from "../_shared/email.ts";
 
 const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")!;
@@ -9,6 +9,8 @@ const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")!;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "method not allowed" }, 405);
+  const rl = await rateLimited(req, "verify-payment", 30, 60);
+  if (rl) return rl;
 
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json().catch(() => ({}));

@@ -18,6 +18,12 @@
 --     COD is disabled; wire a decrement on confirm/deliver when COD is enabled.
 -- ============================================================================
 
+-- 0) the stock triggers below reference these product columns; add them if this
+--    DB predates them (older databases were missing size_stock). ---------------
+alter table public.products
+  add column if not exists stock      integer,
+  add column if not exists size_stock jsonb;
+
 -- 1) paid → confirmed (BEFORE UPDATE so it just adjusts the row) --------------
 create or replace function public.orders_confirm_on_paid()
 returns trigger language plpgsql as $$

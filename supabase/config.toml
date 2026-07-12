@@ -16,3 +16,6 @@ verify_jwt = false
 
 [functions.refund-order]
 verify_jwt = false
+
+[functions.send-order-email]
+verify_jwt = false

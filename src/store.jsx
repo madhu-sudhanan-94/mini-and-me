@@ -435,6 +435,14 @@ export function StoreProvider({ children }) {
       if (!res.ok) { showToast("Couldn't update status"); return; }
       setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, status } : o)));
       showToast("Order marked " + status);
+      // Email the customer on shipped/delivered (fire-and-forget; server dedupes).
+      if (status === "shipped" || status === "delivered") {
+        fetch(SUPABASE_URL + "/functions/v1/send-order-email", {
+          method: "POST",
+          headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: id, kind: status, userToken: session?.access_token || null }),
+        }).catch(() => {});
+      }
     } catch (e) { showToast("Network error"); }
     finally { setOrdersBusy(false); }
   };

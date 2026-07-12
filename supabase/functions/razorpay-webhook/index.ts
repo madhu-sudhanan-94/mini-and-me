@@ -2,7 +2,8 @@
 // server-to-server, so it survives the customer closing the tab mid-payment.
 // Configure it in Razorpay Dashboard → Settings → Webhooks with events
 // payment.captured and payment.failed, and set RAZORPAY_WEBHOOK_SECRET to match.
-import { db, hmacHex, json, safeEqual } from "../_shared/util.ts";
+import { background, db, hmacHex, json, safeEqual } from "../_shared/util.ts";
+import { sendOrderEmail } from "../_shared/email.ts";
 
 const WEBHOOK_SECRET = Deno.env.get("RAZORPAY_WEBHOOK_SECRET")!;
 
@@ -22,14 +23,21 @@ Deno.serve(async (req) => {
 
     // status=neq.cancelled: never resurrect a cancelled/refunded order.
     if (evt.event === "payment.captured") {
-      await db(`orders?razorpay_order_id=eq.${orderId}&payment_status=neq.paid&status=neq.cancelled`, {
+      const uRes = await db(`orders?razorpay_order_id=eq.${orderId}&payment_status=neq.paid&status=neq.cancelled`, {
         method: "PATCH",
+        headers: { Prefer: "return=representation" },
         body: JSON.stringify({
           payment_status: "paid",
           razorpay_payment_id: entity.id,
           amount_paid: entity.amount ? Math.round(entity.amount / 100) : null,
         }),
       });
+      // If THIS call flipped the order to paid (verify-payment hadn't), send the
+      // confirmation. If the row was already paid, no row returns → no email.
+      if (uRes.ok) {
+        const updated = await uRes.json().catch(() => []);
+        if (updated?.[0]?.id) background(sendOrderEmail(updated[0].id, "confirmation"));
+      }
     } else if (evt.event === "payment.failed") {
       await db(`orders?razorpay_order_id=eq.${orderId}&payment_status=eq.pending&status=neq.cancelled`, {
         method: "PATCH",

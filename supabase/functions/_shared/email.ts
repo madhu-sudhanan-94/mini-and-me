@@ -4,6 +4,7 @@ import { db } from "./util.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM = Deno.env.get("ORDER_EMAIL_FROM") || "Mini & Me <onboarding@resend.dev>";
+const OWNER_EMAIL = Deno.env.get("ORDER_ALERT_EMAIL"); // owner new-order alerts (unset = off)
 const BRAND = "Mini & Me";
 const BRAND_COLOR = "#2563EB";
 
@@ -119,19 +120,54 @@ async function release(orderId: string, kind: string): Promise<void> {
   }
 }
 
+// Alert the store owner that a paid order came in (once per order). Independent
+// of the customer email — fires even when the order has no customer email. No-op
+// unless ORDER_ALERT_EMAIL is set. Never throws.
+// deno-lint-ignore no-explicit-any
+async function ownerAlert(orderId: string, o: any): Promise<void> {
+  try {
+    if (!RESEND_API_KEY || !OWNER_EMAIL) return;
+    if (!(await claim(orderId, "owner_alert"))) return; // already alerted
+    const ref = esc(o.ref || o.id);
+    const contact = [o.customer_name, o.customer_phone, o.customer_email].filter(Boolean).map(esc).join(" · ");
+    const html = layout(`<h1 style="font-size:20px;margin:0 0 8px;">New paid order 🎉 #${ref}</h1>
+      <p style="color:#475569;font-size:14px;margin:0 0 4px;">${contact || "—"}</p>
+      ${itemsTable(o.order_items)}${totalsBlock(o)}${addressBlock(o.shipping_address)}`);
+    let ok = false;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 10000);
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: FROM, to: OWNER_EMAIL, subject: `New order #${ref} · ${inr(o.total)}`, html, reply_to: o.customer_email || undefined }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      ok = r.ok;
+      if (!r.ok) console.error("[email] owner alert failed", r.status, await r.text());
+    } catch (e) { console.error("[email] owner alert error", e); }
+    if (!ok) await release(orderId, "owner_alert");
+  } catch (e) { console.error("[email] ownerAlert error", e); }
+}
+
 // Send the given email for an order exactly once: claim → send → unclaim on
 // failure so a later retry (webhook re-delivery / re-verify / admin re-action)
-// can re-send. NEVER throws (so it can't break the payment flow), and no-ops if
-// email isn't configured or the order has no email address.
-export async function sendOrderEmail(orderId: string, kind: Kind): Promise<void> {
+// can re-send. NEVER throws (so it can't break the payment flow). Returns a
+// status the caller can surface: "sent" | "skipped" (already sent) |
+// "no_recipient" (no customer email) | "failed" | "error" | "not_configured".
+export async function sendOrderEmail(orderId: string, kind: Kind): Promise<string> {
   try {
-    if (!RESEND_API_KEY || !orderId) return;
+    if (!RESEND_API_KEY || !orderId) return "not_configured";
     const oRes = await db(`orders?id=eq.${orderId}&select=*,order_items(*)`);
-    if (!oRes.ok) { console.error("[email] order lookup failed", await oRes.text()); return; }
+    if (!oRes.ok) { console.error("[email] order lookup failed", await oRes.text()); return "error"; }
     const rows = await oRes.json();
     const o = rows?.[0];
-    if (!o || !o.customer_email) return; // nothing to send to
-    if (!(await claim(orderId, kind))) return; // already sent / in-flight
+    if (!o) return "error";
+    // Owner alert on a new paid order — independent of the customer's email.
+    if (kind === "confirmation") await ownerAlert(orderId, o);
+    if (!o.customer_email) return "no_recipient"; // nothing to send to the customer
+    if (!(await claim(orderId, kind))) return "skipped"; // already sent / in-flight
 
     let ok = false;
     try {
@@ -150,8 +186,10 @@ export async function sendOrderEmail(orderId: string, kind: Kind): Promise<void>
     } catch (e) {
       console.error("[email] resend error", e);
     }
-    if (!ok) await release(orderId, kind); // let a later retry re-send
+    if (!ok) { await release(orderId, kind); return "failed"; } // let a later retry re-send
+    return "sent";
   } catch (e) {
     console.error("[email] sendOrderEmail error", e); // never propagate to the caller
+    return "error";
   }
 }

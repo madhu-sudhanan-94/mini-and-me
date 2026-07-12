@@ -120,17 +120,6 @@ Deno.serve(async (req) => {
       if (!iRes.ok) { await db(`orders?id=eq.${dbOrder.id}`, { method: "DELETE" }).catch(() => {}); return json({ error: "order_save_failed" }, 500); }
     }
 
-    // Atomically RESERVE stock now that the order + items exist. This is the real
-    // oversell guard — the check loop above is non-atomic. If the last unit was
-    // taken by a concurrent checkout, roll the order + items back so no ghost
-    // order holds a Razorpay order id.
-    const rsv = await db("rpc/reserve_order_stock", { method: "POST", body: JSON.stringify({ p_order: dbOrder.id }) });
-    if (!rsv.ok) {
-      await db(`order_items?order_id=eq.${dbOrder.id}`, { method: "DELETE" }).catch(() => {});
-      await db(`orders?id=eq.${dbOrder.id}`, { method: "DELETE" }).catch(() => {});
-      return json({ error: "out_of_stock" }, 409);
-    }
-
     // Return the SERVER breakdown so the client displays exactly what was charged.
     return json({
       keyId: RZP_KEY_ID, razorpayOrderId: rOrder.id, amount, currency: "INR", dbOrderId: dbOrder.id, ref,

@@ -32,8 +32,8 @@ Deno.serve(async (req) => {
     const { orderId, kind, userToken } = await req.json().catch(() => ({}));
     if (!orderId || (kind !== "shipped" && kind !== "delivered")) return json({ error: "bad request" }, 400);
     if (!(await isAdmin(userToken))) return json({ error: "not_authorized" }, 403);
-    await sendOrderEmail(orderId, kind);
-    return json({ ok: true });
+    const status = await sendOrderEmail(orderId, kind);
+    return json({ ok: true, status });
   } catch (e) {
     console.error("send-order-email error", e);
     return json({ error: "server_error" }, 500);

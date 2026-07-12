@@ -12,7 +12,7 @@ import { isValidPhone } from "./lib/countries.js";
 import { outOfStock, stockFor, sizeOutOfStock, firstInStockSize } from "./lib/catalog.js";
 import { SHOP, findCoupon, couponDiscount } from "./shop.config.js";
 import { PAYMENTS } from "./payments.config.js";
-import { createRazorpayOrder, verifyRazorpayPayment, openRazorpayCheckout, releaseReservation } from "./lib/razorpay.js";
+import { createRazorpayOrder, verifyRazorpayPayment, openRazorpayCheckout } from "./lib/razorpay.js";
 
 /*
   StoreProvider holds ALL of the app's state and actions (what used to live in
@@ -21,6 +21,12 @@ import { createRazorpayOrder, verifyRazorpayPayment, openRazorpayCheckout, relea
 */
 const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);
+
+// Central error sink. Logs now (so failures aren't swallowed silently); a
+// Sentry.captureException() slots in here later without touching call sites.
+function reportError(context, err) {
+  try { console.error(`[mini&me] ${context}:`, err); } catch { /* noop */ }
+}
 
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
@@ -45,6 +51,7 @@ export function StoreProvider({ children }) {
   const [auth, setAuth] = useState({ role: "guest", id: null });
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [catalogError, setCatalogError] = useState(false); // true when the live catalog couldn't load
   // Refs of orders PLACED IN THIS in-memory session (reset on reload + logout).
   // Used to safely surface a just-paid "confirming" order without leaking the
   // device-global (persisted) `orders` cache across accounts on a shared device.
@@ -207,11 +214,15 @@ export function StoreProvider({ children }) {
   const loadProducts = async ({ allowEmpty = false } = {}) => {
     try {
       const res = await authedFetch(SUPABASE_URL + "/rest/v1/products?select=*&order=id.asc", { headers: SB_HEADERS });
-      if (res.ok) {
-        const rows = await res.json();
-        if (Array.isArray(rows) && (rows.length || allowEmpty)) setProducts(rows.map(mapDbProduct));
-      }
-    } catch (e) { /* offline / not hosted yet — keep local sample data */ }
+      if (!res.ok) { setCatalogError(true); reportError("loadProducts", `HTTP ${res.status}`); return; }
+      const rows = await res.json();
+      if (Array.isArray(rows) && (rows.length || allowEmpty)) setProducts(rows.map(mapDbProduct));
+      setCatalogError(false); // reached the store — clear any prior error banner
+    } catch (e) {
+      // Don't silently pretend the sample data is the live catalog — flag it so
+      // the UI can warn instead of showing stale/fake products as orderable.
+      setCatalogError(true); reportError("loadProducts", e);
+    }
   };
   // Aggregate rating (avg + count) per product, from the product_ratings view.
   const loadRatings = async () => {
@@ -318,7 +329,7 @@ export function StoreProvider({ children }) {
         const rows = await res.json();
         if (Array.isArray(rows)) setMyOrders(rows);
       }
-    } catch (e) { /* offline */ }
+    } catch (e) { reportError("loadMyOrders", e); }
   };
   useEffect(() => { loadMyOrders(); }, [session?.user?.id]);
 
@@ -410,7 +421,7 @@ export function StoreProvider({ children }) {
         const rows = await res.json();
         if (Array.isArray(rows)) setAdminOrders(rows);
       }
-    } catch (e) { /* offline */ }
+    } catch (e) { reportError("loadAdminOrders", e); }
     finally { setOrdersBusy(false); }
   };
   // Cancel + refund a paid online order via the edge function (Razorpay refund;
@@ -511,14 +522,30 @@ export function StoreProvider({ children }) {
       });
       if (!res.ok) { showToast("Couldn't update status"); return; }
       setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, status } : o)));
-      showToast("Order marked " + status);
-      // Email the customer on shipped/delivered (fire-and-forget; server dedupes).
+      // On shipped/delivered, email the customer and reflect whether it actually
+      // sent — a silent failure would leave the customer uninformed while the
+      // admin believes they were notified.
       if (status === "shipped" || status === "delivered") {
-        fetch(SUPABASE_URL + "/functions/v1/send-order-email", {
-          method: "POST",
-          headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: id, kind: status, userToken: session?.access_token || null }),
-        }).catch(() => {});
+        let note = "";
+        try {
+          // Bounded so a slow/stalled Resend can't hold the screen-global
+          // ordersBusy (which would freeze every order card's controls).
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 12000);
+          const er = await fetch(SUPABASE_URL + "/functions/v1/send-order-email", {
+            method: "POST",
+            headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: id, kind: status, userToken: session?.access_token || null }),
+            signal: ctrl.signal,
+          });
+          clearTimeout(timer);
+          const ed = await er.json().catch(() => ({}));
+          if (!er.ok || ed.status === "failed" || ed.status === "error") note = " · email didn't send";
+          else if (ed.status === "no_recipient") note = " · no email on file";
+        } catch (e) { reportError("send-order-email", e); note = " · email didn't send"; }
+        showToast("Order marked " + status + note);
+      } else {
+        showToast("Order marked " + status);
       }
     } catch (e) { showToast("Network error"); }
     finally { setOrdersBusy(false); }
@@ -1005,11 +1032,8 @@ export function StoreProvider({ children }) {
           description: `Order ${order.id}`,
           prefill: { name: order.name, email: order.email || "", contact: order.phone || "" },
         });
-        // Payment window couldn't open, or the customer dismissed it without
-        // paying → free the stock we reserved at checkout (server re-checks
-        // Razorpay, so a payment that did go through is settled, not released).
-        if (payResp && payResp.__error === "sdk") { setPlacingOrder(false); releaseReservation(created.razorpayOrderId); showToast("Couldn't open the payment window. Please try again."); return; }
-        if (!payResp) { setPlacingOrder(false); releaseReservation(created.razorpayOrderId); showToast("Payment cancelled"); return; }
+        if (payResp && payResp.__error === "sdk") { setPlacingOrder(false); showToast("Couldn't open the payment window. Please try again."); return; }
+        if (!payResp) { setPlacingOrder(false); showToast("Payment cancelled"); return; }
         const verified = await verifyRazorpayPayment(payResp);
         setPlacingOrder(false);
         if (verified && verified.ok) {
@@ -1423,7 +1447,7 @@ export function StoreProvider({ children }) {
   const value = {
     // state
     products, setProducts, screen, setScreen, goBack, auth, setAuth, cart, setCart,
-    orders, setOrders, sessionOrderRefs, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
+    orders, setOrders, sessionOrderRefs, catalogError, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
     authBusy, session, rememberMe, setRememberMe, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,

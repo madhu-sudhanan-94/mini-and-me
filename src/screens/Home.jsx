@@ -16,7 +16,7 @@ import { useStore } from "../store.jsx";
 const ALL_PAGE = 12;
 
 export default function Home() {
-  const { products, query, setQuery, favorites, cartCount, setScreen, setSelCategory, heroIndex, setHeroIndex, openProduct, profile } = useStore();
+  const { products, query, setQuery, favorites, cartCount, setScreen, setSelCategory, heroIndex, setHeroIndex, openProduct, profile, catalogError } = useStore();
   const firstName = (profile?.full_name || "").trim().split(/\s+/)[0] || "";
 
   const featured = products.filter((p) => p.trending).slice(0, 5);
@@ -48,6 +48,11 @@ export default function Home() {
   const heroSwipe = useSwipe({ onLeft: () => goHero(1), onRight: () => goHero(-1) });
   return (
     <div className="pb-4">
+      {catalogError && (
+        <div className="mx-4 mt-3 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5">
+          <p className="text-xs font-semibold text-amber-800">Having trouble loading the store — items shown may be out of date. Please check your connection and refresh.</p>
+        </div>
+      )}
       {/* pinned menu bar: greeting + logo + quick icons stay put while scrolling */}
       <div className="lg:hidden sticky top-[-1px] z-20 bg-slate-50/95 backdrop-blur-sm px-5 h-16 flex items-center justify-between gap-3">
         <div className="min-w-0 mt-[2px]">

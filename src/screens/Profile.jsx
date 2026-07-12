@@ -75,7 +75,7 @@ export default function Profile() {
         <div className="bg-white rounded-xl shadow-card p-5 space-y-4">
           <div>
             <label className="block text-xs text-slate-500 mb-1">Full name</label>
-            <input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} placeholder="Your name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10" />
+            <input value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} placeholder="Your Name" className="w-full border border-slate-200 rounded-xl py-3 px-3 outline-hidden text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-400 placeholder:font-normal" />
           </div>
 
           <div>

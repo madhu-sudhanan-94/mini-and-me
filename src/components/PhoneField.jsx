@@ -32,7 +32,7 @@ export default function PhoneField({ value, onChange, placeholder = "Mobile numb
           <span className="text-sm text-slate-600">{country.dial}</span>
           <ChevronDown size={14} className="text-slate-400" />
         </button>
-        <input value={number} onChange={onNum} inputMode="numeric" placeholder={placeholder} className="flex-1 py-3 px-3 outline-hidden text-sm bg-transparent min-w-0" />
+        <input value={number} onChange={onNum} inputMode="numeric" placeholder={placeholder} className="flex-1 py-3 px-3 outline-hidden text-sm bg-transparent min-w-0 placeholder:text-slate-400 placeholder:font-normal" />
       </div>
       {open && (
         <>

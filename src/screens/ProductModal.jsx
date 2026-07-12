@@ -241,7 +241,7 @@ export default function ProductModal() {
           </div>
 
         {/* Actions — sticky at the bottom on mobile, inline on desktop */}
-        <div className="sticky bottom-0 z-20 px-4 py-3 border-t border-slate-100 bg-white/95 backdrop-blur lg:static lg:bg-transparent lg:border-0">
+        <div className="sticky bottom-0 z-20 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 bg-white lg:static lg:bg-transparent lg:border-0 lg:pb-3">
           {oos ? (
             <button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-3 rounded-xl cursor-not-allowed">Out of stock</button>
           ) : selSoldOut ? (

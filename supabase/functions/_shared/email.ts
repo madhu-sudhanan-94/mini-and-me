@@ -90,14 +90,14 @@ function render(o: any, kind: Kind): { subject: string; html: string } {
 }
 
 async function claim(orderId: string, kind: string): Promise<boolean> {
-  const r = await db("rpc/claim_order_email", { method: "POST", body: JSON.stringify({ p_order: orderId, p_kind: kind }) });
+  const r = await db("rpc/claim_order_email", { method: "POST", body: JSON.stringify({ p_order: String(orderId), p_kind: kind }) });
   if (!r.ok) { console.error("claim_order_email failed", await r.text()); return false; }
   return (await r.json()) === true;
 }
 
 async function release(orderId: string, kind: string): Promise<void> {
   try {
-    await db("rpc/release_order_email", { method: "POST", body: JSON.stringify({ p_order: orderId, p_kind: kind }) });
+    await db("rpc/release_order_email", { method: "POST", body: JSON.stringify({ p_order: String(orderId), p_kind: kind }) });
   } catch (e) {
     console.error("release_order_email failed", e);
   }
@@ -111,7 +111,7 @@ export async function sendOrderEmail(orderId: string, kind: Kind): Promise<void>
   try {
     if (!RESEND_API_KEY || !orderId) return;
     const oRes = await db(`orders?id=eq.${orderId}&select=*,order_items(*)`);
-    if (!oRes.ok) return;
+    if (!oRes.ok) { console.error("[email] order lookup failed", await oRes.text()); return; }
     const rows = await oRes.json();
     const o = rows?.[0];
     if (!o || !o.customer_email) return; // nothing to send to
@@ -130,12 +130,12 @@ export async function sendOrderEmail(orderId: string, kind: Kind): Promise<void>
       });
       clearTimeout(timer);
       ok = r.ok;
-      if (!r.ok) console.error("resend send failed", await r.text());
+      if (!r.ok) console.error("[email] resend send failed", r.status, await r.text());
     } catch (e) {
-      console.error("resend send error", e);
+      console.error("[email] resend error", e);
     }
     if (!ok) await release(orderId, kind); // let a later retry re-send
   } catch (e) {
-    console.error("sendOrderEmail error", e); // never propagate to the caller
+    console.error("[email] sendOrderEmail error", e); // never propagate to the caller
   }
 }

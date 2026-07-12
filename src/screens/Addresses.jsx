@@ -145,8 +145,18 @@ export default function Addresses() {
             const fullAddr = [a.line1, a.line2, a.area, a.city, a.state, a.pincode, a.country && a.country !== "India" ? a.country : null].filter(Boolean).join(", ");
             const contact = [a.full_name, fmtPhone(a.phone)].filter(Boolean).join(" · ");
             return (
-              // Tap anywhere on the card to make it the default delivery address.
-              <div key={a.id} onClick={() => !a.is_default && makeDefaultAddress(a.id)} className={`rounded-xl shadow-card p-4 transition bg-white ${a.is_default ? "ring-1 ring-brand-500 cursor-default" : "cursor-pointer hover:ring-1 hover:ring-slate-200"}`}>
+              // Tap (or Enter/Space) anywhere on the card to make it the default delivery address.
+              <div
+                key={a.id}
+                onClick={() => !a.is_default && makeDefaultAddress(a.id)}
+                {...(!a.is_default ? {
+                  role: "button",
+                  tabIndex: 0,
+                  "aria-label": `Set ${a.label} address as default`,
+                  onKeyDown: (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); makeDefaultAddress(a.id); } },
+                } : {})}
+                className={`rounded-xl shadow-card p-4 transition bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${a.is_default ? "ring-1 ring-brand-500 cursor-default" : "cursor-pointer hover:ring-1 hover:ring-slate-200"}`}
+              >
                 <div className="flex items-center gap-3">
                   <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${labelTint(a.label)}`}><Icon size={18} /></span>
                   <p className="min-w-0 text-[15px] font-semibold text-slate-800 truncate">{a.label}</p>

@@ -55,6 +55,22 @@ function totalsBlock(o: Record<string, number>): string {
   return `<table style="width:100%;border-collapse:collapse;border-top:1px solid #eef2f7;margin-top:6px;">${rows}</table>`;
 }
 
+// deno-lint-ignore no-explicit-any
+function trackingBlock(o: any): string {
+  const carrier = o.tracking_carrier, num = o.tracking_number, eta = o.tracking_eta;
+  // Only render a link for a real http(s) URL (defence against a javascript: href).
+  const url = typeof o.tracking_url === "string" && /^https?:\/\//i.test(o.tracking_url) ? o.tracking_url : null;
+  if (!carrier && !num && !eta && !url) return ""; // nothing to show
+  const parts: string[] = [];
+  if (carrier) parts.push(`Carrier: <b>${esc(carrier)}</b>`);
+  if (num) parts.push(`Tracking no.: <b>${esc(num)}</b>`);
+  if (eta) parts.push(`Estimated delivery: <b>${esc(eta)}</b>`);
+  const btn = url
+    ? `<div style="margin-top:10px;"><a href="${esc(url)}" style="display:inline-block;background:${BRAND_COLOR};color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;">Track your shipment</a></div>`
+    : "";
+  return `<div style="margin:16px 0;padding:12px 14px;background:#f8fafc;border-radius:10px;font-size:13px;color:#475569;line-height:1.7;">${parts.join("<br/>")}${btn}</div>`;
+}
+
 function addressBlock(a: Record<string, string> | null): string {
   const lines = addrLines(a);
   if (!lines.length) return "";
@@ -70,7 +86,7 @@ function render(o: any, kind: Kind): { subject: string; html: string } {
       subject: `Your ${BRAND} order #${ref} has shipped 🚚`,
       html: layout(`<h1 style="font-size:20px;margin:0 0 8px;">Your order is on its way 🚚</h1>
         <p style="color:#475569;font-size:14px;margin:0 0 4px;">Hi ${name}, order <b>#${ref}</b> has shipped and is heading your way.</p>
-        ${itemsTable(o.order_items)}${addressBlock(o.shipping_address)}`),
+        ${trackingBlock(o)}${itemsTable(o.order_items)}${addressBlock(o.shipping_address)}`),
     };
   }
   if (kind === "delivered") {

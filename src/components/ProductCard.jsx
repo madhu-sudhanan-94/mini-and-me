@@ -20,7 +20,14 @@ export default function ProductCard({ p, wide }) {
     });
 
     return (
-        <div onClick={() => openProduct(p)} className={`text-left bg-white rounded-lg overflow-hidden shadow-card hover:shadow-card-hover transition active:scale-[0.98] cursor-pointer ${wide ? "w-40 shrink-0" : ""}`}>
+        <div
+            onClick={() => openProduct(p)}
+            onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); openProduct(p); } }}
+            role="button"
+            tabIndex={0}
+            aria-label={`View ${p.name}`}
+            className={`text-left bg-white rounded-lg overflow-hidden shadow-card hover:shadow-card-hover transition active:scale-[0.98] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 ${wide ? "w-40 shrink-0" : ""}`}
+        >
             <div className={`relative bg-linear-to-br from-accent-50 to-brand-100 h-[180px] overflow-hidden select-none ${wide ? "" : "touch-pan-y"}`}>
                 <ProductImage key={imgIdx} p={p} color={p.colors[0]} index={imgIdx} />
                 {/* swipe layer — only for grid cards; wide (carousel) cards let the row scroll horizontally */}

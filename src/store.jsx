@@ -424,9 +424,59 @@ export function StoreProvider({ children }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.error) { showToast(data.error === "refund_failed" ? "Refund failed at Razorpay — try again" : "Couldn't cancel the order"); return; }
-      setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, status: "cancelled", payment_status: data.refunded ? "refunded" : o.payment_status } : o)));
+      setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, status: "cancelled", payment_status: data.refunded ? "refunded" : o.payment_status, amount_refunded: data.amountRefunded ?? o.amount_refunded } : o)));
       showToast(data.refunded ? "Order cancelled & refunded" : "Order cancelled");
     } catch (e) { showToast("Network error"); }
+    finally { setOrdersBusy(false); }
+  };
+
+  // Partial refund (admin) — refund a specific ₹ amount WITHOUT cancelling the
+  // order. The edge function caps it at the remaining refundable amount and keeps
+  // the running total in amount_refunded.
+  const partialRefund = async (id, amount) => {
+    if (auth.role !== "admin" || !session?.access_token) return false;
+    const amt = Math.floor(Number(amount));
+    if (!Number.isFinite(amt) || amt <= 0) { showToast("Enter a valid refund amount"); return false; }
+    setOrdersBusy(true);
+    try {
+      const res = await fetch(SUPABASE_URL + "/functions/v1/refund-order", {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id, amount: amt, userToken: session?.access_token || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        showToast(data.error === "refund_failed" ? "Refund failed at Razorpay" : data.error === "nothing_to_refund" ? "Nothing left to refund" : data.error === "not_refundable" ? "This order can't be refunded online" : "Couldn't process the refund");
+        return false;
+      }
+      setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, amount_refunded: data.amountRefunded ?? o.amount_refunded } : o)));
+      showToast(data.refundedNow != null ? `Refunded ₹${data.refundedNow}` : "Refund processed");
+      return true;
+    } catch (e) { showToast("Network error"); return false; }
+    finally { setOrdersBusy(false); }
+  };
+
+  // Save shipment tracking on an order (admin). Picked up by the shipped email
+  // the next time the order is marked 'shipped', and shown to the customer.
+  const saveTracking = async (id, { carrier, number, url, eta }) => {
+    if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin"); return false; }
+    const patch = {
+      tracking_carrier: (carrier || "").trim() || null,
+      tracking_number: (number || "").trim() || null,
+      tracking_url: (url || "").trim() || null,
+      tracking_eta: (eta || "").trim() || null,
+    };
+    setOrdersBusy(true);
+    try {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?id=eq." + id, {
+        method: "PATCH", headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) { writeErrToast(res.status, "Couldn't save tracking"); return false; }
+      setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+      showToast("Tracking saved");
+      return true;
+    } catch (e) { showToast("Network error"); return false; }
     finally { setOrdersBusy(false); }
   };
 
@@ -1139,6 +1189,28 @@ export function StoreProvider({ children }) {
     customSizes: (p.sizes || []).filter((s) => !(p.cat === "toys" ? ["Free"] : p.cat === "kids" ? K : ["pants", "shorts"].includes(p.shape) ? W : L).includes(s)),
   });
 
+  // Quick inline restock from the admin product list (total stock only; per-size
+  // stock is edited in the full form). Optimistically updates the local product.
+  const updateProductStock = async (id, stock) => {
+    if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin"); return false; }
+    const n = Math.floor(Number(stock));
+    if (!Number.isFinite(n) || n < 0) { showToast("Enter a valid stock number"); return false; }
+    setAdminBusy(true);
+    try {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/products?id=eq." + id, {
+        method: "PATCH", headers: { ...writeHeaders(), Prefer: "return=representation" },
+        body: JSON.stringify({ stock: n }),
+      });
+      if (!res.ok) { writeErrToast(res.status, "Couldn't update stock"); return false; }
+      const rows = await res.json().catch(() => []);
+      const saved = Array.isArray(rows) && rows[0] ? mapDbProduct(rows[0]) : null;
+      if (saved) setProducts((ps) => ps.map((p) => (p.id === saved.id ? saved : p)));
+      showToast("Stock updated");
+      return true;
+    } catch (e) { showToast("Network error"); return false; }
+    finally { setAdminBusy(false); }
+  };
+
   const deleteProduct = async (id) => {
     if (auth.role !== "admin" || !session?.access_token) { showToast("Log in as admin to delete"); return; }
     setAdminBusy(true);
@@ -1365,11 +1437,11 @@ export function StoreProvider({ children }) {
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
     openQuickAdd, closeQuickAdd, openProductFromQuick,
     toggleFav, isFav, addToCart, buyNow, changeBuyNowQty, changeQty, removeItem, placeOrder, logout,
-    saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
+    saveProduct, editProduct, deleteProduct, updateProductStock, refreshFromDb, loadProducts,
     uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
-    loadMyOrders, loadAdminOrders, updateOrderStatus, cancelRefundOrder, reconcileOrders,
+    loadMyOrders, loadAdminOrders, updateOrderStatus, cancelRefundOrder, reconcileOrders, partialRefund, saveTracking,
     productReviews, loadProductReviews, canReview, submitReview, deleteReview, productRatings,
   };
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { MapPin, Package, ShoppingCart } from "lucide-react";
+import { MapPin, Package, ShoppingCart, Truck } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR } from "../lib/format.js";
 import { fmtDate, shipLines } from "../lib/orders.js";
@@ -90,6 +90,23 @@ export default function OrderDetail() {
           </div>
           <StepTracker status={displayStatus} />
         </div>
+
+        {/* Shipment tracking (shown once the admin adds tracking) */}
+        {(o.trackingNumber || o.trackingUrl) && (
+          <div className="bg-white rounded-xl shadow-card p-4">
+            <p className="text-sm font-semibold text-slate-800 mb-1.5 flex items-center gap-1.5"><Truck size={15} className="text-brand-600" /> Shipment tracking</p>
+            <div className="text-sm text-slate-600 space-y-0.5">
+              {o.trackingCarrier && <p><span className="text-slate-400">Carrier:</span> {o.trackingCarrier}</p>}
+              {o.trackingNumber && <p><span className="text-slate-400">Tracking no.:</span> <span className="font-medium text-slate-800">{o.trackingNumber}</span></p>}
+              {o.trackingEta && <p><span className="text-slate-400">Estimated delivery:</span> {o.trackingEta}</p>}
+            </div>
+            {o.trackingUrl && /^https?:\/\//i.test(o.trackingUrl) && (
+              <a href={o.trackingUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2.5 bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-xl active:scale-[0.98] transition">
+                <Truck size={15} /> Track shipment
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Items */}
         {count > 0 && (

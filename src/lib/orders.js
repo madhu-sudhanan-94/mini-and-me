@@ -46,6 +46,12 @@ export function normalizeOrder(o) {
     totalSaved: o.total_saved ?? o.saved ?? 0,
     paymentMethod: o.payment_method || o.paymentMethod || null,  // 'online' | 'cod'
     paymentStatus: o.payment_status || o.paymentStatus || null,  // 'pending' | 'paid' | 'failed' | 'refunded'
+    amountRefunded: o.amount_refunded ?? o.amountRefunded ?? 0,  // running total refunded (₹)
+    // Shipment tracking (admin-entered; shown to the customer + in the shipped email)
+    trackingCarrier: o.tracking_carrier || o.trackingCarrier || null,
+    trackingNumber: o.tracking_number || o.trackingNumber || null,
+    trackingUrl: o.tracking_url || o.trackingUrl || null,
+    trackingEta: o.tracking_eta || o.trackingEta || null,
   };
 }
 

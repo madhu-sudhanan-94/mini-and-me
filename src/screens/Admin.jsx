@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { formatINR, CAT_LABEL } from "../lib/format.js";
 import { panelBlueDeep } from "../theme.js";
-import { outOfStock, lowStock, COLOR_FAMILIES } from "../lib/catalog.js";
+import { outOfStock, lowStock, hasSizeStock, COLOR_FAMILIES } from "../lib/catalog.js";
 import { L, W, K } from "../data/products.js";
 import Garment from "../components/Garment.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -38,15 +38,33 @@ function StockBadge({ p }) {
   return null;
 }
 
+// Inline quick-restock for a product's TOTAL stock (per-size stock is edited in
+// the full form). Pre-filled with the current value; Save is disabled until it
+// changes.
+function QuickStock({ p, busy, onSave }) {
+  const [val, setVal] = useState(p.stock ?? "");
+  useEffect(() => { setVal(p.stock ?? ""); }, [p.stock]);
+  const changed = String(val) !== String(p.stock ?? "");
+  return (
+    <div className="flex items-center gap-1.5">
+      <input value={val} onChange={(e) => setVal(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="—" aria-label={`Stock for ${p.name}`}
+        className="w-16 border border-slate-200 rounded-lg py-1.5 px-2 text-sm text-center outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10" />
+      <button onClick={() => onSave(val)} disabled={busy || val === "" || !changed}
+        className="text-xs font-semibold text-brand-600 border border-brand-200 bg-brand-50 rounded-lg px-2.5 py-1.5 disabled:opacity-40 active:scale-95 transition">Save</button>
+    </div>
+  );
+}
+
 export default function Admin() {
   const {
     products, adminOrders, ordersBusy, loadAdminOrders,
     form, setForm, blankForm, adminBusy,
-    saveProduct, editProduct, deleteProduct, refreshFromDb, auth, logout, setScreen, goBack,
+    saveProduct, editProduct, deleteProduct, updateProductStock, refreshFromDb, auth, logout, setScreen, goBack,
     uploadProductImage, importProductsCsv,
   } = useStore();
 
   const [search, setSearch] = useState("");
+  const [stockFilter, setStockFilter] = useState("all"); // 'all' | 'low' | 'oos'
   const [draftColor, setDraftColor] = useState("#2563EB");
   const [imgDraft, setImgDraft] = useState("");
   const [sizeDraft, setSizeDraft] = useState("");
@@ -72,11 +90,12 @@ export default function Admin() {
   // ---- Product search ----
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => {
-    if (!q) return products;
-    return products.filter((p) =>
-      `${p.name} ${CAT_LABEL[p.cat] || p.cat} ${p.shape} ${p.tag || ""}`.toLowerCase().includes(q)
-    );
-  }, [products, q]);
+    let arr = products;
+    if (q) arr = arr.filter((p) => `${p.name} ${CAT_LABEL[p.cat] || p.cat} ${p.shape} ${p.tag || ""}`.toLowerCase().includes(q));
+    if (stockFilter === "low") arr = arr.filter(lowStock);
+    else if (stockFilter === "oos") arr = arr.filter(outOfStock);
+    return arr;
+  }, [products, q, stockFilter]);
 
   // ---- Multiple-colour editor (reads/writes the form.colors ARRAY) ----
   // Defensive read: tolerate a single-`color` form shape too, so the editor
@@ -318,29 +337,45 @@ export default function Admin() {
               </div>
             </div>
 
-            <p className="font-bold text-slate-800 my-2 px-1 text-sm">
-              {q ? `Results (${filtered.length})` : `All products (${products.length})`}
-            </p>
+            <div className="flex items-center justify-between gap-2 my-2 px-1 flex-wrap">
+              <p className="font-bold text-slate-800 text-sm">
+                {q || stockFilter !== "all" ? `Showing ${filtered.length}` : `All products (${products.length})`}
+              </p>
+              <div className="flex items-center gap-1.5">
+                {[["all", "All"], ["low", `Low${lowCount ? ` · ${lowCount}` : ""}`], ["oos", `Out${oosCount ? ` · ${oosCount}` : ""}`]].map(([k, lbl]) => (
+                  <button key={k} onClick={() => setStockFilter(k)} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition ${stockFilter === k ? "bg-brand-600 text-white" : "bg-white text-slate-600 border border-slate-200"}`}>{lbl}</button>
+                ))}
+              </div>
+            </div>
 
             <div className="space-y-2">
               {filtered.map((p) => {
                 const isRow = form.id === p.id;
                 return (
-                  <div key={p.id} className={`bg-white rounded-xl p-2.5 shadow-card flex items-center gap-3 ${isRow ? "ring-2 ring-brand-500" : ""}`}>
-                    <div className="w-12 h-12 rounded-lg bg-linear-to-br from-accent-50 to-brand-100 flex items-center justify-center shrink-0 overflow-hidden">
-                      {p.images && p.images[0]
-                        ? <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                        : <Garment shape={p.shape} color={(p.colors && p.colors[0]) || "#2563EB"} className="h-[80%]" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-semibold text-slate-800 truncate max-w-[55%]">{p.name}</p>
-                        <StockBadge p={p} />
+                  <div key={p.id} className={`bg-white rounded-xl p-2.5 shadow-card ${isRow ? "ring-2 ring-brand-500" : ""}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-linear-to-br from-accent-50 to-brand-100 flex items-center justify-center shrink-0 overflow-hidden">
+                        {p.images && p.images[0]
+                          ? <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                          : <Garment shape={p.shape} color={(p.colors && p.colors[0]) || "#2563EB"} className="h-[80%]" />}
                       </div>
-                      <p className="text-xs text-slate-400">{CAT_LABEL[p.cat]} · {formatINR(p.price)}{p.trending ? " · Trending" : ""}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-semibold text-slate-800 truncate max-w-[55%]">{p.name}</p>
+                          <StockBadge p={p} />
+                        </div>
+                        <p className="text-xs text-slate-400">{CAT_LABEL[p.cat]} · {formatINR(p.price)}{p.trending ? " · Trending" : ""}</p>
+                      </div>
+                      <button onClick={() => startEdit(p)} className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition" aria-label="Edit"><Edit3 size={15} /></button>
+                      <button onClick={() => { if (typeof window === "undefined" || window.confirm(`Delete "${p.name}"? This can't be undone.`)) deleteProduct(p.id); }} disabled={adminBusy} className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 disabled:opacity-50 active:scale-95 transition" aria-label="Delete"><Trash2 size={15} /></button>
                     </div>
-                    <button onClick={() => startEdit(p)} className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition" aria-label="Edit"><Edit3 size={15} /></button>
-                    <button onClick={() => { if (typeof window === "undefined" || window.confirm(`Delete "${p.name}"? This can't be undone.`)) deleteProduct(p.id); }} disabled={adminBusy} className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 disabled:opacity-50 active:scale-95 transition" aria-label="Delete"><Trash2 size={15} /></button>
+                    {/* Quick restock (total stock); per-size products link to the full form */}
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-medium text-slate-400">{hasSizeStock(p) ? "Per-size stock" : "Total stock"}</span>
+                      {hasSizeStock(p)
+                        ? <button onClick={() => startEdit(p)} className="text-xs font-semibold text-brand-600 active:scale-95 transition">Edit sizes →</button>
+                        : <QuickStock p={p} busy={adminBusy} onSave={(v) => updateProductStock(p.id, v)} />}
+                    </div>
                   </div>
                 );
               })}

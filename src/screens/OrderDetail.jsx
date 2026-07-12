@@ -30,6 +30,10 @@ export default function OrderDetail() {
   }
 
   const count = o.items.length;
+  // Mirror the Orders list: an online order whose payment isn't settled yet shows
+  // the amber "Confirming payment" pill instead of the raw "Placed" status.
+  const confirming = o.paymentMethod === "online" && o.paymentStatus !== "paid" && o.paymentStatus !== "refunded";
+  const displayStatus = confirming ? "confirming" : o.status;
   const subtotal = o.items.reduce((s, it) => s + (it.unit_price || 0) * (it.qty || 1), 0);
   // Reorder: re-add every still-available line item to the cart.
   const anyAvailable = o.items.some((it) => { const p = products.find((x) => x.id === it.product_id); return p && !outOfStock(p); });
@@ -82,9 +86,9 @@ export default function OrderDetail() {
               <p className="text-base font-bold text-slate-800">#{o.ref}</p>
               <p className="text-xs text-slate-400 mt-0.5">{fmtDate(o.date)} · {count} item{count !== 1 ? "s" : ""}</p>
             </div>
-            <StatusPill status={o.status} />
+            <StatusPill status={displayStatus} />
           </div>
-          <StepTracker status={o.status} />
+          <StepTracker status={displayStatus} />
         </div>
 
         {/* Items */}

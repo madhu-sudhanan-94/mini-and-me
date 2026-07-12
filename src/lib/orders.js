@@ -7,6 +7,9 @@ export const STATUS_LABEL = {
   shipped: "Shipped",
   delivered: "Delivered",
   cancelled: "Cancelled",
+  // Not a fulfillment stage — a UI-only pill for an online order whose payment
+  // was taken but isn't confirmed yet. Excluded from ALL_STATUSES (admin picker).
+  confirming: "Confirming payment",
 };
 
 export function fmtDate(s) {

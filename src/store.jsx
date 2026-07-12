@@ -44,6 +44,10 @@ export function StoreProvider({ children }) {
   const [auth, setAuth] = useState({ role: "guest", id: null });
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
+  // Refs of orders PLACED IN THIS in-memory session (reset on reload + logout).
+  // Used to safely surface a just-paid "confirming" order without leaking the
+  // device-global (persisted) `orders` cache across accounts on a shared device.
+  const sessionOrderRefs = useRef(new Set());
   const [hydrated, setHydrated] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -435,6 +439,14 @@ export function StoreProvider({ children }) {
       showToast("A cancelled order can't be reopened.");
       return;
     }
+    // Never fulfill an online order that hasn't actually been paid — an abandoned
+    // / failed Razorpay attempt leaves a 'pending' row, and shipping it would send
+    // goods + a shipped/delivered email for money that was never collected.
+    if ((status === "shipped" || status === "delivered") && raw
+        && raw.payment_method === "online" && raw.payment_status !== "paid") {
+      showToast("This order isn't paid yet — can't mark it " + status + ".");
+      return;
+    }
     // Cancelling ANY online order routes through the refund edge function, which
     // re-checks the real payment state server-side (covers paid, and the
     // captured-but-not-yet-confirmed window) and refunds if money was taken.
@@ -459,6 +471,27 @@ export function StoreProvider({ children }) {
       }
     } catch (e) { showToast("Network error"); }
     finally { setOrdersBusy(false); }
+  };
+
+  // Self-heal stuck payments. Asks the server to reconcile pending online orders
+  // against Razorpay (ground truth): a captured-but-pending order (verify blip /
+  // late webhook) is settled to 'paid'; for an admin the sweep also cancels
+  // checkouts abandoned >24h ago. Reloads the affected list only on a real change.
+  const reconcileOrders = async () => {
+    if (!session?.access_token) return null;
+    try {
+      const res = await fetch(SUPABASE_URL + "/functions/v1/reconcile-orders", {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ userToken: session.access_token }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data && (data.settled > 0 || data.cancelled > 0)) {
+        loadMyOrders();
+        if (auth.role === "admin") loadAdminOrders();
+      }
+      return data;
+    } catch (e) { return null; }
   };
 
   // Restore a saved login session on load (refresh the token so it stays valid)
@@ -552,6 +585,12 @@ export function StoreProvider({ children }) {
 
   const applySession = (data) => {
     guestMergeRef.current = { cart, favorites }; // merge this guest cart/wishlist into the account
+    // Don't carry the previous (guest or signed-out) person's local order cache
+    // or "confirming" refs into THIS account — on a shared device that would leak
+    // their order (name + address) into the newly signed-in user's list. The
+    // account's real orders reload from the DB (loadMyOrders / claimGuestOrders).
+    setOrders([]);
+    sessionOrderRefs.current = new Set();
     const user = data.user || { email: loginEmail.trim().toLowerCase() };
     const email = (user.email || "").toLowerCase();
     const isAdmin = email === ADMIN_EMAIL;
@@ -867,6 +906,7 @@ export function StoreProvider({ children }) {
 
     // Shared success handoff (clear cart + fields, go to the success screen).
     const finishOrder = (finalOrder) => {
+      try { sessionOrderRefs.current.add(String(finalOrder.ref || finalOrder.id)); } catch {}
       setOrders((o) => [finalOrder, ...o]);
       setLastOrder(finalOrder);
       if (buyNowItem) setBuyNowItem(null); else setCart([]); // buy-now leaves the cart intact
@@ -954,6 +994,8 @@ export function StoreProvider({ children }) {
     setAddresses([]);
     setMyOrders([]);
     setAdminOrders([]);
+    setOrders([]);         // don't leave this account's local order cache for the next person
+    sessionOrderRefs.current = new Set();
     setCart([]);            // don't leave this account's cart/wishlist for the next person
     setFavorites([]);
     setCoupon(null); setCouponMsg("");
@@ -1303,7 +1345,7 @@ export function StoreProvider({ children }) {
   const value = {
     // state
     products, setProducts, screen, setScreen, goBack, auth, setAuth, cart, setCart,
-    orders, setOrders, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
+    orders, setOrders, sessionOrderRefs, hydrated, favorites, setFavorites, heroIndex, setHeroIndex,
     imgIndex, setImgIndex, authMode, setAuthMode, loginEmail, setLoginEmail,
     loginPassword, setLoginPassword, authErr, setAuthErr, authNotice, setAuthNotice,
     authBusy, session, rememberMe, setRememberMe, adminBusy, returnTo, setReturnTo, profile, setProfile, profileBusy, avatarBusy,
@@ -1327,7 +1369,7 @@ export function StoreProvider({ children }) {
     uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
-    loadMyOrders, loadAdminOrders, updateOrderStatus, cancelRefundOrder,
+    loadMyOrders, loadAdminOrders, updateOrderStatus, cancelRefundOrder, reconcileOrders,
     productReviews, loadProductReviews, canReview, submitReview, deleteReview, productRatings,
   };
 

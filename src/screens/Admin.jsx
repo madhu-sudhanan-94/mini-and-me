@@ -340,7 +340,7 @@ export default function Admin() {
                       <p className="text-xs text-slate-400">{CAT_LABEL[p.cat]} · {formatINR(p.price)}{p.trending ? " · Trending" : ""}</p>
                     </div>
                     <button onClick={() => startEdit(p)} className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition" aria-label="Edit"><Edit3 size={15} /></button>
-                    <button onClick={() => deleteProduct(p.id)} disabled={adminBusy} className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 disabled:opacity-50 active:scale-95 transition" aria-label="Delete"><Trash2 size={15} /></button>
+                    <button onClick={() => { if (typeof window === "undefined" || window.confirm(`Delete "${p.name}"? This can't be undone.`)) deleteProduct(p.id); }} disabled={adminBusy} className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 disabled:opacity-50 active:scale-95 transition" aria-label="Delete"><Trash2 size={15} /></button>
                   </div>
                 );
               })}

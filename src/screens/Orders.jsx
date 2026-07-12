@@ -18,6 +18,7 @@ import EmptyState from "../components/EmptyState.jsx";
 // delivered=emerald, cancelled=rose. Icon reinforces the stage.
 const STATUS_STYLE = {
   placed: { pill: "bg-brand-50 text-brand-600", dot: "bg-brand-500", Icon: Clock },
+  confirming: { pill: "bg-amber-50 text-amber-600", dot: "bg-amber-500", Icon: Clock },
   confirmed: { pill: "bg-violet-100 text-violet-600", dot: "bg-violet-500", Icon: CheckCircle2 },
   shipped: { pill: "bg-amber-100 text-amber-600", dot: "bg-amber-500", Icon: Truck },
   delivered: { pill: "bg-emerald-100 text-emerald-600", dot: "bg-emerald-500", Icon: CheckCircle2 },
@@ -122,7 +123,7 @@ function ThumbRow({ items, products }) {
 }
 
 export default function Orders() {
-  const { myOrders, orders, session, setScreen, loadMyOrders, products, openOrder } = useStore();
+  const { myOrders, orders, session, setScreen, loadMyOrders, products, openOrder, reconcileOrders, sessionOrderRefs } = useStore();
   const [loading, setLoading] = useState(!!session);
   useEffect(() => {
     if (!session) { setLoading(false); return; }
@@ -130,12 +131,34 @@ export default function Orders() {
     loadMyOrders().finally(() => setLoading(false));
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Self-heal: if any online order is stuck 'pending' (verify blip / late webhook),
+  // ask the server to reconcile it against Razorpay so a truly-paid order surfaces
+  // as paid instead of staying hidden. Settled orders flip to 'paid' → the
+  // predicate goes false, so this can't loop on genuinely-abandoned rows.
+  useEffect(() => {
+    if (session && myOrders.some((o) => o.payment_method === "online" && o.payment_status === "pending" && o.status !== "cancelled")) {
+      reconcileOrders();
+    }
+  }, [myOrders, session]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Orders PLACED IN THIS session (in-memory ref set, empty on reload/logout) —
+  // for these we KNOW money was taken this session, so it's safe to surface a
+  // still-'pending' online one as "Confirming payment". We deliberately do NOT
+  // trust the persisted device-global `orders` cache here: it survives a
+  // logout→login on a shared device and would otherwise leak another account's
+  // order (name + address) into this user's list.
+  const placedThisSession = sessionOrderRefs?.current || new Set();
+
   // Signed-in users: DB history plus any local order not yet synced (deduped by ref).
   // Hide online orders that were never paid (abandoned/failed Razorpay attempts
-  // leave a 'pending' row); COD and paid orders still show.
+  // leave a 'pending' row), EXCEPT this session's just-paid-but-confirming ones.
   const list = (session ? mergeOrders(myOrders, orders) : orders)
     .map(normalizeOrder)
-    .filter((o) => !(o.paymentMethod === "online" && o.paymentStatus !== "paid"));
+    .filter((o) => {
+      if (o.paymentMethod !== "online") return true;                         // COD always shows
+      if (o.paymentStatus === "paid" || o.paymentStatus === "refunded") return true; // settled shows
+      return placedThisSession.has(String(o.ref));                           // else only if placed this session
+    });
 
   return (
     <div className="pb-6">
@@ -154,6 +177,8 @@ export default function Orders() {
         <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
           {list.map((o, oi) => {
             const count = o.items.length;
+            // Online order shown before its payment is confirmed → amber pill.
+            const confirming = o.paymentMethod === "online" && o.paymentStatus !== "paid" && o.paymentStatus !== "refunded";
             return (
               <button
                 key={o.key}
@@ -167,7 +192,7 @@ export default function Orders() {
                     <p className="text-sm font-bold text-slate-800">#{o.ref}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{fmtDate(o.date)} · {count} item{count !== 1 ? "s" : ""}</p>
                   </div>
-                  <StatusPill status={o.status} />
+                  <StatusPill status={confirming ? "confirming" : o.status} />
                 </div>
 
                 {/* Visual receipt: thumbnails + a short item summary + tap affordance */}

@@ -28,8 +28,17 @@ function PayBadge({ o }) {
 }
 
 export default function AdminOrders() {
-  const { adminOrders, ordersBusy, loadAdminOrders, updateOrderStatus, goBack } = useStore();
+  const { adminOrders, ordersBusy, loadAdminOrders, updateOrderStatus, reconcileOrders, goBack } = useStore();
   useEffect(() => { loadAdminOrders(); }, []);
+
+  // On load, reconcile any pending online orders against Razorpay: settle
+  // captured-but-pending ones (so revenue is right) and sweep abandoned checkouts.
+  // Only fires when such rows exist, so a clean list makes zero Razorpay calls.
+  useEffect(() => {
+    if (adminOrders.some((o) => o.payment_method === "online" && o.payment_status === "pending" && o.status !== "cancelled")) {
+      reconcileOrders();
+    }
+  }, [adminOrders]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const list = adminOrders.map(normalizeOrder);
   // Count toward revenue/AOV only real orders: not cancelled, and not an online
@@ -117,7 +126,24 @@ export default function AdminOrders() {
 
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${statusChip[o.status] || "bg-slate-100 text-slate-600"}`}>{STATUS_LABEL[o.status] || o.status}</span>
-                <select value={o.status} disabled={ordersBusy} onChange={(e) => updateOrderStatus(o.key, e.target.value)} className="border border-slate-200 rounded-lg py-2 pl-2.5 pr-8 text-sm outline-hidden bg-white disabled:opacity-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron">
+                <select
+                  value={o.status}
+                  disabled={ordersBusy}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === o.status) return;
+                    // Cancelling is destructive (a paid online order fires a REAL
+                    // Razorpay refund) — confirm before it goes through.
+                    if (v === "cancelled") {
+                      const msg = (o.paymentMethod === "online" && o.paymentStatus === "paid")
+                        ? "Cancel this order and refund the customer at Razorpay? This can't be undone."
+                        : "Cancel this order? This can't be undone.";
+                      if (typeof window !== "undefined" && !window.confirm(msg)) return;
+                    }
+                    updateOrderStatus(o.key, v);
+                  }}
+                  className="border border-slate-200 rounded-lg py-2 pl-2.5 pr-8 text-sm outline-hidden bg-white disabled:opacity-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 select-chevron"
+                >
                   {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
                 </select>
               </div>

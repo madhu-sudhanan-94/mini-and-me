@@ -16,6 +16,21 @@ export const SHOP = {
 };
 
 /*
+  ============================================================
+  CATEGORY TILES — the "Shop by category" row on the Home screen.
+  Order here = order shown. `key` must match a product's `cat`.
+  `image` is the tile photo (any URL or /public path); leave it
+  "" to fall back to the first product photo in that category.
+  ============================================================
+*/
+export const CATEGORIES = [
+  { key: "kids",  label: "Kids",  image: "" },
+  { key: "women", label: "Women", image: "" },
+  { key: "men",   label: "Men",   image: "" },
+  { key: "toys",  label: "Toys",  image: "" },
+];
+
+/*
   Preset coupon codes. Each: { code, type: "percent"|"flat", value, label,
   minSubtotal (₹, optional), maxDiscount (₹, cap for percent, optional) }.
   Codes are matched case-insensitively.

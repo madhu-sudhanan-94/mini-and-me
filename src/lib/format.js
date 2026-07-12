@@ -3,8 +3,10 @@
 export const formatINR = (n) => "₹" + Number(n).toLocaleString("en-IN");
 
 // Prices are tax-inclusive. Split an inclusive total into subtotal + GST.
-// Set GST_RATE to your effective rate (apparel is 5% under ₹1000, 12% at/above).
-export const GST_RATE = 0.05;
+// GST disabled — the store isn't GST-registered (no GSTIN), so we don't collect
+// or show GST. Prices are charged as-is; bills are plain receipts, not tax
+// invoices. Set this back to your effective rate once you register + add a GSTIN.
+export const GST_RATE = 0;
 export function gstBreakdown(totalIncl, rate = GST_RATE) {
   const gst = Math.round(totalIncl - totalIncl / (1 + rate));
   return { subtotal: totalIncl - gst, gst, total: totalIncl, ratePct: Math.round(rate * 100) };

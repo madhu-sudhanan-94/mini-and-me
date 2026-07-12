@@ -1,7 +1,6 @@
 import React from "react";
 import { Check, Download } from "lucide-react";
 import { formatINR } from "../lib/format.js";
-import { SUPPORT } from "../content/legal.js";
 import { printInvoice } from "../lib/invoice.js";
 import { useStore } from "../store.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -54,22 +53,21 @@ export default function Success() {
           )}
         </div>
 
-        {/* Tax invoice */}
+        {/* Receipt */}
         {lastOrder?.items?.length > 0 && (
           <div className="bg-white rounded-xl shadow-card p-4 mt-4 w-full max-w-xs text-left">
             <div className="flex items-center justify-between mb-2.5">
-              <p className="text-sm font-bold text-slate-800">Tax invoice</p>
+              <p className="text-sm font-bold text-slate-800">Receipt</p>
               <button onClick={() => printInvoice(lastOrder)} className="text-xs font-semibold text-brand-600 flex items-center gap-1 active:scale-95 transition"><Download size={13} /> Download</button>
             </div>
             <div className="space-y-1 text-xs">
-              <div className="flex justify-between text-slate-500"><span>Taxable value</span><span>{formatINR(lastOrder.subtotal)}</span></div>
-              <div className="flex justify-between text-slate-500"><span>GST ({lastOrder.ratePct}%)</span><span>{formatINR(lastOrder.gst)}</span></div>
+              <div className="flex justify-between text-slate-500"><span>Subtotal</span><span>{formatINR(lastOrder.subtotal)}</span></div>
+              {lastOrder.gst > 0 && <div className="flex justify-between text-slate-500"><span>GST ({lastOrder.ratePct}%)</span><span>{formatINR(lastOrder.gst)}</span></div>}
               {lastOrder.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount{lastOrder.coupon?.code ? ` (${lastOrder.coupon.code})` : ""}</span><span>−{formatINR(lastOrder.discount)}</span></div>}
               <div className="flex justify-between text-slate-500"><span>Delivery</span><span>{lastOrder.delivery_fee ? formatINR(lastOrder.delivery_fee) : "Free"}</span></div>
               {lastOrder.gift_wrap_fee > 0 && <div className="flex justify-between text-slate-500"><span>Gift wrapping</span><span>{formatINR(lastOrder.gift_wrap_fee)}</span></div>}
               <div className="flex justify-between pt-1.5 mt-1.5 border-t border-slate-100 font-bold text-slate-800"><span>Total</span><span>{formatINR(lastOrder.total)}</span></div>
             </div>
-            <p className="text-[10px] text-slate-400 mt-2">{SUPPORT.gstin ? `GSTIN ${SUPPORT.gstin} · ` : ""}Prices inclusive of GST.</p>
           </div>
         )}
 

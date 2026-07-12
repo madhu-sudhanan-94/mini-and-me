@@ -88,7 +88,7 @@ export default function Cart() {
             <div className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-xl p-4">
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(bill.subtotal)}</span></div>
-                <div className="flex justify-between text-slate-600"><span>GST ({bill.ratePct}%, incl.)</span><span>{formatINR(bill.gst)}</span></div>
+                {bill.gst > 0 && <div className="flex justify-between text-slate-600"><span>GST ({bill.ratePct}%, incl.)</span><span>{formatINR(bill.gst)}</span></div>}
                 {bill.discount > 0 && <div className="flex justify-between text-green-600 font-medium"><span>Coupon ({coupon?.code})</span><span>−{formatINR(bill.discount)}</span></div>}
                 <div className="flex justify-between text-slate-600"><span>Delivery</span>{bill.deliveryFee ? <span>{formatINR(bill.deliveryFee)}</span> : <span className="text-green-600 font-medium">Free</span>}</div>
               </div>

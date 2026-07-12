@@ -3,7 +3,7 @@
 // files, update them here too, or the server total will diverge from the cart.
 
 export const SHOP = { freeDeliveryThreshold: 1000, deliveryFee: 99, giftWrapFee: 30 };
-export const GST_RATE = 0.05;
+export const GST_RATE = 0; // GST disabled — not registered (no GSTIN). See src/lib/format.js.
 
 type Coupon = { code: string; type: "percent" | "flat"; value: number; minSubtotal: number; maxDiscount?: number };
 

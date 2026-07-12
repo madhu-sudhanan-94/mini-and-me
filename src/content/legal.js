@@ -41,7 +41,7 @@ export const LEGAL_PAGES = {
     sections: [
       { h: "Acceptance", body: `By using ${NAME}, you agree to these terms. If you don't agree, please don't use the store.` },
       { h: "Your account", body: "You're responsible for keeping your login secure and for activity under your account. Provide accurate information at signup and checkout." },
-      { h: "Orders & pricing", body: "All prices are in Indian Rupees (₹) and include applicable taxes unless stated otherwise. We may cancel or refuse any order — for example due to pricing errors or stock issues — and will refund any amount already paid." },
+      { h: "Orders & pricing", body: "All prices are in Indian Rupees (₹). We may cancel or refuse any order — for example due to pricing errors or stock issues — and will refund any amount already paid." },
       { h: "Payments", body: "Payments are processed securely by our third-party gateway, Razorpay; by paying you also agree to their terms. We don't store your full card or UPI details. Your order is confirmed once payment is successful." },
       { h: "Content", body: `All content, branding, and images on ${NAME} belong to us or our licensors and may not be reused without permission.` },
       { h: "Liability", body: "The store is provided “as is”. To the extent permitted by law, we're not liable for indirect or incidental losses arising from use of the store." },

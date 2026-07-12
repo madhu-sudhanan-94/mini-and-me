@@ -140,7 +140,7 @@ export default function Checkout() {
         <section className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-xl p-4">
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{formatINR(checkoutBill.subtotal)}</span></div>
-            <div className="flex justify-between text-slate-600"><span>GST ({checkoutBill.ratePct}%, incl.)</span><span>{formatINR(checkoutBill.gst)}</span></div>
+            {checkoutBill.gst > 0 && <div className="flex justify-between text-slate-600"><span>GST ({checkoutBill.ratePct}%, incl.)</span><span>{formatINR(checkoutBill.gst)}</span></div>}
             {checkoutBill.discount > 0 && <div className="flex justify-between text-green-600 font-medium"><span>Coupon ({coupon?.code})</span><span>−{formatINR(checkoutBill.discount)}</span></div>}
             <div className="flex justify-between text-slate-600"><span>Delivery</span>{checkoutBill.deliveryFee ? <span>{formatINR(checkoutBill.deliveryFee)}</span> : <span className="text-green-600 font-medium">Free</span>}</div>
             {checkoutBill.giftWrapFee > 0 && <div className="flex justify-between text-slate-600"><span>Gift wrapping</span><span>{formatINR(checkoutBill.giftWrapFee)}</span></div>}

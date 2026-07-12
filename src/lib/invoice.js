@@ -1,4 +1,4 @@
-/* ============================ GST tax invoice (printable) ============================ */
+/* ============================ Printable receipt ============================ */
 import { BRAND } from "../brand.config.js";
 import { SUPPORT } from "../content/legal.js";
 import { formatINR } from "./format.js";
@@ -93,7 +93,7 @@ export function buildInvoiceHTML(order) {
         </div>
       </div>
       <div class="meta">
-        <h1>Tax Invoice</h1>
+        <h1>Receipt</h1>
         <div class="muted" style="margin-top:6px">
           Invoice&nbsp;No: <b>${esc(o.id || "")}</b><br/>
           Date: ${esc(fmtDate(o.ts))}
@@ -116,8 +116,8 @@ export function buildInvoiceHTML(order) {
       <thead><tr><th class="c" style="width:34px">#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead>
       <tbody>
         ${rows || '<tr><td colspan="5" class="muted c">No items</td></tr>'}
-        ${totalRow("Taxable value", formatINR(subtotal), { muted: true })}
-        ${totalRow(`GST (${ratePct}%)`, formatINR(gst), { muted: true })}
+        ${totalRow("Subtotal", formatINR(subtotal), { muted: true })}
+        ${gst > 0 ? totalRow(`GST (${ratePct}%)`, formatINR(gst), { muted: true }) : ""}
         ${discount > 0 ? totalRow("Discount", "−" + formatINR(discount), { muted: true }) : ""}
         ${totalRow("Delivery", delivery ? formatINR(delivery) : "Free", { muted: true })}
         ${giftWrap > 0 ? totalRow("Gift wrapping", formatINR(giftWrap), { muted: true }) : ""}
@@ -126,8 +126,8 @@ export function buildInvoiceHTML(order) {
     </table>
 
     <p class="note">
-      All prices are inclusive of GST at ${esc(String(ratePct))}%. This is a computer-generated invoice and does not require a signature.<br/>
-      ${SUPPORT.gstin ? "" : "Note: add your GSTIN in the app config to show it on invoices. "}Thank you for shopping with ${esc(BRAND.name)}.
+      This is a computer-generated receipt and does not require a signature.<br/>
+      Thank you for shopping with ${esc(BRAND.name)}.
     </p>
   </div>
 </body></html>`;

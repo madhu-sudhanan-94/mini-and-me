@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Star } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { useStore } from "../store.jsx";
 
 /*
@@ -30,7 +30,7 @@ function StarPicker({ value, onChange }) {
 }
 
 export default function ReviewsSection({ productId }) {
-  const { productReviews, loadProductReviews, canReview, submitReview } = useStore();
+  const { productReviews, loadProductReviews, canReview, submitReview, deleteReview, auth } = useStore();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -92,6 +92,15 @@ export default function ReviewsSection({ productId }) {
                   <p className="text-[10px] text-slate-400">{fmtDate(r.created_at)}</p>
                 </div>
                 <Stars value={r.rating} />
+                {auth?.role === "admin" && (
+                  <button
+                    onClick={() => { if (typeof window !== "undefined" && window.confirm("Remove this review?")) deleteReview(r.id, productId); }}
+                    aria-label="Remove review"
+                    className="ml-1 shrink-0 text-slate-300 hover:text-rose-500 active:scale-90 transition"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
               {r.comment && <p className="text-sm text-slate-600 mt-2 whitespace-pre-line">{r.comment}</p>}
             </div>

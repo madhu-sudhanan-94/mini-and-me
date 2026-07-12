@@ -141,9 +141,23 @@ export default function ProductModal() {
           {/* Details */}
           <div className="px-5 pt-3 pb-24 lg:pb-2">
           <h2 className="text-xl font-semibold text-slate-900 leading-tight">{p.name}</h2>
-          {oos ? <p className="text-xs font-semibold text-red-500 mt-1">Currently out of stock</p>
-            : selSoldOut ? <p className="text-xs font-semibold text-red-500 mt-1">Size {selSize} is out of stock</p>
-            : sizeLowStock(p, selSize) ? <p className="text-xs font-semibold text-amber-600 mt-1">Hurry — only {stockFor(p, selSize)} left{hasSizeStock(p) ? ` in size ${selSize}` : ""}</p> : null}
+          {(() => {
+            const stk = stockFor(p, selSize); // null = untracked (no count shown)
+            const dot = (dotc, textc, label, pulse = false) => (
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  {pulse && <span className={`absolute inline-flex h-full w-full rounded-full ${dotc} opacity-60 animate-ping`} />}
+                  <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dotc}`} />
+                </span>
+                <span className={`text-sm font-medium ${textc}`}>{label}</span>
+              </div>
+            );
+            if (oos) return <p className="text-sm font-medium text-red-600 mt-1.5">Out of stock</p>;
+            if (selSoldOut) return <p className="text-sm font-medium text-red-600 mt-1.5">Size {selSize} out of stock</p>;
+            if (sizeLowStock(p, selSize)) return dot("bg-amber-600", "text-amber-600", `Only ${stk} left${hasSizeStock(p) ? ` in size ${selSize}` : ""}`, true);
+            if (stk != null) return dot("bg-green-700", "text-green-700", `${stk} in stock`, true);
+            return null; // untracked stock → no indicator
+          })()}
 
           {/* description — 2 lines + See more (hidden when empty / placeholder) */}
           {hasDesc && (
@@ -214,15 +228,6 @@ export default function ProductModal() {
             </div>
           )}
 
-          {related.length > 0 && (
-            <div className="mt-5">
-              <p className="text-sm font-semibold text-slate-800 mb-2">{usingFallback ? "You may also like" : `Similar in ${catLabel}`}</p>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar py-3 -mx-5 px-5">
-                {related.map((rp) => <ProductCard key={rp.id} p={rp} wide />)}
-              </div>
-            </div>
-          )}
-
           {/* Product details */}
           <div className="mt-5">
             <p className="text-sm font-semibold text-slate-800 mb-2">Product details</p>
@@ -236,8 +241,17 @@ export default function ProductModal() {
             </dl>
           </div>
 
-          {/* Ratings & reviews */}
+          {/* Ratings & reviews — right after the details, before the cross-sell */}
           <ReviewsSection productId={p.id} />
+
+          {related.length > 0 && (
+            <div className="mt-5">
+              <p className="text-sm font-semibold text-slate-800 mb-2">{usingFallback ? "You may also like" : `Similar in ${catLabel}`}</p>
+              <div className="flex gap-3 overflow-x-auto no-scrollbar py-3 -mx-5 px-5">
+                {related.map((rp) => <ProductCard key={rp.id} p={rp} wide />)}
+              </div>
+            </div>
+          )}
           </div>
 
         {/* Actions — sticky at the bottom on mobile, inline on desktop */}

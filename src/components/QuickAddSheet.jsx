@@ -18,7 +18,7 @@ import { useStore } from "../store.jsx";
   the device Back button just closes it (see store.openQuickAdd/closeQuickAdd).
 */
 export default function QuickAddSheet() {
-  const { quickAdd, closeQuickAdd, setQuickAdd, addToCart, buyNow } = useStore();
+  const { quickAdd, closeQuickAdd, setQuickAdd, addToCart, buyNow, openProductFromQuick } = useStore();
   const p = quickAdd;
   const [size, setSize] = useState(null);            // user's pick; null → first in-stock
   const [qty, setQty] = useState(1);
@@ -63,7 +63,7 @@ export default function QuickAddSheet() {
             {imgs.length > 0 && <span aria-hidden className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center shadow-xs"><Maximize2 size={11} className="text-slate-600" /></span>}
           </button>
           <div className="min-w-0 flex-1 pr-6">
-            <p className="text-base font-bold text-slate-900 leading-snug">{p.name}</p>
+            <button onClick={() => openProductFromQuick(p)} className="text-left text-base font-bold text-slate-900 leading-snug hover:text-brand-600 transition">{p.name}</button>
             <div className="mt-1.5"><PriceTag p={p} /></div>
             {onSale && <p className="mt-1 text-[11px] font-semibold text-green-600">You save {formatINR(p.original - p.price)}</p>}
             {hasDesc && <p className="mt-1.5 text-xs text-slate-500 leading-relaxed line-clamp-2">{p.desc}</p>}

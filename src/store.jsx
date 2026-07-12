@@ -23,6 +23,7 @@ export const useStore = () => useContext(StoreContext);
 
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [productRatings, setProductRatings] = useState({}); // { [productId]: { avg, count } } for the catalog thumbnails
   const [screen, setScreenRaw] = useState("home"); // open on the store; login only when needed
   // Navigation is mirrored into the browser history so the device/browser Back
   // (and Forward) buttons walk through the app's screens (Address → Profile → Home),
@@ -207,7 +208,20 @@ export function StoreProvider({ children }) {
       }
     } catch (e) { /* offline / not hosted yet — keep local sample data */ }
   };
-  useEffect(() => { loadProducts(); }, []);
+  // Aggregate rating (avg + count) per product, from the product_ratings view.
+  const loadRatings = async () => {
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/product_ratings?select=*", { headers: SB_HEADERS });
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (Array.isArray(rows)) {
+        const m = {};
+        rows.forEach((r) => { m[r.product_id] = { avg: Number(r.avg) || 0, count: Number(r.count) || 0 }; });
+        setProductRatings(m);
+      }
+    } catch (e) { /* offline / view not created yet */ }
+  };
+  useEffect(() => { loadProducts(); loadRatings(); }, []);
 
   // ---- Browser Back / Forward buttons ↔ screen + product modal ----
   // setScreen()/openProduct() push history entries; this listener syncs the app
@@ -619,9 +633,22 @@ export function StoreProvider({ children }) {
       });
       if (!res.ok) { showToast(res.status === 401 || res.status === 403 ? "Only delivered buyers can review this" : "Couldn't post your review"); return false; }
       await loadProductReviews(productId);
+      loadRatings();
       showToast("Thanks for your review!");
       return true;
     } catch (e) { showToast("Network error — review not posted"); return false; }
+  };
+  // Admin moderation: remove any review + rating (RLS reviews_admin_all allows it).
+  const deleteReview = async (reviewId, productId) => {
+    if (auth.role !== "admin" || !session?.access_token) return false;
+    try {
+      const res = await authedFetch(SUPABASE_URL + "/rest/v1/reviews?id=eq." + reviewId, { method: "DELETE", headers: writeHeaders() });
+      if (!res.ok) { showToast("Couldn't remove the review"); return false; }
+      await loadProductReviews(productId);
+      loadRatings();
+      showToast("Review removed");
+      return true;
+    } catch (e) { showToast("Network error"); return false; }
   };
 
   // Quick-add bottom sheet (tap the cart icon on a product card → pick a size →
@@ -635,6 +662,17 @@ export function StoreProvider({ children }) {
   const closeQuickAdd = () => {
     if (typeof window !== "undefined" && window.history.state && window.history.state.quick != null) { window.history.back(); return; }
     setQuickAdd(null);
+  };
+  // Tap the product name in the quick-add sheet → open its full product page.
+  // Strip the sheet's history marker first so Back from the product doesn't
+  // reopen the sheet, then route to the product screen.
+  const openProductFromQuick = (p) => {
+    if (!p) return;
+    setQuickAdd(null);
+    if (typeof window !== "undefined" && window.history.state && window.history.state.quick != null) {
+      try { window.history.replaceState({ screen: screenRef.current }, ""); } catch {}
+    }
+    openProduct(p);
   };
 
   // Deep-link: a shared ?p=<id> URL opens that product once products are loaded.
@@ -1283,14 +1321,14 @@ export function StoreProvider({ children }) {
     showToast, goToLogin, applySession, handleAuth,
     applyCoupon, removeCoupon,
     requestPasswordReset, setNewPassword, updateAccount, openProduct, closeProduct,
-    openQuickAdd, closeQuickAdd,
+    openQuickAdd, closeQuickAdd, openProductFromQuick,
     toggleFav, isFav, addToCart, buyNow, changeBuyNowQty, changeQty, removeItem, placeOrder, logout,
     saveProduct, editProduct, deleteProduct, refreshFromDb, loadProducts,
     uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
     loadMyOrders, loadAdminOrders, updateOrderStatus, cancelRefundOrder,
-    productReviews, loadProductReviews, canReview, submitReview,
+    productReviews, loadProductReviews, canReview, submitReview, deleteReview, productRatings,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

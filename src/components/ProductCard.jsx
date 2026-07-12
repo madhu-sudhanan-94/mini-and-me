@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart, Star } from "lucide-react";
 import ProductImage from "./ProductImage.jsx";
 import PriceTag from "./PriceTag.jsx";
 import { outOfStock, lowStock } from "../lib/catalog.js";
@@ -7,7 +7,8 @@ import { useSwipe } from "../lib/useSwipe.js";
 import { useStore } from "../store.jsx";
 
 export default function ProductCard({ p, wide }) {
-    const { openProduct, toggleFav, isFav, openQuickAdd } = useStore();
+    const { openProduct, toggleFav, isFav, openQuickAdd, productRatings } = useStore();
+    const rating = productRatings?.[p.id];
     const oos = outOfStock(p);
     const imgs = p.images || [];
     const [imgIdx, setImgIdx] = useState(0);
@@ -78,6 +79,13 @@ export default function ProductCard({ p, wide }) {
 
             <div className="px-2.5 pt-2 pb-2.5">
                 <p className="text-[13px] font-semibold text-slate-800 truncate">{p.name}</p>
+                {rating && rating.count > 0 && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                        <Star size={11} className="text-amber-400" fill="currentColor" />
+                        <span className="text-[11px] font-semibold text-slate-600">{rating.avg.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400">({rating.count})</span>
+                    </div>
+                )}
                 <div className="mt-0.5">
                     <PriceTag p={p} />
                 </div>

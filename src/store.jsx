@@ -394,8 +394,37 @@ export function StoreProvider({ children }) {
     } catch (e) { /* offline */ }
     finally { setOrdersBusy(false); }
   };
+  // Cancel + refund a paid online order via the edge function (Razorpay refund;
+  // the DB trigger then restores stock). Used for any cancel of a paid order.
+  const cancelRefundOrder = async (id) => {
+    setOrdersBusy(true);
+    try {
+      const res = await fetch(SUPABASE_URL + "/functions/v1/refund-order", {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id, userToken: session?.access_token || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) { showToast(data.error === "refund_failed" ? "Refund failed at Razorpay — try again" : "Couldn't cancel the order"); return; }
+      setAdminOrders((os) => os.map((o) => (o.id === id ? { ...o, status: "cancelled", payment_status: data.refunded ? "refunded" : o.payment_status } : o)));
+      showToast(data.refunded ? "Order cancelled & refunded" : "Order cancelled");
+    } catch (e) { showToast("Network error"); }
+    finally { setOrdersBusy(false); }
+  };
+
   const updateOrderStatus = async (id, status) => {
     if (auth.role !== "admin" || !session?.access_token) return;
+    const raw = adminOrders.find((o) => o.id === id);
+    // Cancelled orders are terminal — reopening would leave them fulfillable with
+    // the money already refunded and the stock already restored.
+    if (raw && raw.status === "cancelled" && status !== "cancelled") {
+      showToast("A cancelled order can't be reopened.");
+      return;
+    }
+    // Cancelling ANY online order routes through the refund edge function, which
+    // re-checks the real payment state server-side (covers paid, and the
+    // captured-but-not-yet-confirmed window) and refunds if money was taken.
+    if (status === "cancelled" && raw && raw.payment_method === "online") return cancelRefundOrder(id);
     setOrdersBusy(true);
     try {
       const res = await authedFetch(SUPABASE_URL + "/rest/v1/orders?id=eq." + id, {
@@ -857,6 +886,7 @@ export function StoreProvider({ children }) {
     }
 
     // ----- Cash on delivery / pay later -----
+    if (!PAYMENTS.codAvailable) { showToast("Cash on delivery isn't available yet — please pay online."); return; }
     // Wait for the order to be safely recorded before showing success. If it
     // can't be saved, keep the cart + details so the customer can retry.
     setPlacingOrder(true);
@@ -1249,7 +1279,7 @@ export function StoreProvider({ children }) {
     uploadProductImage, importProductsCsv,
     loadProfile, saveProfile, uploadAvatar,
     loadAddresses, saveAddress, deleteAddress, makeDefaultAddress,
-    loadMyOrders, loadAdminOrders, updateOrderStatus,
+    loadMyOrders, loadAdminOrders, updateOrderStatus, cancelRefundOrder,
     productReviews, loadProductReviews, canReview, submitReview,
   };
 

@@ -15,6 +15,18 @@ const statusChip = {
   cancelled: "bg-red-50 text-red-600",
 };
 
+// Payment badge so an unpaid/abandoned online order is never mistaken for a real one.
+function PayBadge({ o }) {
+  const m = o.paymentMethod, s = o.paymentStatus;
+  let text, cls;
+  if (m === "online" && s === "paid") { text = "Paid online"; cls = "bg-green-50 text-green-700"; }
+  else if (m === "online" && s === "refunded") { text = "Refunded"; cls = "bg-slate-100 text-slate-500"; }
+  else if (m === "online") { text = "Unpaid"; cls = "bg-red-50 text-red-600"; }
+  else if (m === "cod") { text = "COD"; cls = "bg-slate-100 text-slate-600"; }
+  else return null;
+  return <span className={`inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${cls}`}>{text}</span>;
+}
+
 export default function AdminOrders() {
   const { adminOrders, ordersBusy, loadAdminOrders, updateOrderStatus, goBack } = useStore();
   useEffect(() => { loadAdminOrders(); }, []);
@@ -73,7 +85,10 @@ export default function AdminOrders() {
                   <p className="text-sm font-bold text-slate-800">#{o.ref}</p>
                   <p className="text-xs text-slate-400">{fmtDate(o.date)} · {o.name || "—"}{o.contact ? " · " + o.contact : ""}</p>
                 </div>
-                <span className="font-bold text-slate-900">{formatINR(o.total)}</span>
+                <div className="text-right shrink-0">
+                  <span className="font-bold text-slate-900 block">{formatINR(o.total)}</span>
+                  <PayBadge o={o} />
+                </div>
               </div>
 
               {o.items.length > 0 && (

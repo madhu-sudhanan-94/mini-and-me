@@ -7,11 +7,8 @@ export const GST_RATE = 0.05;
 
 type Coupon = { code: string; type: "percent" | "flat"; value: number; minSubtotal: number; maxDiscount?: number };
 
-const COUPONS: Coupon[] = [
-  { code: "SAVE10", type: "percent", value: 10, minSubtotal: 0, maxDiscount: 500 },
-  { code: "FLAT100", type: "flat", value: 100, minSubtotal: 500 },
-  { code: "WELCOME", type: "percent", value: 15, minSubtotal: 0, maxDiscount: 750 },
-];
+// No coupons active for now — mirrors src/shop.config.js.
+const COUPONS: Coupon[] = [];
 
 export function findCoupon(code?: string | null): Coupon | null {
   const c = (code || "").trim().toUpperCase();

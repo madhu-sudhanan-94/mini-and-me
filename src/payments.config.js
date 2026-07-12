@@ -6,6 +6,7 @@
 */
 export const PAYMENTS = {
   provider: "razorpay",
-  onlineEnabled: true, // show "Pay online" (Razorpay) at checkout
-  codEnabled: true,    // show "Cash on delivery / Pay later" at checkout
+  onlineEnabled: true,  // show "Pay online" (Razorpay) at checkout
+  codEnabled: true,     // show the "Cash on delivery" option at checkout
+  codAvailable: false,  // ...but COD can't be ordered yet — selecting it shows "not available"
 };

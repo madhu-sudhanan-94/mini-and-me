@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown, User, MapPin, Truck, Minus, Plus, Trash2, Gift, Check, CreditCard, Banknote } from "lucide-react";
 import ScreenHeader from "../components/ScreenHeader.jsx";
 import { formatINR, isEmail } from "../lib/format.js";
-import { SHOP } from "../shop.config.js";
+import { SHOP, COUPONS_ENABLED } from "../shop.config.js";
 import { PAYMENTS } from "../payments.config.js";
 import PhoneField from "../components/PhoneField.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
@@ -18,6 +18,7 @@ export default function Checkout() {
     changeQty, removeItem, changeBuyNowQty, giftWrap, setGiftWrap, paymentMethod, setPaymentMethod,
   } = useStore();
   const payOnline = paymentMethod === "online" && PAYMENTS.onlineEnabled;
+  const codBlocked = paymentMethod === "cod" && !PAYMENTS.codAvailable;
   // Buy-now shows the single item; from the cart the order is collapsed by default.
   const [itemsOpen, setItemsOpen] = useState(!!buyNowItem);
   const emailInvalid = coEmail.trim() && !isEmail(coEmail);
@@ -126,10 +127,12 @@ export default function Checkout() {
         )}
 
         {/* Coupon */}
-        <section>
-          <p className="text-sm font-semibold text-slate-800 mb-2">Have a coupon?</p>
-          <CouponBox bill={checkoutBill} />
-        </section>
+        {COUPONS_ENABLED && (
+          <section>
+            <p className="text-sm font-semibold text-slate-800 mb-2">Have a coupon?</p>
+            <CouponBox bill={checkoutBill} />
+          </section>
+        )}
 
         {/* Order summary */}
         <section className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-xl p-4">
@@ -176,6 +179,9 @@ export default function Checkout() {
                 </button>
               )}
             </div>
+            {codBlocked && (
+              <p className="mt-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-2.5 py-2">Cash on delivery isn't available for this order yet — please pay online to place your order.</p>
+            )}
           </section>
         )}
 
@@ -212,8 +218,10 @@ export default function Checkout() {
             <p className="text-[11px] text-slate-400 text-center mt-2">Please log in or create an account to complete your order.</p>
           </>
         ) : (
-          <PrimaryButton onClick={placeOrder} disabled={!coName.trim() || !hasContact || placingOrder || checkoutCount === 0} size="xl">
-            {placingOrder
+          <PrimaryButton onClick={placeOrder} disabled={!coName.trim() || !hasContact || placingOrder || checkoutCount === 0 || codBlocked} size="xl">
+            {codBlocked
+              ? "Cash on delivery unavailable"
+              : placingOrder
               ? (payOnline ? "Starting payment…" : "Placing your order…")
               : `${payOnline ? "Pay" : "Place order ·"} ${formatINR(checkoutBill.total)}`}
           </PrimaryButton>

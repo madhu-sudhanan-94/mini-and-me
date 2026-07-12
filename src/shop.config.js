@@ -20,11 +20,11 @@ export const SHOP = {
   minSubtotal (₹, optional), maxDiscount (₹, cap for percent, optional) }.
   Codes are matched case-insensitively.
 */
-export const COUPONS = [
-  { code: "SAVE10",  type: "percent", value: 10,  label: "10% off your order",   minSubtotal: 0,    maxDiscount: 500 },
-  { code: "FLAT100", type: "flat",    value: 100, label: "₹100 off",             minSubtotal: 500 },
-  { code: "WELCOME", type: "percent", value: 15,  label: "15% off (welcome)",    minSubtotal: 0,    maxDiscount: 750 },
-];
+// No coupons active for now. Add entries here to re-enable the coupon box.
+export const COUPONS = [];
+
+// Whether to show the "Have a coupon?" box at checkout (auto-hidden when empty).
+export const COUPONS_ENABLED = COUPONS.length > 0;
 
 // Find a coupon by code (case-insensitive). Returns the coupon or null.
 export function findCoupon(code) {

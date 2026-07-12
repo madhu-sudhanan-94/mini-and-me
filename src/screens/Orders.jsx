@@ -131,7 +131,11 @@ export default function Orders() {
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Signed-in users: DB history plus any local order not yet synced (deduped by ref).
-  const list = (session ? mergeOrders(myOrders, orders) : orders).map(normalizeOrder);
+  // Hide online orders that were never paid (abandoned/failed Razorpay attempts
+  // leave a 'pending' row); COD and paid orders still show.
+  const list = (session ? mergeOrders(myOrders, orders) : orders)
+    .map(normalizeOrder)
+    .filter((o) => !(o.paymentMethod === "online" && o.paymentStatus !== "paid"));
 
   return (
     <div className="pb-6">

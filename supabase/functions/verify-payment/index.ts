@@ -18,14 +18,15 @@ Deno.serve(async (req) => {
     const expected = await hmacHex(RZP_KEY_SECRET, `${razorpay_order_id}|${razorpay_payment_id}`);
     if (!safeEqual(expected, razorpay_signature)) return json({ ok: false, error: "signature mismatch" }, 400);
 
-    const gRes = await db(`orders?razorpay_order_id=eq.${razorpay_order_id}&select=id,total,payment_status`);
+    const gRes = await db(`orders?razorpay_order_id=eq.${razorpay_order_id}&select=id,total,payment_status,status`);
     if (!gRes.ok) return json({ ok: false, error: "lookup_failed" }, 500);
     const rows = await gRes.json();
     if (!Array.isArray(rows) || !rows.length) return json({ ok: false, error: "order not found" }, 404);
     const order = rows[0];
 
-    if (order.payment_status !== "paid") {
-      const uRes = await db(`orders?razorpay_order_id=eq.${razorpay_order_id}`, {
+    // Never resurrect a cancelled order (would re-trigger the stock decrement).
+    if (order.payment_status !== "paid" && order.status !== "cancelled") {
+      const uRes = await db(`orders?razorpay_order_id=eq.${razorpay_order_id}&status=neq.cancelled`, {
         method: "PATCH",
         body: JSON.stringify({ payment_status: "paid", razorpay_payment_id, amount_paid: order.total }),
       });

@@ -20,8 +20,9 @@ Deno.serve(async (req) => {
     const orderId = entity?.order_id;
     if (!orderId) return json({ ok: true, ignored: true });
 
+    // status=neq.cancelled: never resurrect a cancelled/refunded order.
     if (evt.event === "payment.captured") {
-      await db(`orders?razorpay_order_id=eq.${orderId}&payment_status=neq.paid`, {
+      await db(`orders?razorpay_order_id=eq.${orderId}&payment_status=neq.paid&status=neq.cancelled`, {
         method: "PATCH",
         body: JSON.stringify({
           payment_status: "paid",
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
         }),
       });
     } else if (evt.event === "payment.failed") {
-      await db(`orders?razorpay_order_id=eq.${orderId}&payment_status=eq.pending`, {
+      await db(`orders?razorpay_order_id=eq.${orderId}&payment_status=eq.pending&status=neq.cancelled`, {
         method: "PATCH",
         body: JSON.stringify({ payment_status: "failed", razorpay_payment_id: entity.id }),
       });

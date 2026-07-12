@@ -41,6 +41,8 @@ export function normalizeOrder(o) {
     giftWrapFee: o.gift_wrap_fee ?? 0,
     giftWrap: o.gift_wrap ?? o.giftWrap ?? false,
     totalSaved: o.total_saved ?? o.saved ?? 0,
+    paymentMethod: o.payment_method || o.paymentMethod || null,  // 'online' | 'cod'
+    paymentStatus: o.payment_status || o.paymentStatus || null,  // 'pending' | 'paid' | 'failed' | 'refunded'
   };
 }
 

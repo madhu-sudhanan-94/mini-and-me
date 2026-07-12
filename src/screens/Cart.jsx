@@ -6,6 +6,7 @@ import ProductImage from "../components/ProductImage.jsx";
 import PrimaryButton from "../components/PrimaryButton.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import CouponBox from "../components/CouponBox.jsx";
+import { COUPONS_ENABLED } from "../shop.config.js";
 import { useStore } from "../store.jsx";
 
 export default function Cart() {
@@ -69,8 +70,12 @@ export default function Cart() {
             )}
 
             {/* Coupon */}
-            <p className="text-sm font-semibold text-slate-800 mb-2">Have a coupon?</p>
-            <div className="mb-4"><CouponBox /></div>
+            {COUPONS_ENABLED && (
+              <>
+                <p className="text-sm font-semibold text-slate-800 mb-2">Have a coupon?</p>
+                <div className="mb-4"><CouponBox /></div>
+              </>
+            )}
 
             {/* Summary */}
             <div className="bg-linear-to-br from-brand-50 to-accent-50 border border-brand-100 rounded-xl p-4">

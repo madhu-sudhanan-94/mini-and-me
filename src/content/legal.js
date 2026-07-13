@@ -2,9 +2,10 @@ import { BRAND } from "../brand.config.js";
 
 /*
   Legal content — the single source for all policy pages + FAQs. Business and
-  support details live in SUPPORT below; still to complete before full launch:
-  the registered business address and GSTIN. Have a lawyer / CA review these,
-  and keep LAST_UPDATED current whenever you change them.
+  support details live in SUPPORT below. Address shown publicly is the city/state
+  (full postal address kept on file for Razorpay / customer requests on demand);
+  GSTIN is intentionally blank (not GST-registered). Have a lawyer / CA review
+  these, and keep LAST_UPDATED current whenever you change them.
   Edit everything in THIS one file.
 */
 
@@ -15,12 +16,12 @@ export const SUPPORT = {
   email: "miniandme.in@gmail.com",             // real support inbox
   phone: "+91 89715 83502",                    // real support number
   hours: "Monday–Saturday, 10:00–18:00 IST",
-  address: "Bengaluru, Karnataka, India",      // support address
-  jurisdiction: "Bengaluru, Karnataka",        // EDIT — courts/jurisdiction city
-  gstin: "",                                   // EDIT — add once registered
+  address: "Palladam, Tirupur, Tamil Nadu 641664, India",  // public address (city/state; full postal on file)
+  jurisdiction: "Tirupur, Tamil Nadu",         // courts/jurisdiction
+  gstin: "",                                   // intentionally blank — not GST-registered
 };
 
-export const LAST_UPDATED = "12 July 2026";
+export const LAST_UPDATED = "13 July 2026";
 
 // ---- Policy pages ----  each = { title, sections: [{ h, body }] }
 export const LEGAL_PAGES = {
